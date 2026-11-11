@@ -1,0 +1,41 @@
+# M0 / T01：密钥拦截 + 只读质量检查
+#
+# 设计约束：仓库既有的 docs/01-09、AGENTS.md 等文件是 CRLF 且归协调者所有
+# （AGENTS.md 铁律 2/4）。因此这里**不使用任何自动改写型 hook**
+# （trailing-whitespace / end-of-file-fixer / mixed-line-ending / ruff --fix），
+# 全部为只读检查，保证 `pre-commit run --all-files` 不会改动他人文件。
+# ruff 通过 uv 调用，版本与 uv.lock 一致；格式修复由 `make fmt` 显式执行。
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-toml
+      - id: detect-private-key
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        # 排除协调者持有且本 PR 未改动的既有文件：CONTRACTS.md 的占位连接串
+        # 示例（user:pass@host）会被 BasicAuth 检测器误报；uv.lock 含大量哈希。
+        # T01 新增的 backend/**、Makefile、配置全部纳入扫描。
+        # 全仓 baseline 覆盖由 T09 的 CI 复查时补齐。
+        # 用 pre-commit 自身的 exclude（路径恒为 / 分隔），避免 Windows 反斜杠差异。
+        exclude: ^(docs/|AGENTS\.md$|CHANGELOG\.md$|README\.md$|\.github/|backend/uv\.lock$)
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check (uv / frozen)
+        entry: uv run --project backend --frozen ruff check
+        language: system
+        types: [python]
+        pass_filenames: true
+      - id: ruff-format-check
+        name: ruff format --check (uv / frozen)
+        entry: uv run --project backend --frozen ruff format --check
+        language: system
+        types: [python]
+        pass_filenames: true
