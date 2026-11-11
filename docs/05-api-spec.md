@@ -1,0 +1,173 @@
+# 05 API 规格
+
+> 权威契约以 FastAPI 自动生成的 OpenAPI 为准（`/api/v1/openapi.json`）。本文定义约定与端点清单，开发前先评审本文，再写代码。
+
+## 1. 通用约定
+
+| 项 | 约定 |
+|---|---|
+| 基础路径 | `/api/v1`，破坏性变更升 `/api/v2`，旧版本至少并行保留一个迭代周期 |
+| 认证 | `Authorization: Bearer <access_token>`；公开端点仅注册/登录/健康检查 |
+| 格式 | JSON，字段 `snake_case`；金额用字符串（Decimal）避免浮点误差；时间 ISO 8601 UTC |
+| 请求追踪 | 响应头 `X-Request-ID`；客户端可传入 |
+| 幂等 | 下单等写操作要求 `Idempotency-Key` 头 |
+| 分页 | `?page=1&page_size=20`，返回 `{items, total, page, page_size}` |
+| 限流 | 超限返回 `429` + `Retry-After` |
+| 语言 | `Accept-Language: zh-CN`（默认）影响 AI 输出语言与错误消息 |
+
+### 1.1 统一响应
+
+成功：直接返回资源对象，或 `{items, total, ...}`。
+
+失败：
+
+```json
+{
+  "error": {
+    "code": "QUOTA_EXCEEDED",
+    "message": "今日 AI 分析次数已用完",
+    "details": {"limit": 20, "used": 20, "resets_at": "2026-11-12T00:00:00Z"},
+    "request_id": "7f3c..."
+  }
+}
+```
+
+### 1.2 错误码
+
+| HTTP | code | 含义 |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | 参数不合法 |
+| 401 | `UNAUTHENTICATED` / `TOKEN_EXPIRED` | 未登录/令牌过期 |
+| 403 | `FORBIDDEN` | 无权限 |
+| 404 | `NOT_FOUND` | 资源不存在或不属于当前用户（不区分，防探测） |
+| 409 | `IDEMPOTENCY_CONFLICT` / `STATE_CONFLICT` | 幂等键冲突/状态不允许 |
+| 422 | `INSUFFICIENT_FUNDS` / `INSUFFICIENT_POSITION` / `INVALID_ORDER` | 业务规则拒绝 |
+| 424 | `DATA_UNAVAILABLE` | 数据源不可用且无可用缓存 |
+| 429 | `RATE_LIMITED` / `QUOTA_EXCEEDED` | 限流/配额 |
+| 502 | `LLM_FAILED` / `LLM_OUTPUT_INVALID` | AI 调用失败/输出未通过校验 |
+| 503 | `BUDGET_CIRCUIT_OPEN` | 全局 AI 预算熔断 |
+
+### 1.3 异步任务模式
+
+长耗时接口（AI 分析、筛选、回测）统一：
+
+```
+POST /ai/research            → 202 {"task_id": "...", "status": "queued"}
+GET  /tasks/{task_id}        → {"status":"queued|running|succeeded|failed",
+                                "progress": 0-100, "result_ref": {"type":"ai_report","id":"..."},
+                                "error": {...}}
+GET  /tasks/{task_id}/stream → SSE 推送进度（可选，前端可退化为轮询）
+```
+
+命中缓存时直接 `200` 返回报告，并带 `"cached": true`。
+
+## 2. 端点清单
+
+### 2.1 认证与用户（M1）
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| POST | `/auth/register` | 注册 |
+| POST | `/auth/login` | 登录，返回 access/refresh |
+| POST | `/auth/refresh` | 刷新 |
+| POST | `/auth/logout` | 吊销刷新令牌 |
+| POST | `/auth/password/reset-request` `/reset-confirm` | 重置密码 |
+| GET/PATCH | `/me` | 个人信息与设置（风险偏好、语言） |
+| GET | `/me/usage` | 我的 AI 用量与配额 |
+
+### 2.2 行情与数据（M2）
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/market/quotes?symbols=AAPL,MSFT` | 报价（含 `as_of`、`delayed_seconds`、`stale`） |
+| GET | `/market/bars/{symbol}?start&end&interval` | K 线 |
+| GET | `/market/profile/{symbol}` | 公司资料 |
+| GET | `/market/fundamentals/{symbol}` | 基本面指标 |
+| GET | `/market/earnings/{symbol}` | 财报历史与日历 |
+| GET | `/market/news/{symbol}` | 新闻 |
+| GET | `/market/environment` | 市场环境（SPY 趋势、VIX、仓位上限建议） |
+| GET | `/market/calendar?from&to` | 交易日历 |
+
+### 2.3 策略与技术面（M3）
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/strategies` | 策略列表（含参数 Schema，前端据此渲染表单） |
+| POST | `/strategies/{id}/evaluate` | 对单只股票评估，返回 `Signal` |
+| GET | `/technical/{symbol}` | 技术快照（指标、支撑压力、进场/止损/目标） |
+| POST | `/backtests` | 创建回测（异步） |
+| GET | `/backtests/{id}` | 回测结果 |
+
+### 2.4 模拟盘（M4）
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| POST/GET | `/sim/accounts` | 创建/列出账户 |
+| GET | `/sim/accounts/{id}` | 账户概览（现金、市值、净值、当日盈亏、总盈亏） |
+| POST | `/sim/accounts/{id}/orders` | 下单（需 `Idempotency-Key`） |
+| GET | `/sim/accounts/{id}/orders` | 订单列表 |
+| DELETE | `/sim/accounts/{id}/orders/{oid}` | 撤单 |
+| GET | `/sim/accounts/{id}/positions` | 持仓（成本、现价、浮盈浮亏、占比） |
+| GET | `/sim/accounts/{id}/trades` | 成交记录 |
+| GET | `/sim/accounts/{id}/performance` | 净值曲线、回撤、胜率、盈亏比、收益 vs SPY |
+| GET | `/sim/accounts/{id}/risk` | 持仓体检：行业集中度、单股占比、相关性 |
+| PUT | `/sim/trades/{tid}/journal` | 写交易日志 |
+
+下单请求示例：
+
+```json
+{ "symbol": "AAPL", "side": "buy", "qty": "10", "type": "limit",
+  "limit_price": "180.50", "tif": "day",
+  "note": "回踩 50 日均线", "ai_report_id": "optional-uuid" }
+```
+
+### 2.5 AI 分析（M6 / M7）
+| 方法 | 路径 | 请求体要点 |
+|---|---|---|
+| POST | `/ai/research` | `{symbol}` |
+| POST | `/ai/buy-decision` | `{symbol, target_price, horizon, risk_level}` |
+| POST | `/ai/technical` | `{symbol}` |
+| POST | `/ai/earnings` | `{symbol}` |
+| POST | `/ai/compare` | `{symbols[2..8]}` |
+| POST | `/ai/long-term` | `{symbol, years: 5\|10\|15}` |
+| POST | `/ai/portfolio` | `{amount, symbols[], risk_level, goal}` |
+| GET | `/ai/reports` | 历史报告列表（可按 symbol、用例过滤） |
+| GET | `/ai/reports/{id}` | 报告详情（含数据快照引用、提示词版本、成本） |
+| GET | `/ai/reports/{id}/facts` | 该报告所用的数据快照（可复盘） |
+
+枚举：`horizon ∈ {short(<3m), medium(3-12m), long(>1y)}`；`risk_level ∈ {conservative, moderate, aggressive}`；`goal ∈ {growth, income, safety, retirement}`。
+
+### 2.6 筛选、主题、自选（M8）
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/universes` | 股票池列表 |
+| POST | `/screener/runs` | 创建筛选（策略、股票池、参数）异步 |
+| GET | `/screener/runs/{id}` | 结果（排名、信号、失败项） |
+| GET | `/themes` `/themes/{id}` | 主题及成分 |
+| POST | `/themes/{id}/cards` | 生成主题股票卡片（AI，异步） |
+| CRUD | `/watchlists` `/watchlists/{id}/items` | 自选清单 |
+
+### 2.7 提醒、复盘、日报（M10）
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| CRUD | `/alerts` | 价格/信号/财报日提醒 |
+| GET | `/reviews/ai-outcomes` | AI 建议复盘统计（按 verdict/用例分组） |
+| GET | `/reports/daily?date=` | 每日报告 |
+| CRUD | `/notification-channels` | 通知渠道配置 |
+
+### 2.8 管理（admin）
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/admin/usage` | 全局用量与成本 |
+| PATCH | `/admin/users/{id}` | 启停用户、调整配额 |
+| GET | `/admin/providers/health` | 数据源/LLM 健康状态 |
+
+### 2.9 运维
+`GET /healthz`（进程存活）、`GET /readyz`（依赖就绪：DB/Redis）、`GET /metrics`（Prometheus，仅内网）。
+
+## 3. 响应中的"可信度字段"
+
+所有行情与 AI 响应必须携带，前端必须展示：
+
+```json
+{ "as_of": "2026-11-10T21:00:00Z", "stale": false,
+  "source": "yfinance", "disclaimer_id": "not_investment_advice_v1" }
+```
+
+AI 报告额外含 `prompt_version`、`model`、`data_snapshot_id`、`cached`。
