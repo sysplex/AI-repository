@@ -1,0 +1,14 @@
+# 本地调试用覆盖示例：把 postgres / redis 端口临时暴露到宿主，便于 psql / redis-cli 直连。
+# 用法（不要提交你自己的 override）：
+#   cp deploy/docker-compose.override.example.yml deploy/docker-compose.override.yml
+#   docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.override.yml up -d
+# 生产环境禁止使用本文件。
+
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  redis:
+    ports:
+      - "127.0.0.1:6379:6379"
