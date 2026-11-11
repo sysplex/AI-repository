@@ -99,7 +99,7 @@ def _configure_structlog() -> None:
     """让 structlog 走标准库 root handler，使 caplog 能验证 500 日志。"""
     settings = Settings(
         _env_file=None,
-        database_url="postgresql+asyncpg://user:pass@localhost:5432/stockpilot",
+        database_url="postgresql+asyncpg://user@localhost:5432/stockpilot",
         redis_url="redis://localhost:6379/0",
         secret_key="x" * 32,
     )
