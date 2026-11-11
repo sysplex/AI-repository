@@ -1,13 +1,12 @@
 """M0-T04 Alembic 迁移测试。
 
-`test_offline_sql_contains_ddl` 不需要数据库；其余用例需要 ``TEST_DATABASE_URL``，
-未设置时明确 skip（本机/CI 由 T09 的 postgres:16 服务容器或 K8S 提供）。
+`test_offline_sql_contains_ddl` 与凭据检查不需要数据库；真实迁移用例改用 T10 共享
+`db_engine` / `test_database_url` fixture（连接串注入、迁移与 skip 提示见 conftest）。
 """
 
 from __future__ import annotations
 
 import asyncio
-import os
 from pathlib import Path
 
 import pytest
@@ -16,12 +15,10 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import command
-from app.core.config import get_settings
 
 BACKEND = Path(__file__).resolve().parents[3]
 ALEMBIC_DIR = BACKEND / "alembic"
 INI_PATH = BACKEND / "alembic.ini"
-TEST_DB_URL = os.getenv("TEST_DATABASE_URL")
 
 
 def _config() -> Config:
@@ -30,8 +27,10 @@ def _config() -> Config:
     return config
 
 
-async def _query(sql: str, params: dict[str, str] | None = None) -> list[tuple[object, ...]]:
-    engine = create_async_engine(TEST_DB_URL or "")
+async def _query(
+    url: str, sql: str, params: dict[str, str] | None = None
+) -> list[tuple[object, ...]]:
+    engine = create_async_engine(url)
     try:
         async with engine.connect() as connection:
             result = await connection.execute(text(sql), params or {})
@@ -62,38 +61,37 @@ def test_offline_sql_contains_ddl(
     assert "pgcrypto" in output
 
 
-@pytest.mark.skipif(not TEST_DB_URL, reason="未设置 TEST_DATABASE_URL，跳过真实迁移用例")
-def test_upgrade_downgrade_upgrade_and_check() -> None:
+@pytest.mark.usefixtures("db_engine")
+def test_upgrade_downgrade_upgrade_and_check(test_database_url: str) -> None:
     """空库升级 → 降级到 base → 再升级 → 无模型漂移。"""
-    os.environ["DATABASE_URL"] = TEST_DB_URL or ""
-    get_settings.cache_clear()
     config = _config()
 
     command.downgrade(config, "base")
     command.upgrade(config, "head")
-    versions = asyncio.run(_query("SELECT version_num FROM alembic_version"))
+    versions = asyncio.run(_query(test_database_url, "SELECT version_num FROM alembic_version"))
     assert versions == [("0001_initial",)]
 
     command.downgrade(config, "base")
-    tables = asyncio.run(_query("SELECT tablename FROM pg_tables WHERE tablename = 'audit_log'"))
+    tables = asyncio.run(
+        _query(test_database_url, "SELECT tablename FROM pg_tables WHERE tablename = 'audit_log'")
+    )
     assert tables == []
 
     command.upgrade(config, "head")
     command.check(config)
 
 
-@pytest.mark.skipif(not TEST_DB_URL, reason="未设置 TEST_DATABASE_URL，跳过真实迁移用例")
-def test_migrated_schema_and_indexes() -> None:
+@pytest.mark.usefixtures("db_engine")
+def test_migrated_schema_and_indexes(test_database_url: str) -> None:
     """迁移后列类型/可空性/索引与 docs/03 §3.1 一致。"""
-    os.environ["DATABASE_URL"] = TEST_DB_URL or ""
-    get_settings.cache_clear()
     command.upgrade(_config(), "head")
 
     columns = asyncio.run(
         _query(
+            test_database_url,
             "SELECT column_name, data_type, is_nullable "
             "FROM information_schema.columns WHERE table_name = 'audit_log' "
-            "ORDER BY column_name"
+            "ORDER BY column_name",
         )
     )
     by_name = {str(row[0]): (str(row[1]), str(row[2])) for row in columns}
@@ -113,12 +111,13 @@ def test_migrated_schema_and_indexes() -> None:
     assert by_name["action"][1] == "NO"
     assert by_name["user_id"][1] == "YES"
 
-    indexes = asyncio.run(_query("SELECT indexname FROM pg_indexes WHERE tablename = 'audit_log'"))
+    indexes = asyncio.run(
+        _query(test_database_url, "SELECT indexname FROM pg_indexes WHERE tablename = 'audit_log'")
+    )
     names = {str(row[0]) for row in indexes}
     assert {"ix_audit_log_user_id_created_at", "ix_audit_log_action_created_at"} <= names
 
 
-@pytest.mark.skipif(not TEST_DB_URL, reason="未设置 TEST_DATABASE_URL，跳过真实迁移用例")
 def test_migration_file_has_no_hardcoded_credentials() -> None:
     """迁移与 env.py 不得含硬编码连接串/口令。"""
     for path in (INI_PATH, ALEMBIC_DIR / "env.py", ALEMBIC_DIR / "versions" / "0001_initial.py"):

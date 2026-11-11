@@ -1,13 +1,13 @@
 """M0-T04 数据库层测试。
 
 单元测试不依赖外部服务（用 mock 验证懒单例、commit/rollback、探活）。
-集成用例需要 ``TEST_DATABASE_URL``；未设置时明确 skip（T10 会提供共享 fixture）。
+真实库用例改用 T10 共享 `db_engine` fixture：连接串注入、迁移与 skip 提示
+统一由 `tests/conftest.py` 负责，本文件不再就地定义 `TEST_DATABASE_URL`。
 """
 
 from __future__ import annotations
 
 import asyncio
-import os
 from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -17,9 +17,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core import db as db_module
 from app.core.audit import AuditLog
-from app.core.config import get_settings
-
-TEST_DB_URL = os.getenv("TEST_DATABASE_URL")
 
 
 @pytest.fixture(autouse=True)
@@ -157,12 +154,9 @@ async def test_dispose_engine_without_engine_is_noop() -> None:
     assert db_module._engine is None
 
 
-@pytest.mark.skipif(not TEST_DB_URL, reason="未设置 TEST_DATABASE_URL，跳过真实数据库集成用例")
+@pytest.mark.usefixtures("db_engine")
 def test_real_session_commit_and_rollback() -> None:
     """真实库：正常 commit 写入、异常 rollback 不落库、check_db 探活。"""
-    url = TEST_DB_URL or ""
-    os.environ["DATABASE_URL"] = url
-    get_settings.cache_clear()
 
     async def scenario() -> tuple[bool, int, int, bool]:
         await db_module.dispose_engine()
@@ -203,12 +197,9 @@ def test_real_session_commit_and_rollback() -> None:
     assert completed is True
 
 
-@pytest.mark.skipif(not TEST_DB_URL, reason="未设置 TEST_DATABASE_URL，跳过真实数据库集成用例")
+@pytest.mark.usefixtures("db_engine")
 def test_real_timestamptz_is_utc_aware() -> None:
     """真实库：created_at 为 timestamptz，读回带 UTC 时区。"""
-    url = TEST_DB_URL or ""
-    os.environ["DATABASE_URL"] = url
-    get_settings.cache_clear()
 
     async def scenario() -> tuple[str, Any]:
         await db_module.dispose_engine()

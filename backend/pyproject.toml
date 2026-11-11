@@ -88,8 +88,9 @@ source = ["app"]
 branch = true
 
 [tool.coverage.report]
-# T01 覆盖率豁免 E1（M0 README 附录 A）：T10 合并后调整为 80。
-fail_under = 0
+# M0 README 附录 A：T01–T07 阶段性豁免 E1–E7 已结束，T10 起全局门槛固定 80。
+# 模块核心逻辑的 85/90/95% 目标用局部断言，不改本值。
+fail_under = 80
 show_missing = true
 
 [tool.importlinter]
