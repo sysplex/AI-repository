@@ -1,0 +1,46 @@
+# 构建上下文 = 仓库根（因为需要 backend/ 与 uv.lock），镜像只需要 backend 子集。
+# 规则写法遵循 Docker 官方 .dockerignore 语法。
+
+# VCS / CI
+.git
+.gitignore
+.github
+.gitattributes
+
+# 本地环境与缓存
+**/.venv
+**/__pycache__
+**/*.py[cod]
+**/.mypy_cache
+**/.ruff_cache
+**/.pytest_cache
+**/.hypothesis
+**/.import_linter_cache
+**/.coverage
+**/htmlcov
+**/coverage.xml
+**/*.bak
+
+# 密钥与本地配置：绝不进镜像
+.env
+.env.*
+**/.env
+**/.env.*
+!deploy/env.example
+*.pem
+*.key
+secrets/
+
+# 文档、任务卡、前端（M9 前不存在）——运行镜像不需要
+docs
+*.md
+!backend/README.md
+Makefile
+node_modules
+**/node_modules
+
+# 测试与开发工具配置（运行镜像不需要测试代码）
+backend/tests
+backend/pyproject.toml.bak
+deploy/docker-compose*.yml
+deploy/README.md
