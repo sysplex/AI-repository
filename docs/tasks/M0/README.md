@@ -9,17 +9,17 @@ M0 目标与验收见 [`docs/04-modules.md`](../../04-modules.md)（M0 一节）
 
 | ID | 任务 | 波次 | 依赖 | 规模 | 负责 Agent | 状态 |
 |---|---|---|---|---|---|---|
-| [T01](T01-skeleton-toolchain.md) | 仓库骨架与工具链 | 0 | — | 小 | _未分配_ | Todo |
-| [T02](T02-config-logging.md) | 配置、日志、请求上下文 | 1 | T01 | 中 | _未分配_ | Todo |
-| [T03](T03-errors.md) | 统一错误体系 | 1 | T01 | 小–中 | _未分配_ | Todo |
-| [T05](T05-event-bus.md) | 事件总线与领域事件 | 1 | T01 | 小 | _未分配_ | Todo |
-| [T06](T06-calendar-clock.md) | NYSE 日历与时钟 | 1 | T01 | 中 | _未分配_ | Todo |
-| [T08](T08-docker-compose-worker.md) | Docker / Compose / Nginx / Worker | 1→2 | T01（联调需 T02、T04、T07） | 大 | _未分配_ | Todo |
-| [T09](T09-ci-pipeline.md) | CI 流水线 | 1 | T01 | 中 | _未分配_ | Todo |
-| [T04](T04-database-alembic-audit.md) | 数据库 / 迁移 / 审计表 | 2 | T01、T02 | 中–大 | _未分配_ | Todo |
-| [T07](T07-health-metrics-redis.md) | Redis / 健康检查 / 指标 / 生命周期 | 2 | T02、T03、T04 | 中 | _未分配_ | Todo |
-| [T10](T10-test-infrastructure.md) | 测试基础设施 | 2 | T01、T02、T04、T06 | 中 | _未分配_ | Todo |
-| [T11](T11-integration-acceptance.md) | 集成验收与收尾 | 3 | T01–T10 | 中 | _未分配_ | Todo |
+| [T01](T01-skeleton-toolchain.md) ([#1](https://github.com/sysplex/AI-repository/issues/1)) | 仓库骨架与工具链 | 0 | — | 小 | _未分配_ | Todo |
+| [T02](T02-config-logging.md) ([#2](https://github.com/sysplex/AI-repository/issues/2)) | 配置、日志、请求上下文 | 1 | T01 | 中 | _未分配_ | Todo |
+| [T03](T03-errors.md) ([#3](https://github.com/sysplex/AI-repository/issues/3)) | 统一错误体系 | 1 | T01 | 小–中 | _未分配_ | Todo |
+| [T05](T05-event-bus.md) ([#5](https://github.com/sysplex/AI-repository/issues/5)) | 事件总线与领域事件 | 1 | T01 | 小 | _未分配_ | Todo |
+| [T06](T06-calendar-clock.md) ([#6](https://github.com/sysplex/AI-repository/issues/6)) | NYSE 日历与时钟 | 1 | T01 | 中 | _未分配_ | Todo |
+| [T08](T08-docker-compose-worker.md) ([#8](https://github.com/sysplex/AI-repository/issues/8)) | Docker / Compose / Nginx / Worker | 1→2 | T01（联调需 T02、T04、T07） | 大 | _未分配_ | Todo |
+| [T09](T09-ci-pipeline.md) ([#9](https://github.com/sysplex/AI-repository/issues/9)) | CI 流水线 | 1 | T01 | 中 | _未分配_ | Todo |
+| [T04](T04-database-alembic-audit.md) ([#4](https://github.com/sysplex/AI-repository/issues/4)) | 数据库 / 迁移 / 审计表 | 2 | T01、T02 | 中–大 | _未分配_ | Todo |
+| [T07](T07-health-metrics-redis.md) ([#7](https://github.com/sysplex/AI-repository/issues/7)) | Redis / 健康检查 / 指标 / 生命周期 | 2 | T02、T03、T04 | 中 | _未分配_ | Todo |
+| [T10](T10-test-infrastructure.md) ([#10](https://github.com/sysplex/AI-repository/issues/10)) | 测试基础设施 | 2 | T01、T02、T04、T06 | 中 | _未分配_ | Todo |
+| [T11](T11-integration-acceptance.md) ([#11](https://github.com/sysplex/AI-repository/issues/11)) | 集成验收与收尾 | 3 | T01–T10 | 中 | _未分配_ | Todo |
 
 ## 依赖图
 
