@@ -17,8 +17,10 @@
 1. `core/config.py`：完整 `Settings`、`get_settings()`；校验规则：`database_url` 必须以 `postgresql+asyncpg://` 开头，`redis_url` 以 `redis://` 或 `rediss://` 开头，`secret_key` ≥ 32 字符；`cors_origins` 同时支持 JSON 数组与逗号分隔字符串；`.env` 仅在 `app_env=local` 时读取。
 2. 启动失败友好提示：缺失/非法变量**一次性全部列出**（变量名 + 原因），不暴露任何值；退出码 ≠ 0。提供一个小函数 `load_settings_or_exit()` 供 `main`/`worker` 使用（`create_app()` 内部仍调 `get_settings()`；`get_settings()` 抛出的异常应是可读的）。
 3. `core/logging.py`：structlog + 标准库桥接（uvicorn/sqlalchemy/arq 的日志也进入同一格式）；`request_id_var/user_id_var/task_id_var` 自动并入每条日志。
-4. `core/middleware.py`：`RequestContextMiddleware`（X-Request-ID 处理、访问日志）、`SecurityHeadersMiddleware`、CORS；`install_middlewares` 内用注释标明"指标中间件插入点"（T07 会在此处加一行调用 `install_metrics`，**由 T07 修改该文件的这一处**，其余部分归 T02）。
+4. `core/middleware.py`：`RequestContextMiddleware`（X-Request-ID 处理、访问日志）、`SecurityHeadersMiddleware`、CORS；`install_middlewares` 内用注释标明「指标中间件插入点」（**T02 只留注释，不得自行调用** `install_metrics`；T07 在该处替换为唯一一行调用 `install_metrics(app, settings)`，见 `CONTRACTS.md §3/§8`。T07 对本文件的修改权限仅限这一行）。
 5. 敏感信息保护：日志与 `repr(Settings)` 不得泄露 `secret_key`、`database_url` 中的密码（以 `***` 代替）；访问日志不记录 `Authorization`、`Cookie`、请求体。
+
+**阶段切换点**：T01 空壳 `Settings` 不校验三必填变量且 `uvicorn` 可空壳启动；**本任务合并后**启用「缺失/非法即启动失败并一次性列出」，见 `CONTRACTS.md §2`。两条行为分属不同阶段，评审按阶段判定。
 
 **不包含**：错误处理器（T03）、指标（T07）。
 

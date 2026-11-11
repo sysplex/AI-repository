@@ -14,8 +14,8 @@ M0 目标与验收见 [`docs/04-modules.md`](../../04-modules.md)（M0 一节）
 | [T03](T03-errors.md) ([#3](https://github.com/sysplex/AI-repository/issues/3)) | 统一错误体系 | 1 | T01 | 小–中 | _未分配_ | Todo |
 | [T05](T05-event-bus.md) ([#5](https://github.com/sysplex/AI-repository/issues/5)) | 事件总线与领域事件 | 1 | T01 | 小 | _未分配_ | Todo |
 | [T06](T06-calendar-clock.md) ([#6](https://github.com/sysplex/AI-repository/issues/6)) | NYSE 日历与时钟 | 1 | T01 | 中 | _未分配_ | Todo |
-| [T08](T08-docker-compose-worker.md) ([#8](https://github.com/sysplex/AI-repository/issues/8)) | Docker / Compose / Nginx / Worker | 1→2 | T01（联调需 T02、T04、T07） | 大 | _未分配_ | Todo |
-| [T09](T09-ci-pipeline.md) ([#9](https://github.com/sysplex/AI-repository/issues/9)) | CI 流水线 | 1 | T01 | 中 | _未分配_ | Todo |
+| [T08](T08-docker-compose-worker.md) ([#8](https://github.com/sysplex/AI-repository/issues/8)) | Docker / Compose / Nginx / Worker | 2（顺序执行：T07 之后） | T01、T02、T04、T07 已合并 | 大 | _未分配_ | Todo |
+| [T09](T09-ci-pipeline.md) ([#9](https://github.com/sysplex/AI-repository/issues/9)) | CI 流水线 | 顺序执行：T08 之后 | T01、T08 已合并 | 中 | _未分配_ | Todo |
 | [T04](T04-database-alembic-audit.md) ([#4](https://github.com/sysplex/AI-repository/issues/4)) | 数据库 / 迁移 / 审计表 | 2 | T01、T02 | 中–大 | _未分配_ | Todo |
 | [T07](T07-health-metrics-redis.md) ([#7](https://github.com/sysplex/AI-repository/issues/7)) | Redis / 健康检查 / 指标 / 生命周期 | 2 | T02、T03、T04 | 中 | _未分配_ | Todo |
 | [T10](T10-test-infrastructure.md) ([#10](https://github.com/sysplex/AI-repository/issues/10)) | 测试基础设施 | 2 | T01、T02、T04、T06 | 中 | _未分配_ | Todo |
@@ -30,17 +30,18 @@ flowchart LR
     T03[T03 错误体系]:::w1
     T05[T05 事件总线]:::w1
     T06[T06 日历/时钟]:::w1
-    T09[T09 CI]:::w1
-    T08[T08 Docker/Compose]:::w1
+    T09[T09 CI]:::w2
+    T08[T08 Docker/Compose]:::w2
     T04[T04 DB/迁移/审计]:::w2
     T07[T07 健康/指标/Redis]:::w2
     T10[T10 测试基座]:::w2
     T11[T11 集成验收]:::w3
-    T01 --> T02 & T03 & T05 & T06 & T09 & T08
+    T01 --> T02 & T03 & T05 & T06
     T02 --> T04
     T02 & T03 & T04 --> T07
     T01 & T02 & T04 & T06 --> T10
-    T07 -.联调.-> T08
+    T07 --> T08
+    T08 --> T09
     T01 & T02 & T03 & T04 & T05 & T06 & T07 & T08 & T09 & T10 --> T11
     classDef w0 fill:#fde,stroke:#c36
     classDef w1 fill:#def,stroke:#36c
@@ -50,14 +51,22 @@ flowchart LR
 
 ## 并行策略
 
-| 波次 | 可同时进行的任务 | 最多并行 Agent 数 |
+**本阶段采用顺序实现**（项目负责人裁定）：不派多个 Agent 并发，由一个执行者按下列线性序列逐个完成、一任务一分支一 PR、前一个 PR 合并后才切下一个分支。波次仅作逻辑分批，不驱动调度。
+
+```
+T01 → T02 → T03 → T04 → T05 → T06 → T07 → T10 → T08 → T09 → T11
+```
+
+| 波次（逻辑分组） | 任务 | 并行度 |
 |---|---|---|
 | Wave 0 | T01 | 1 |
-| Wave 1 | T02、T03、T05、T06、T09、T08（Dockerfile/Compose 部分） | 6 |
-| Wave 2 | T04（等 T02）、T07（等 T02+T03+T04）、T10（等 T04+T06）、T08 联调收尾 | 3–4 |
+| Wave 1 | T02、T03、T05、T06 | 顺序执行，1 |
+| Wave 2 | T04、T07、T10、T08、T09 | 顺序执行，1 |
 | Wave 3 | T11 | 1 |
 
-**关键路径**：T01 → T02 → T04 → T07 → T11（其余任务不在关键路径上）。建议把最稳的 Agent 分给关键路径任务。
+顺序执行的两点收益：T08 整体后移到 T07 之后，「停 redis → `/readyz` 503」联调在**同一个 PR** 一次完成；T09 后移到 T08 之后，CI 的 `hashFiles('deploy/Dockerfile') != ''` 命中、docker 作业**实跑而非 skipped**，T11「CI 全流程通过」不会假绿。顺序下每个任务的依赖 = 序列左侧全部已合并，卡面「依赖」字段只作参考。
+
+**关键路径**：T01 → T02 → T04 → T07 → T11（其余任务虽不在最长链上，仍是 T11 的硬前置，不得晚于 T11 合并）。
 
 ## 文件所有权矩阵（防冲突）
 
@@ -71,16 +80,20 @@ flowchart LR
 | `core/db.py` `core/audit.py` `alembic/**` | T04 | — |
 | `core/events.py` `domain/events.py` | T05 | — |
 | `core/calendar.py` `core/clock.py` | T06 | — |
-| `core/redis.py` `core/metrics.py` `core/lifecycle.py` `api/health.py` `api/router.py` | T07 | — |
+| `core/redis.py` `core/metrics.py` `core/lifecycle.py` `api/health.py` | T07 | — |
+| `api/router.py` | T01 建可运行空壳 → T07 整体重写并接入 health | 其余任务不得改 |
 | `deploy/**` `app/worker.py` | T08 | — |
 | `.github/workflows/**` `dependabot.yml` `CODEOWNERS` `docs/ci.md` | T09 | — |
 | `tests/conftest.py` `tests/fixtures/**` `docs/testing-guide.md` | T10 | T04 的三个测试文件可由 T10 做 fixture 替换 |
 | `docs/acceptance/M0.md` | T11 | — |
 | `docs/01`–`09`、`AGENTS.md`、`.github/PULL_REQUEST_TEMPLATE.md` | 协调者 | 任何人不得改 |
+| `CHANGELOG.md`、`docs/README.md`、根 `README.md` | 协调者 | M0 期间 T01–T10 一律不改；`CHANGELOG.md` 由 T11 一次汇总写入，`docs/README.md` 路线图状态行由 T11 更新（见 `AGENTS.md §7`） |
+| `Makefile`、`.editorconfig`、`.pre-commit-config.yaml`、`.gitignore`、全部 `__init__.py`、`backend/uv.lock` | T01 | 后续任务一律不改（T10 仅可改 `pyproject.toml` 的 `[tool.coverage]`/`[tool.pytest.ini_options]` 两段） |
+| **矩阵未列出的任何文件/目录** | 协调者 | 需改先在 Issue 申请，不得自行改 |
 
 ## 协调规则
 
-1. **合并顺序**：严格按依赖；Wave 1 任务可任意顺序合并，但都必须在 T01 之后。
+1. **合并顺序**：严格按上面的线性序列；每个 PR 核实 `MERGED` 后才创建下一分支，依赖未合并时不开工。
 2. **冲突处理**：出现文件冲突说明有人越权修改——以所有权矩阵为准，由协调者裁决。
 3. **契约变更**：提 Issue → 协调者评估 → 更新 `CONTRACTS.md` 并通知所有受影响任务（在相关 Issue 评论 @）。
 4. **评审**：每个 PR 由协调者逐条对照任务卡验收标准评审；证据不全一律退回。
@@ -93,3 +106,20 @@ flowchart LR
 - **给每个 Agent 的开场指令**（复制即可）：
   > 你负责仓库 `sysplex/AI-repository` 的任务 **M0-Txx**。请先完整阅读 `AGENTS.md`、`docs/tasks/M0/README.md`、`docs/tasks/M0/CONTRACTS.md` 和 `docs/tasks/M0/Txx-*.md`，严格遵守文件所有权与接口契约。依赖任务未合并前不要开工。完成后按 PR 模板汇报，逐条给出验收证据。有疑问在对应 Issue 里评论，不要自行修改契约。
 - 同一个 Agent 不要同时做有依赖关系的相邻任务以外的"顺手改动"。
+
+## 附录 A：覆盖率阶段性豁免登记表（R15）
+
+| 阶段 | 全局 `fail_under` | 豁免编号 | 说明 |
+|---|---|---|---|
+| T01 | 0 | E1 | 空壳期无业务代码；`pyproject.toml` 注释注明由 T10 调整 |
+| T02–T07 | 0 | E2–E7 | 逐任务在 PR「假设与偏差」引用本表编号 |
+| T10 起 | 80 | 豁免结束 | T10 把 `[tool.coverage]` 的 `fail_under` 调为 80 |
+| M1+ | 80 | 常规 | 各任务卡 85/90/95 为**模块核心逻辑目标**，用局部断言，不改全局门槛 |
+
+`docs/07` §1.2 #5、`docs/08` §3 的「≥ 80%」「≥ 95%」均指**模块核心逻辑**覆盖率目标，不等同于全局 `fail_under`；M0 豁免期内不得按全局门槛退回 PR。
+
+## 附录 B：顺序执行序列（R6/R7/R8/R13）
+
+固定线性序列：`T01 → T02 → T03 → T04 → T05 → T06 → T07 → T10 → T08 → T09 → T11`。
+
+顺序下每个任务的依赖 = 序列左侧全部已合并；任务卡「依赖」字段只记录最小前置，二者不一致时**以本序列为准**。T08 后移使 `/readyz` 联调在同一 PR 完成；T09 后移使 CI docker 作业实跑而非 skipped。

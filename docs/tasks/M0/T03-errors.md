@@ -3,7 +3,7 @@
 | 项 | 内容 |
 |---|---|
 | 波次 | Wave 1 |
-| 依赖 | T01 已合并（request_id 上下文变量来自 T02，见"对 T02 的软依赖"） |
+| 依赖 | **T01、T02 已合并**（`request_id_var` 由 T02 导出，见下） |
 | 阻塞 | T07 |
 | 分支 | `feat/m0-t03-errors` |
 | 建议规模 | 小–中 |
@@ -12,8 +12,8 @@
 ## 目标
 实现 `ErrorCode`、`AppError` 及全部子类、统一异常处理器，错误响应格式严格按 `CONTRACTS.md §4` 与 `docs/05-api-spec.md §1.1–1.2`。
 
-## 对 T02 的软依赖
-响应体含 `request_id`，来自 `app.core.logging.request_id_var`。T01 的空壳 `logging.py` 已导出该变量，因此**不必等 T02 合并**：从 `app.core.logging` 导入 `request_id_var` 即可；T02 合并后行为自动生效。
+## 对 T02 的依赖（顺序执行下为硬依赖）
+响应体含 `request_id`，来自 `app.core.logging.request_id_var`。该变量由 **T02** 在 `core/logging.py` 中导出，T01 的空壳**不导出**（见 `CONTRACTS.md §1` 补充）。因此本任务必须等 T02 合并后开工；执行序列为 T02 → T03，原「软依赖」表述已取消。
 
 ## 范围
 **包含**

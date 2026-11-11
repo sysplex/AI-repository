@@ -4,7 +4,7 @@
 |---|---|
 | 波次 | Wave 2 |
 | 依赖 | **T02、T03、T04 已合并** |
-| 阻塞 | T08（Compose 健康检查）、T10、T11 |
+| 阻塞 | T08（Compose 健康检查）、T10、T11（顺序执行下以 M0 README 附录 B 线性序列为准） |
 | 分支 | `feat/m0-t07-health-metrics` |
 | 建议规模 | 中 |
 | 负责 Agent | _未分配_ |
@@ -18,14 +18,14 @@
 2. `api/health.py`：三个根路径端点；`/readyz` 并发检查 DB 与 Redis，**整体 2 秒超时**，超时视为不就绪；响应体见契约；这些端点**不要求认证**，且**不出现在 OpenAPI**（`include_in_schema=False`）。
 3. `core/metrics.py`：`install_metrics`；使用独立 `CollectorRegistry`（避免测试间重复注册）；`path_template` 使用路由模板，未匹配记为 `unmatched`；`/metrics`、`/healthz`、`/readyz` 自身不计入请求指标。
 4. `core/lifecycle.py`：`on_startup`（输出启动日志含版本与环境）、`on_shutdown`（调用 `dispose_engine()` 与 `close_redis()`，任一失败仍继续另一个并记录日志）。
-5. 修改 `api/router.py`：把 health 路由挂到 `root_router`。
-6. 修改 `core/middleware.py` **仅限"指标中间件插入点"那一处**，加入 `install_metrics(app, settings)` 调用（T02 已预留注释位置）。
+5. **整体重写** `api/router.py`（T01 建可运行空壳 → T07 拥有并重写，见 `CONTRACTS.md §1` 与所有权矩阵）：把 health 路由挂到 `root_router`。
+6. 修改 `core/middleware.py` **仅限"指标中间件插入点"那一处**：把 T02 预留的注释替换为唯一一行 `install_metrics(app, settings)` 调用（这是 `install_metrics` 的**唯一调用点**，`main.py` 不单独调用，见 `CONTRACTS.md §3/§8/§9`）。
 
 **不包含**：Nginx 内网限制（T08）；业务指标（后续模块）。
 
 ## 文件所有权
 - **拥有**：`core/redis.py`、`core/metrics.py`、`core/lifecycle.py`、`api/health.py`
-- **有限修改**：`api/router.py`（T01 空壳，整体归 T07）、`core/middleware.py`（**仅插入点一行**）
+- **有限修改**：`api/router.py`（T01 建空壳后由 T07 整体重写）、`core/middleware.py`（**仅插入点一行**）
 - **新增测试**：`tests/integration/test_health.py`、`tests/unit/core/test_metrics.py`、`tests/unit/core/test_redis.py`（使用 `fakeredis` 或 `REDIS_URL` 指向的测试 Redis）
 
 ## 验收标准

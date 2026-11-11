@@ -15,6 +15,7 @@
 | 时间 | 带时区 `datetime`；存储/传输 UTC；业务日历用 `America/New_York` |
 | 金额 | `Decimal`，禁止 float |
 | 测试 | `pytest` + `pytest-asyncio`（`asyncio_mode = "auto"`）；标记：`unit` `integration` `contract` `e2e` |
+| 覆盖率 | 全局 `fail_under` 在 M0 分阶段启用：T01 设 0、T10 起设 80；各卡 85/90/95 为**模块目标**非全局门槛。见 `docs/tasks/M0/README.md` 附录 A |
 
 ## 1. 目录结构（T01 创建，其余任务在其中填充）
 
@@ -44,7 +45,7 @@ backend/
       events.py                  领域事件                 ← T05
     api/
       __init__.py
-      router.py                  root_router / api_router ← T01 创建空壳，T07 接入 health
+      router.py                  root_router / api_router ← T01 创建可运行空壳，T07 整体重写并接入 health
       health.py                  /healthz /readyz /metrics ← T07
     modules/
       identity/ marketdata/ strategy/ simbroker/ ai/ research/ screener/ scheduler/ notify/
@@ -59,6 +60,12 @@ Makefile  .editorconfig  .pre-commit-config.yaml                     ← T01
 ```
 
 **"空壳（stub）"规则**：T01 为每个被其他任务拥有的文件创建**最小可运行占位**（不报错、无副作用）。该文件之后**归所属任务所有并可整体重写**，其他任务不得修改。
+
+补充（T01 空壳的精确边界）：
+- `app/main.py` 必须实现 `create_app()` **与 `lifespan`**（定义见 §9），否则 `FastAPI(..., lifespan=lifespan)` 在空壳期即 `NameError`。
+- `core/logging.py` 空壳**不导出** `request_id_var` / `user_id_var` / `task_id_var`；三者归 T02（见 §3）。T03 因此必须等 T02 合并。
+- `core/config.py` 空壳的 `Settings` 不声明也不校验 `database_url`/`redis_url`/`secret_key`（见 §2 阶段切换点）。
+- `alembic/versions/.gitkeep` 由 T01 创建（git 不保留空目录）；T04 提交 `0001_initial` 时保留该文件。
 
 ## 2. 配置 `app/core/config.py`（T02）
 
@@ -83,6 +90,8 @@ def get_settings() -> Settings   # lru_cache 单例；测试可 get_settings.cac
 - **必填项缺失或非法 → 启动失败**，错误信息列出**所有**缺失/非法变量名（不是只报第一个），进程退出码 ≠ 0。
 - `SecretStr` 不得出现在日志/`repr`。
 
+**阶段切换点（M0）**：上述「必填项缺失即启动失败」自 **T02 合并后**生效。T01 的空壳 `Settings` 只含 `app_env`/`app_name`/`app_version`，不声明也不校验这三个必填项，以保证 T01 验收「空壳状态下 `uvicorn app.main:app` 能启动」。评审 T01 与 T02 时按各自阶段判定，不得互相套用。
+
 ## 3. 日志与请求上下文（T02）
 
 ```python
@@ -101,7 +110,7 @@ def install_middlewares(app: FastAPI, settings: Settings) -> None
 - `RequestContextMiddleware`：读取请求头 `X-Request-ID`（合法 UUID/≤64 字符 ASCII 则沿用，否则新生成 UUID4），写入 `request_id_var`，**响应头回写 `X-Request-ID`**；请求结束输出一条访问日志（方法、路径、状态码、耗时 ms，**不记录 Authorization/Cookie/请求体**）。
 - CORS：按 `settings.cors_origins` 安装 `CORSMiddleware`（空列表则不安装）。
 - 安全响应头中间件：`X-Content-Type-Options: nosniff`、`X-Frame-Options: DENY`、`Referrer-Policy: no-referrer`。
-- `install_middlewares` 之后 T07 会追加指标中间件，故中间件顺序须写在 `install_middlewares` 内部并用注释标明"指标中间件插入点"。
+- `install_middlewares` 内须用注释标明「指标中间件插入点」（T02 只留注释，**不自行调用**）；**T07 在该注释处替换为唯一一行调用 `install_metrics(app, settings)`**。这是 `install_metrics` 的**唯一调用点**：`main.py` 不单独调用，T07 对 `core/middleware.py` 的修改权限也仅限这一行。指标中间件顺序仍由 `install_middlewares` 内部定义，保证 `main.py` 无需改动。
 
 ## 4. 错误体系 `app/core/errors.py`（T03）
 
@@ -219,6 +228,8 @@ async def on_shutdown(app: FastAPI) -> None    # 调用 dispose_engine() 与 clo
 # core/metrics.py
 def install_metrics(app: FastAPI, settings: Settings) -> None    # 指标中间件 + 注册表
 ```
+> 调用点唯一：T07 在 `core/middleware.py` 的「指标中间件插入点」（§3）调用本函数；`create_app()` 不另行调用。
+
 端点（**根路径，不带 /api/v1**）：
 
 | 端点 | 行为 |
@@ -231,6 +242,22 @@ def install_metrics(app: FastAPI, settings: Settings) -> None    # 指标中间�
 
 ## 9. 应用接线 `app/main.py`（T01 创建；之后仅 T01/T11 可改）
 
+`lifespan` 由 **T01 定义并实现**（签名如下），M0 空壳期可为直接 `yield` 的 no-op；T07 合并后其 `on_startup` / `on_shutdown` 自动生效，**无需再改 `main.py`**：
+
+```python
+from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
+from app.core.lifecycle import on_startup, on_shutdown   # T07
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    await on_startup(app)
+    try:
+        yield
+    finally:
+        await on_shutdown(app)
+```
+
 ```python
 def create_app() -> FastAPI:
     settings = get_settings()
@@ -239,7 +266,7 @@ def create_app() -> FastAPI:
                   docs_url="/docs" if settings.docs_enabled else None,
                   openapi_url="/api/v1/openapi.json" if settings.docs_enabled else None,
                   lifespan=lifespan)                # lifespan 调用 lifecycle.on_startup/on_shutdown
-    install_middlewares(app, settings)              # T02（内含 T07 指标插入点）
+    install_middlewares(app, settings)              # T02；内部插入点由 T07 调 install_metrics（§3/§8）
     register_exception_handlers(app)                # T03
     app.include_router(root_router)                 # T07：/healthz /readyz /metrics
     app.include_router(api_router, prefix="/api/v1")# M1+ 逐步挂载
@@ -266,3 +293,5 @@ app = create_app()
 ## 11. Makefile 目标（T01）
 
 `make install`（uv sync）`lint`（ruff check + format --check）`fmt` `typecheck`（mypy --strict）`lint-imports` `test` `test-unit` `check`（= lint + typecheck + lint-imports + test）`up` `down` `migrate` `revision m="msg"`。
+
+**实现归属**：`Makefile` 唯一所有者是 **T01**，T01 需把 `up`/`down`/`migrate`/`revision` 的命令**一次写全**（统一用 `docker compose -f deploy/docker-compose.yml ...` 与 `alembic`），不预留占位。T08 只创建 `deploy/**` 并在验收中核对命令与 compose 文件一致，**不得修改 `Makefile`**；若不一致在 Issue 说明，由协调者处理（T08 卡「文件所有权」同此口径）。
