@@ -3,7 +3,7 @@
 | 项 | 内容 |
 |---|---|
 | 波次 | Wave 2 |
-| 依赖 | **T01、T02、T04、T06 已合并**（Settings、DB、冻结时钟） |
+| 依赖 | **T01、T02、T04、T06 已合并**（Settings、DB、冻结时钟）；顺序执行下按 M0 README 附录 B 线性序列，T07 亦已合并 |
 | 阻塞 | T11；M1+ 全部测试依赖本任务 |
 | 分支 | `feat/m0-t10-test-infra` |
 | 建议规模 | 中 |
@@ -26,7 +26,7 @@
 3. `tests/fixtures/README.md`：录制 fixture 的目录规范（`tests/fixtures/<provider>/<symbol>/<endpoint>.json`、命名、脱敏、如何重新录制）；以及 `tests/fixtures/loader.py`（`load_fixture(path)`）。
 4. `hypothesis` 配置：`tests/conftest.py` 注册 profile（`ci`：`max_examples=200, deadline=None`；`dev`：50），由环境变量 `HYPOTHESIS_PROFILE` 选择。
 5. 示例测试（证明基座可用，兼作使用范例）：`tests/integration/test_infra_examples.py`（db_session 回滚隔离、client 访问 `/healthz`、frozen_clock、event_bus）。
-6. 调整 `pyproject.toml` 的覆盖率门槛为 **`fail_under = 80`**（本任务**被授权修改 pyproject 的 `[tool.coverage]` 与 `[tool.pytest.ini_options]` 两段**，其余段不得改动）。
+6. 调整 `pyproject.toml` 的覆盖率门槛为 **`fail_under = 80`**，**结束 M0 阶段性豁免**（登记表见 M0 README 附录 A，在本 PR「假设与偏差」引用豁免编号）；本任务**被授权修改 pyproject 的 `[tool.coverage]` 与 `[tool.pytest.ini_options]` 两段**，其余段不得改动。
 7. `docs/testing-guide.md`（新增）：如何写单元/集成/契约测试、fixture 用法、如何隔离时间与网络、命名与目录约定。
 
 **不包含**：任何业务 fixture（行情样本归 M2）；E2E（Playwright，M9）。
@@ -39,7 +39,7 @@
 ## 验收标准
 - [ ] 在设置了 `TEST_DATABASE_URL` 的环境运行 `make test` 全绿；未设置且无 Docker 时，依赖 DB 的测试被**明确 skip**（带提示）而非报错
 - [ ] 隔离性：测试 A 写入的数据，测试 B 读不到；被测代码内 `commit()` 也不泄漏（专门测试）
-- [ ] 随机顺序运行（`pytest -p no:randomly` 与随机种子各一次，或 `pytest-randomly`）结果一致
+- [ ] 以 `pytest -p no:randomly` 与默认顺序各跑一次，结果一致（**不引入 `pytest-randomly`**：T01 依赖清单未列该包，`-p no:` 对未安装插件安全；见 AGENTS.md 铁律 6）
 - [ ] `frozen_clock` 下 `get_clock().now()` 固定；测试结束后恢复 `SystemClock`（测试）
 - [ ] `make test-unit` 不依赖 DB/Redis/网络（断开网络与服务环境下运行通过，给出证据）
 - [ ] 目录自动打标正确：`pytest -m unit --collect-only` 仅含 unit 测试

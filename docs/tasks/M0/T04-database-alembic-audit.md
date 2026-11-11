@@ -18,7 +18,7 @@
 2. `get_session`：作为 FastAPI 依赖，正常结束 commit，异常 rollback，最后 close。
 3. `core/audit.py`：`AuditLog` 模型与 `record_audit`（只增不改；`detail` 为 JSONB；对 `detail` 做大小限制，超过 8KB 抛 `ValueError`）。
 4. `backend/alembic.ini`、`backend/alembic/env.py`（异步，URL 取自 Settings，`target_metadata=Base.metadata`，开启 `compare_type`）、`script.py.mako`。
-5. 初始迁移 `0001_initial`：创建 `audit_log` 与索引（见契约）；`downgrade` 完整可逆。
+5. 初始迁移 `0001_initial`：创建 `audit_log` 与索引（见契约）；`downgrade` 完整可逆。**保留 T01 创建的 `alembic/versions/.gitkeep`**（见 `CONTRACTS.md §1` 补充）。
 6. 迁移规范文档 `backend/alembic/README.md`：命名规则（`NNNN_描述`）、向前兼容原则（先加后删、禁止在线重命名/删列）、如何生成与回滚。
 
 **不包含**：用户表与外键（M1）；多租户 Repository 基类（M1）；容器编排（T08）。

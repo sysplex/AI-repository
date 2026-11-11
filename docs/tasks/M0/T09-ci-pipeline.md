@@ -2,8 +2,8 @@
 
 | 项 | 内容 |
 |---|---|
-| 波次 | Wave 1 |
-| 依赖 | T01 已合并 |
+| 波次 | **顺序执行：T08 之后**（见 M0 README 附录 B） |
+| 依赖 | **T01、T08 已合并**（保证 `hashFiles('deploy/Dockerfile') != ''` 命中、docker 作业实跑而非 skipped） |
 | 阻塞 | T11 |
 | 分支 | `feat/m0-t09-ci` |
 | 建议规模 | 中 |
@@ -20,7 +20,7 @@ GitHub Actions 实现 `docs/07-delivery-standard.md §3` 的 CI：静态检查�
    - `architecture`：import-linter
    - `test`：服务容器 `postgres:16`、`redis:7`；设置 `DATABASE_URL`、`REDIS_URL`、`TEST_DATABASE_URL`、`SECRET_KEY`（工作流内使用**仅限 CI 的随机占位值**，禁止使用任何真实密钥）；运行 `pytest --cov`，上传覆盖率报告为 artifact；覆盖率门槛读取 pyproject 配置
    - `security`：`pip-audit`（对锁定依赖）+ `gitleaks`（扫描全历史）
-   - `docker`：`docker build -f deploy/Dockerfile`（不推送；T08 合并前该作业需 `if: hashFiles('deploy/Dockerfile') != ''` 守卫）
+   - `docker`：`docker build -f deploy/Dockerfile`（不推送；保留 `if: hashFiles('deploy/Dockerfile') != ''` 守卫）。**本任务必须在 T08 合并后开分支**，否则该作业为 skipped，会使 T11「CI 全流程通过」假绿。
    - `docs`：Markdown 链接检查（对 `docs/**`、根 README；忽略外部站点的偶发失败时设为 non-blocking 并说明）
 2. 缓存：uv 缓存、Docker 层缓存（`gha` cache）。
 3. `concurrency`：同分支新提交取消旧运行。
@@ -43,3 +43,5 @@ GitHub Actions 实现 `docs/07-delivery-standard.md §3` 的 CI：静态检查�
 - [ ] `concurrency` 生效（连续推送两次，旧运行被取消）
 - [ ] 工作流文件中无任何真实密钥；`gitleaks` 通过
 - [ ] `docs/ci.md` 命令在本地可复现对应作业
+- [ ] `docs/ci.md` 已写明**私有仓库免费版无法设置分支保护时的替代做法**（PR 必过 CI 的团队约定 + CODEOWNERS + 协调者人工评审清单 + 禁止直推 `main`），且可定位到对应章节（**R12 新增验收项**）
+- [ ] `docker` 作业在 T08 已合并的分支上为 **success/failure 实跑状态**，而非 skipped（贴 Actions run 链接）

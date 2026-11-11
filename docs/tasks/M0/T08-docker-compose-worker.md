@@ -2,8 +2,8 @@
 
 | 项 | 内容 |
 |---|---|
-| 波次 | Wave 1（Dockerfile/Compose 可先行）→ 与 T07 合并后补全健康检查联调 |
-| 依赖 | T01 已合并；联调验收需 T02、T04、T07 已合并 |
+| 波次 | **Wave 2（顺序执行：T07 之后，单 PR 一次完成基础设施与联调）** |
+| 依赖 | **T01、T02、T04、T07 已合并**（见 M0 README 附录 B 线性序列） |
 | 阻塞 | T11 |
 | 分支 | `feat/m0-t08-docker-compose` |
 | 建议规模 | 大 |
@@ -33,7 +33,7 @@
 
 ## 文件所有权
 - **拥有**：`deploy/**`、`backend/app/worker.py`、`.dockerignore`
-- **不得修改**：`Makefile`（T01）。如需新增 `make up/down` 的具体命令，已由 T01 预留为 `docker compose -f deploy/docker-compose.yml ...`，若不匹配请在 Issue 说明，由协调者处理。
+- **不得修改**：`Makefile`（T01）。`up/down/migrate/revision` 的命令由 **T01 一次写全**（`CONTRACTS.md §11`），本任务只创建 `deploy/**` 并在验收中核对命令与 compose 文件一致；若不匹配请在 Issue 说明，由协调者处理。
 
 ## 验收标准
 - [ ] `cp deploy/env.example deploy/.env`（填占位值）后 `docker compose -f deploy/docker-compose.yml up -d --build` 一条命令成功
