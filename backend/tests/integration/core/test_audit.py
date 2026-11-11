@@ -1,9 +1,11 @@
-"""M0-T04 审计表与 record_audit 测试。"""
+"""M0-T04 审计表与 record_audit 测试。
+
+真实库用例改用 T10 共享 `db_engine` fixture（连接串、迁移、skip 提示见 conftest）。
+"""
 
 from __future__ import annotations
 
 import asyncio
-import os
 import uuid
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
@@ -14,9 +16,6 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 from app.core import db as db_module
 from app.core.audit import MAX_DETAIL_BYTES, AuditLog, record_audit
-from app.core.config import get_settings
-
-TEST_DB_URL = os.getenv("TEST_DATABASE_URL")
 
 
 def test_audit_log_table_matches_data_model() -> None:
@@ -107,12 +106,9 @@ async def test_record_audit_rejects_oversized_detail() -> None:
     session.flush.assert_awaited_once()
 
 
-@pytest.mark.skipif(not TEST_DB_URL, reason="未设置 TEST_DATABASE_URL，跳过真实数据库集成用例")
+@pytest.mark.usefixtures("db_engine")
 def test_real_audit_log_roundtrip() -> None:
     """真实库：写入审计记录并读回，JSONB 与 UTC 时间正确。"""
-    url = TEST_DB_URL or ""
-    os.environ["DATABASE_URL"] = url
-    get_settings.cache_clear()
     marker = str(uuid.uuid4())
 
     async def scenario() -> tuple[Any, Any, Any]:
