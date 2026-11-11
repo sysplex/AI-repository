@@ -64,6 +64,7 @@ Makefile  .editorconfig  .pre-commit-config.yaml                     ← T01
 补充（T01 空壳的精确边界）：
 - `app/main.py` 必须实现 `create_app()` **与 `lifespan`**（定义见 §9），否则 `FastAPI(..., lifespan=lifespan)` 在空壳期即 `NameError`。
 - `core/logging.py` 空壳**不导出** `request_id_var` / `user_id_var` / `task_id_var`；三者归 T02（见 §3）。T03 因此必须等 T02 合并。
+- `core/logging.py` 空壳**必须导出** no-op 的 `setup_logging(settings)`（`create_app()` 会调用，缺失即 `ImportError`）与 `get_logger(name=None)`（返回标准库 `logging.Logger` 即可）；T02 整体重写时保持这两个签名不变。
 - `core/config.py` 空壳的 `Settings` 不声明也不校验 `database_url`/`redis_url`/`secret_key`（见 §2 阶段切换点）。
 - `alembic/versions/.gitkeep` 由 T01 创建（git 不保留空目录）；T04 提交 `0001_initial` 时保留该文件。
 

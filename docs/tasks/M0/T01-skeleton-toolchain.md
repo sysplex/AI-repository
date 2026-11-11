@@ -31,7 +31,7 @@
      d. 禁止契约：`yfinance`、`anthropic`、`alpaca*` 仅允许出现在 `app.modules.*.adapters` 中。
 4. `Makefile`（目标**与命令实现**见 `CONTRACTS.md §11`，`up/down/migrate/revision` 一次写全，T08 不改本文件）、`.editorconfig`、`.pre-commit-config.yaml`（ruff、ruff-format、基本文件检查、**gitleaks 或 detect-secrets**）。
 5. **空壳文件**（最小可运行，no-op，签名遵守 CONTRACTS）：
-   `core/config.py`（仅 `Settings` 含 app_env/app_name/app_version + `get_settings()`，**不校验三必填变量**）、`core/logging.py`（**不导出** `request_id_var` 等三个 ContextVar，归 T02）、`core/middleware.py`（`install_middlewares` 空实现 + 保留「指标中间件插入点」注释占位，**不调用** `install_metrics`）、`core/errors.py`（`register_exception_handlers` 空实现）、`core/lifecycle.py`（空 `on_startup/on_shutdown`）、`api/router.py`（空 `root_router`、`api_router`）；另建 `alembic/versions/.gitkeep`（git 不保留空目录，T04 提交迁移时保留该文件）。
+   `core/config.py`（仅 `Settings` 含 app_env/app_name/app_version + `get_settings()`，**不校验三必填变量**）、`core/logging.py`（**不导出** `request_id_var` 等三个 ContextVar，归 T02；**但必须导出** no-op 的 `setup_logging(settings)` 与 `get_logger(name=None)`，否则 `create_app()` 导入失败）、`core/middleware.py`（`install_middlewares` 空实现 + 保留「指标中间件插入点」注释占位，**不调用** `install_metrics`）、`core/errors.py`（`register_exception_handlers` 空实现）、`core/lifecycle.py`（空 `on_startup/on_shutdown`）、`api/router.py`（空 `root_router`、`api_router`）；另建 `alembic/versions/.gitkeep`（git 不保留空目录，T04 提交迁移时保留该文件）。
 6. `app/main.py`：严格按 `CONTRACTS.md §9` 实现 `create_app()` **与 `lifespan`**（签名与 no-op 实现见 §9），`app = create_app()`；空壳期 `lifespan` 可直接 `yield`，避免 `NameError`。
 7. 一个冒烟测试 `tests/unit/test_smoke.py`：`create_app()` 可构建且 `/docs` 可访问（用 httpx ASGITransport）。
 
