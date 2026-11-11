@@ -14,6 +14,7 @@ from starlette.datastructures import Headers, MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.core.logging import get_logger, request_id_var
+from app.core.metrics import install_metrics
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -109,8 +110,8 @@ def install_middlewares(app: FastAPI, settings: Settings) -> None:
     app.add_middleware(RequestContextMiddleware)
     app.add_middleware(SecurityHeadersMiddleware)
 
-    # 指标中间件插入点（T07 在此加入唯一一行 install_metrics(app, settings) 调用；
-    # create_app() 不单独调用，见 CONTRACTS §3/§8/§9）。T02 不自行调用。
+    # 指标中间件插入点（CONTRACTS §3/§8/§9）：install_metrics 的唯一调用点。
+    install_metrics(app, settings)
 
     if settings.cors_origins:
         from fastapi.middleware.cors import CORSMiddleware
