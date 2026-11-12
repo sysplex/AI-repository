@@ -20,7 +20,11 @@ from app.core.errors import Forbidden, Unauthenticated
 from app.core.redis import get_redis
 from app.modules.identity.enums import UserRole
 from app.modules.identity.schemas import AuthenticatedUser
-from app.modules.identity.service import IdentityService, build_identity_service
+from app.modules.identity.service import (
+    IdentityService,
+    build_identity_service,
+    make_mail_sender,
+)
 
 __all__ = [
     "bearer_token",
@@ -38,8 +42,17 @@ def get_identity_service(
     settings: Annotated[Settings, Depends(get_settings)],
     redis: Annotated[aioredis.Redis, Depends(get_redis)],
 ) -> IdentityService:
-    """组装 `IdentityService`；测试用 `app.dependency_overrides` 替换本函数即可。"""
-    return build_identity_service(session=session, settings=settings, redis=redis)
+    """组装 `IdentityService`；测试用 `app.dependency_overrides` 替换本函数即可。
+
+    邮件适配器由 `make_mail_sender(settings)` 按 `APP_ENV` 选择：路由层不直接引用
+    `adapters`（T01 契约 C8），只负责把选好的实例交给组合根（T06）。
+    """
+    return build_identity_service(
+        session=session,
+        settings=settings,
+        redis=redis,
+        mail=make_mail_sender(settings),
+    )
 
 
 def client_ip(request: Request) -> str | None:

@@ -1,8 +1,8 @@
 """Identity HTTP 端点（T04 主干），`CONTRACTS.md §10`。
 
 路径按 `docs/05-api-spec.md §2.1` 声明为完整相对路径（`/auth/...`），
-由 `router.py` 一次性 `include_router` 到 `/api/v1` 之下，T05 直接在本文件追加
-`/me`、`/admin/users`，无需再次改路由聚合。
+由 `router.py` 一次性 `include_router` 到 `/api/v1` 之下；T05 在同文件追加
+`/me`、`/admin/users`，T06 追加两个 `/auth/password/*`，均无需再改路由聚合。
 """
 
 from __future__ import annotations
@@ -22,6 +22,8 @@ from app.modules.identity.schemas import (
     LoginRequest,
     LogoutRequest,
     PaginatedUsers,
+    PasswordResetConfirm,
+    PasswordResetRequest,
     RefreshRequest,
     RegisterRequest,
     SettingsUpdate,
@@ -87,6 +89,42 @@ async def logout(
 ) -> Response:
     """需要有效 access；提交的 refresh 令牌随即失效（幂等）。"""
     await service.logout(payload, user=user, ip=client_ip(request))
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# ---------------------------------------------------------------- T06：重置
+
+
+@router.post(
+    "/auth/password/reset-request",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="请求重置密码",
+)
+async def request_password_reset(
+    payload: PasswordResetRequest,
+    request: Request,
+    service: ServiceDep,
+) -> dict[str, str]:
+    """无论账号是否存在都返回 202，避免账号枚举（`CONTRACTS §9` 行为 6）。
+
+    响应用固定文案且不含令牌：明文令牌只经 `MailSender` 投递。
+    """
+    await service.request_password_reset(payload, ip=client_ip(request))
+    return {"status": "accepted"}
+
+
+@router.post(
+    "/auth/password/reset-confirm",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="确认重置密码",
+)
+async def confirm_password_reset(
+    payload: PasswordResetConfirm,
+    request: Request,
+    service: ServiceDep,
+) -> Response:
+    """一次性令牌换新密码；成功后该用户全部 refresh 令牌立即失效。"""
+    await service.confirm_password_reset(payload, ip=client_ip(request))
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

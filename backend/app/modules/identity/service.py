@@ -9,6 +9,10 @@ T05 / T06 只允许在本类追加方法，不得改动已有签名。
 * 登录失败对外只有一种文案，且「用户不存在」也走一次真实的 argon2 校验
   （`_DUMMY_PASSWORD_HASH`），避免通过响应时间枚举账号。
 * 审计 `detail` 只放摘要类信息（邮箱 SHA-256 前缀），不放明文密码、令牌或邮箱本身。
+
+邮件投递（T06）：服务只依赖 `MailSender` 端口，具体实现由 `make_mail_sender`
+按 `APP_ENV` 选择。**Q3 未拍板前没有任何外发通道**，重置令牌只出现在邮件正文里，
+响应体、审计与访问日志均不含明文令牌。
 """
 
 from __future__ import annotations
@@ -32,7 +36,8 @@ from app.core.errors import (
     TokenExpired,
     Unauthenticated,
 )
-from app.modules.identity.adapters.mail import LoggingMailSender
+from app.core.logging import get_logger
+from app.modules.identity.adapters.mail import InMemoryMailSender, LoggingMailSender
 from app.modules.identity.adapters.password_hasher import Argon2PasswordHasher
 from app.modules.identity.adapters.token_codec import JWTTokenCodec
 from app.modules.identity.enums import UserRole, UserStatus
@@ -49,6 +54,8 @@ from app.modules.identity.schemas import (
     LoginRequest,
     LogoutRequest,
     PaginatedUsers,
+    PasswordResetConfirm,
+    PasswordResetRequest,
     RefreshRequest,
     RegisterRequest,
     SettingsUpdate,
@@ -64,12 +71,20 @@ from app.modules.identity.security import (
 )
 from app.modules.identity.tokens import issue_access
 
-__all__ = ["IdentityService", "LoginRateLimiter", "build_identity_service", "normalize_email"]
+__all__ = [
+    "IdentityService",
+    "LoginRateLimiter",
+    "build_identity_service",
+    "make_mail_sender",
+    "normalize_email",
+]
 
 _LOGIN_ACCOUNT_KEY: Final[str] = "login:fail:account:{}"
 _LOGIN_IP_KEY: Final[str] = "login:fail:ip:{}"
 _UNKNOWN_IP: Final[str] = "unknown"
 _EMAIL_DIGEST_PREFIX: Final[int] = 12
+_RESET_SUBJECT: Final[str] = "密码重置令牌"
+_LOGGER = get_logger(__name__)
 
 # 时序对齐用的哑哈希：明文是随机字符串且从未在任何地方保存，仅用于让
 # 「账号不存在」与「密码错误」两条分支都消耗一次完整的 argon2 校验时间。
@@ -90,6 +105,22 @@ def normalize_email(email: str) -> str:
 def _email_digest(email: str) -> str:
     """审计用邮箱摘要：可追溯、不可逆、不写 PII。"""
     return hash_opaque_token(email)[:_EMAIL_DIGEST_PREFIX]
+
+
+def _render_reset_body(token: str, *, ttl_seconds: int) -> str:
+    """重置邮件正文：明文令牌**只**出现在这里（不落库、不进审计、不进响应体）。
+
+    令牌独占一行且无其它字符干扰，便于调用方/测试按行提取；
+    正文不含邮箱，避免同一份内容在本地日志里重复出现 PII。
+    """
+    minutes = max(ttl_seconds // 60, 1)
+    return (
+        "你好：\n\n"
+        f"我们收到你的密码重置请求。请在 {minutes} 分钟内使用下面的令牌完成重置，"
+        "该令牌仅可使用一次：\n\n"
+        f"{token}\n\n"
+        "如果这不是你本人的操作，请忽略本邮件，你的密码不会被修改。\n"
+    )
 
 
 class LoginRateLimiter:
@@ -306,6 +337,66 @@ class IdentityService:
             page_size=page_size,
         )
 
+    # ------------------------------------------------------------------ T06
+
+    async def request_password_reset(self, req: PasswordResetRequest, *, ip: str | None) -> None:
+        """发起重置：账号存在才落库 + 发信，否则静默返回（`CONTRACTS §9` 行为 6）。
+
+        账号不存在、被禁用都走「什么都不做」的分支，路由层统一回 202，
+        响应体与耗时量级一致，不泄露账号是否存在。
+        """
+        email = normalize_email(str(req.email))
+        user = await self._users.get_by_email(email)
+        if user is None or user.status != UserStatus.ACTIVE.value:
+            return
+
+        now = get_clock().now()
+        ttl = self._settings.password_reset_ttl_seconds
+        plain_token = new_opaque_token()
+        await self._reset_tokens.create(
+            user_id=user.id,
+            token_hash=hash_opaque_token(plain_token),
+            expires_at=now + timedelta(seconds=ttl),
+        )
+        await self._mail.send(
+            to=email,
+            subject=_RESET_SUBJECT,
+            body=_render_reset_body(plain_token, ttl_seconds=ttl),
+        )
+        await self._audit(
+            "auth.password_reset_requested",
+            user_id=user.id,
+            ip=ip,
+            detail={"email": _email_digest(email)},
+        )
+
+    async def confirm_password_reset(self, req: PasswordResetConfirm, *, ip: str | None) -> None:
+        """确认重置：一次性令牌 → 吊销全部 refresh → 改密 → 审计。
+
+        无效/过期/已用三种情况在 `get_active_by_hash` 里已经收敛成「查不到」，
+        对外一律 401 `UNAUTHENTICATED`，不区分原因（`CONTRACTS §9` 行为 7）。
+        """
+        digest = hash_opaque_token(req.token.get_secret_value())
+        now = get_clock().now()
+        record = await self._reset_tokens.get_active_by_hash(digest, now=now)
+        if record is None:
+            raise Unauthenticated()
+
+        user = await self._users.get_by_id(record.user_id)
+        if user is None or user.status != UserStatus.ACTIVE.value:
+            raise Unauthenticated()
+
+        await self._reset_tokens.mark_used(record, now=now)
+        revoked = await self._refresh_tokens.revoke_all_for_user(user_id=user.id, now=now)
+        user.password_hash = hash_password(self._hasher, req.new_password)
+        await self._users.save(user)
+        await self._audit(
+            "auth.password_changed",
+            user_id=user.id,
+            ip=ip,
+            detail={"email": _email_digest(user.email), "refresh_tokens_revoked": revoked},
+        )
+
     # ------------------------------------------------------------- 内部工具
 
     async def _require_user(self, user_id: uuid.UUID) -> User:
@@ -368,23 +459,45 @@ class IdentityService:
         )
 
 
+def make_mail_sender(settings: Settings) -> MailSender:
+    """按 `APP_ENV` 选择 `MailSender` 实现（T06），不读任何外部密钥。
+
+    * `ci`：`InMemoryMailSender` —— 令牌不外泄到 CI 日志，测试自行注入实例断言。
+    * `local`：`LoggingMailSender` —— 开发者在控制台直接看到重置令牌，便于手工联调。
+    * `staging` / `production`：暂时同样回落到 `LoggingMailSender`，但打 **error** 级
+      标记，因为正文含一次性令牌（T06 偏差 D2）。Q3 拍板后新增一个 `adapters/*`
+      实现并改这里一行即可，service 签名不变（裁定 C1）。
+    """
+    if settings.app_env == "ci":
+        return InMemoryMailSender()
+    if settings.app_env != "local":
+        _LOGGER.error(
+            "mail.adapter.placeholder",
+            app_env=settings.app_env,
+            incident="mail_adapter_missing",
+            detail="非本地环境仍在使用日志投递，邮件正文含一次性重置令牌，上线前必须替换",
+        )
+    return LoggingMailSender()
+
+
 def build_identity_service(
     *,
     session: AsyncSession,
     settings: Settings,
     redis: aioredis.Redis,
+    mail: MailSender | None = None,
 ) -> IdentityService:
     """组合根：把端口实现装配进服务。
 
     放在模块内而非 `app/api/deps.py`，是因为 import-linter 禁止路由层引用
     `app.modules.identity.adapters`（T01 契约 C8）；服务层引用本模块适配器不受限。
-    T06 换真实邮件适配器只需改这里一行。
+    `mail` 为空时按 `APP_ENV` 自动选择（T06）；测试可显式传入 `InMemoryMailSender`。
     """
     return IdentityService(
         session=session,
         settings=settings,
         hasher=Argon2PasswordHasher(),
         codec=JWTTokenCodec(settings.secret_key.get_secret_value(), settings.jwt_algorithm),
-        mail=LoggingMailSender(),
+        mail=mail if mail is not None else make_mail_sender(settings),
         redis=redis,
     )
