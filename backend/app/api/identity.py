@@ -9,17 +9,26 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 
-from app.api.deps import client_ip, current_user, get_identity_service
+from app.api.deps import (
+    client_ip,
+    current_user,
+    get_identity_service,
+    require_role,
+)
 from app.modules.identity.schemas import (
     AuthenticatedUser,
     LoginRequest,
     LogoutRequest,
+    PaginatedUsers,
     RefreshRequest,
     RegisterRequest,
+    SettingsUpdate,
     TokenPair,
+    UsageResponse,
     UserPublic,
+    UserRole,
 )
 from app.modules.identity.service import IdentityService
 
@@ -27,6 +36,7 @@ router = APIRouter(tags=["identity"])
 
 ServiceDep = Annotated[IdentityService, Depends(get_identity_service)]
 CurrentUserDep = Annotated[AuthenticatedUser, Depends(current_user)]
+AdminDep = Annotated[AuthenticatedUser, Depends(require_role(UserRole.ADMIN))]
 
 
 @router.post(
@@ -78,3 +88,43 @@ async def logout(
     """需要有效 access；提交的 refresh 令牌随即失效（幂等）。"""
     await service.logout(payload, user=user, ip=client_ip(request))
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# ---------------------------------------------------------------- T05：自助
+
+
+@router.get("/me", response_model=UserPublic, summary="我的资料")
+async def get_me(user: CurrentUserDep, service: ServiceDep) -> UserPublic:
+    """返回当前令牌对应用户的公开视图（不含任何凭据字段）。"""
+    return await service.get_profile(user)
+
+
+@router.patch("/me", response_model=UserPublic, summary="更新我的设置")
+async def update_me(
+    payload: SettingsUpdate,
+    user: CurrentUserDep,
+    service: ServiceDep,
+) -> UserPublic:
+    """整体替换设置项（风险偏好/语言/默认账户），写 `auth.settings_updated` 审计。"""
+    return await service.update_settings(user, payload)
+
+
+@router.get("/me/usage", response_model=UsageResponse, summary="我的 AI 用量与配额")
+async def get_my_usage(user: CurrentUserDep, service: ServiceDep) -> UsageResponse:
+    """当日用量；无记录返回全 0，`quota` 取 `AI_DAILY_QUOTA`（M1 只读，裁定 C6）。"""
+    return await service.get_usage(user)
+
+
+# ---------------------------------------------------------------- T05：管理
+
+
+@router.get("/admin/users", response_model=PaginatedUsers, summary="用户列表（admin）")
+async def list_users(
+    admin: AdminDep,
+    service: ServiceDep,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> PaginatedUsers:
+    """仅 admin 可访问；非 admin 403（`CONTRACTS §12`）。"""
+    del admin
+    return await service.list_users(page=page, page_size=page_size)
