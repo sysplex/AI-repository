@@ -1,0 +1,107 @@
+{
+  "symbol": "AAPL",
+  "quote": {
+    "price": "224.23",
+    "change": "1.50",
+    "change_pct": "0.67",
+    "volume": 54321000,
+    "as_of": "2026-11-10T20:00:00Z",
+    "delayed_seconds": 0,
+    "stale": false
+  },
+  "profile": {
+    "name": "Apple Inc.",
+    "exchange": "NASDAQ",
+    "sector": "Technology",
+    "industry": "Consumer Electronics",
+    "description": "Apple designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories.",
+    "website": "https://www.apple.com",
+    "employees": 161000,
+    "country": "US"
+  },
+  "fundamentals": {
+    "as_of": "2026-11-01",
+    "pe_trailing": "34.2",
+    "pe_forward": "28.5",
+    "pb": "48.6",
+    "ps": "8.7",
+    "roe": "1.52",
+    "net_margin": "0.24",
+    "debt_to_equity": "1.87",
+    "market_cap": "3400000000000",
+    "dividend_yield": "0.005",
+    "beta": "1.08",
+    "missing_fields": []
+  },
+  "financial_statements": {
+    "period_end": "2025-09-30",
+    "balance_sheet": { "total_assets": 352583000000, "total_liabilities": 290437000000 },
+    "income_statement": { "total_revenue": 391035000000, "net_income": 93736000000 },
+    "cash_flow": { "operating_cash_flow": 118254000000 }
+  },
+  "earnings": [
+    {
+      "report_date": "2026-10-31",
+      "eps_estimated": "1.60",
+      "eps_actual": "1.64",
+      "revenue_estimated": "94500000000",
+      "revenue_actual": "94930000000",
+      "reaction_1d_pct": "2.15"
+    }
+  ],
+  "news": [
+    {
+      "id": "aapl-news-1",
+      "title": "Apple Reports Record Services Revenue",
+      "summary": "Apple posted Q4 services revenue growth across all key regions.",
+      "source": "Bloomberg",
+      "url": "https://example.com/aapl/1",
+      "published_at": "2026-11-10T14:30:00Z"
+    }
+  ],
+  "analyst_ratings": {
+    "as_of": "2026-11-01",
+    "consensus_rating": "buy",
+    "target_high": "260.00",
+    "target_low": "180.00",
+    "target_mean": "235.00",
+    "target_median": "238.00",
+    "analyst_count": 42
+  },
+  "corporate_actions": [
+    {
+      "ex_date": "2026-11-08",
+      "action_type": "dividend",
+      "amount": "0.25"
+    }
+  ],
+  "bars": [
+    {
+      "trade_date": "2026-11-08",
+      "open": "221.00",
+      "high": "223.50",
+      "low": "220.10",
+      "close": "222.70",
+      "volume": 48200000,
+      "adj_close": "222.70"
+    },
+    {
+      "trade_date": "2026-11-09",
+      "open": "222.80",
+      "high": "224.90",
+      "low": "221.50",
+      "close": "223.50",
+      "volume": 51200000,
+      "adj_close": "223.50"
+    },
+    {
+      "trade_date": "2026-11-10",
+      "open": "223.50",
+      "high": "225.00",
+      "low": "222.00",
+      "close": "224.23",
+      "volume": 54321000,
+      "adj_close": "224.23"
+    }
+  ]
+}

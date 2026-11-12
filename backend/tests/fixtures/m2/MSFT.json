@@ -1,0 +1,89 @@
+{
+  "symbol": "MSFT",
+  "quote": {
+    "price": "415.20",
+    "change": "3.50",
+    "change_pct": "0.85",
+    "volume": 18500000,
+    "as_of": "2026-11-10T20:00:00Z",
+    "delayed_seconds": 0,
+    "stale": false
+  },
+  "profile": {
+    "name": "Microsoft Corporation",
+    "exchange": "NASDAQ",
+    "sector": "Technology",
+    "industry": "Software—Infrastructure",
+    "description": "Microsoft develops and supports software, services, devices and AI cloud solutions.",
+    "website": "https://www.microsoft.com",
+    "employees": 221000,
+    "country": "US"
+  },
+  "fundamentals": {
+    "as_of": "2026-11-01",
+    "pe_trailing": "35.6",
+    "pe_forward": "29.8",
+    "pb": "11.8",
+    "ps": "12.4",
+    "roe": "0.36",
+    "net_margin": "0.36",
+    "debt_to_equity": "0.41",
+    "market_cap": "3100000000000",
+    "dividend_yield": "0.007",
+    "beta": "0.92",
+    "missing_fields": []
+  },
+  "financial_statements": {
+    "period_end": "2026-06-30",
+    "balance_sheet": { "total_assets": 512000000000, "total_liabilities": 245000000000 },
+    "income_statement": { "total_revenue": 245000000000, "net_income": 88000000000 },
+    "cash_flow": { "operating_cash_flow": 118000000000 }
+  },
+  "earnings": [
+    {
+      "report_date": "2026-10-25",
+      "eps_estimated": "3.10",
+      "eps_actual": "3.30",
+      "revenue_estimated": "64500000000",
+      "revenue_actual": "65600000000",
+      "reaction_1d_pct": "1.80"
+    }
+  ],
+  "news": [
+    {
+      "id": "msft-news-1",
+      "title": "Microsoft Cloud and AI Cloud Demand Surges",
+      "summary": "Azure and Copilot adoption drive growth in Q1 results.",
+      "source": "WSJ",
+      "url": "https://example.com/msft/1",
+      "published_at": "2026-11-10T12:00:00Z"
+    }
+  ],
+  "analyst_ratings": {
+    "as_of": "2026-11-01",
+    "consensus_rating": "buy",
+    "target_high": "500.00",
+    "target_low": "400.00",
+    "target_mean": "470.00",
+    "target_median": "475.00",
+    "analyst_count": 45
+  },
+  "corporate_actions": [
+    {
+      "ex_date": "2026-11-15",
+      "action_type": "dividend",
+      "amount": "0.83"
+    }
+  ],
+  "bars": [
+    {
+      "trade_date": "2026-11-10",
+      "open": "412.00",
+      "high": "416.50",
+      "low": "410.80",
+      "close": "415.20",
+      "volume": 18500000,
+      "adj_close": "415.20"
+    }
+  ]
+}
