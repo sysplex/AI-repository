@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 import time
@@ -30,7 +31,7 @@ except ImportError:  # pragma: no cover - 依赖缺失时给出可操作提示
     raise SystemExit(2) from None
 
 _API = "/api/v1"
-_TOKEN_IN_LOG = re.compile(r"([A-Za-z0-9_-]{43})")
+_TOKEN_LINE = re.compile(r"[A-Za-z0-9_-]{43}")
 _MAIL_EVENT = "mail.send"
 _OK = "✔"
 _BAD = "✘"
@@ -88,6 +89,12 @@ def _read_reset_token(path: str, *, timeout: float) -> str | None:
 
 
 def _scan_reset_token(path: str) -> str | None:
+    """从后往前扫日志，取最后一条 `mail.send` 里的令牌。
+
+    日志是结构化 JSON（可能带 `docker compose logs` 的容器名前缀），所以优先解析
+    JSON 取 `body` 再按行整行匹配令牌；解析失败时才退回「按 `\\n` 分片整段匹配」。
+    两种方式都要求**整行/整段**匹配，避免把 `\\n` 里的 `n` 当成令牌首字符。
+    """
     try:
         with open(path, encoding="utf-8", errors="replace") as handle:
             lines = handle.readlines()
@@ -96,10 +103,24 @@ def _scan_reset_token(path: str) -> str | None:
     for line in reversed(lines):
         if _MAIL_EVENT not in line:
             continue
-        match = _TOKEN_IN_LOG.search(line)
-        if match is not None:
-            return match.group(1)
+        body = _body_of(line)
+        for candidate in body.split("\n") if body else line.split("\\n"):
+            if _TOKEN_LINE.fullmatch(candidate.strip()):
+                return candidate.strip()
     return None
+
+
+def _body_of(line: str) -> str:
+    """取日志行里 `body` 字段（解析不了就返回空串）。"""
+    start = line.find("{")
+    if start < 0:
+        return ""
+    try:
+        payload = json.loads(line[start:])
+    except ValueError:
+        return ""
+    body = payload.get("body") if isinstance(payload, dict) else None
+    return body if isinstance(body, str) else ""
 
 
 def _json(response: httpx.Response) -> Any:
@@ -218,7 +239,7 @@ def run(args: argparse.Namespace) -> int:
             demo.info("      `docker compose logs api | grep mail.send` 查看后重跑。")
             return demo.summary()
 
-        demo.info(f"从日志取得重置令牌（前 6 位）：{token[:6]}…")
+        demo.info(f"从日志取得重置令牌（长度 {len(token)}，值不打印）")
         demo.step(
             "POST /auth/password/reset-confirm",
             204,
