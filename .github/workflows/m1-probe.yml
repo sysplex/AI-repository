@@ -94,24 +94,28 @@ jobs:
           for path in paths:
               print("  ", path, sorted(app.openapi()["paths"][path]))
 
-          text = pathlib.Path("../docs/05-api-spec.md").read_text(encoding="utf-8")
-          rows = re.findall(r"^\|\s*(GET|POST|PATCH|DELETE)\s*\|\s*`([^`]+)`", text, re.M)
-          declared = {
-              "/api/v1" + raw.split("?")[0]
-              for _, raw in rows
-              if raw.startswith(("/auth", "/me", "/admin"))
-          }
-          print(f"docs/05 §2.1 identity paths ({len(declared)}):", sorted(declared))
+          spec = pathlib.Path("../docs/05-api-spec.md").read_text(encoding="utf-8")
+          # 只截 §2.1 这一节：后面各节（M2+）的端点尚未实现，不能参与 M1 断言。
+          section = spec.split("### 2.1", 1)[1].split("### 2.2", 1)[0]
+          rows = re.findall(r"^\|\s*(GET|POST|PATCH|DELETE)\s*\|\s*`([^`]+)`", section, re.M)
+          declared = {"/api/v1" + raw.split("?")[0] for _, raw in rows}
+          print(f"docs/05 §2.1 paths ({len(declared)}):", sorted(declared))
 
           identity_paths = {
-              p
-              for p in paths
-              if p.startswith("/api/v1/") and not p.startswith("/api/v1/market")
+              p for p in paths if p.startswith("/api/v1/") and not p.startswith("/api/v1/market")
           }
           missing = declared - identity_paths
           extra = identity_paths - declared
           print("missing in openapi:", sorted(missing))
-          print("undeclared in docs/05:", sorted(extra))
+          print("undeclared in docs/05 §2.1:", sorted(extra))
+
+          # 附注（不断言）：docs/05 §2.2 与 M2 实际 OpenAPI 的对照，供 M2 维护者参考。
+          m2_section = spec.split("### 2.2", 1)[1].split("### 2.3", 1)[0]
+          m2_rows = re.findall(r"^\|\s*(GET|POST|PATCH)\s*\|\s*`([^`]+)`", m2_section, re.M)
+          m2_declared = {"/api/v1" + raw.split("?")[0] for _, raw in m2_rows}
+          m2_actual = {p for p in paths if p.startswith("/api/v1/market")}
+          print("docs/05 §2.2 (M2，仅供参考) 未实现:", sorted(m2_declared - m2_actual))
+          print("docs/05 §2.2 (M2，仅供参考) 未登记:", sorted(m2_actual - m2_declared))
 
           contracts = pathlib.Path("../docs/tasks/M1/CONTRACTS.md").read_text(encoding="utf-8")
           names = {
