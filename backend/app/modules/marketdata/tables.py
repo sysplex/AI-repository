@@ -102,9 +102,7 @@ class FundamentalsSnapshotTable(Base):
     """Valuation and financial ratio snapshot table."""
 
     __tablename__ = "fundamentals_snapshots"
-    __table_args__ = (
-        PrimaryKeyConstraint("symbol", "as_of", name="pk_fundamentals_snapshots"),
-    )
+    __table_args__ = (PrimaryKeyConstraint("symbol", "as_of", name="pk_fundamentals_snapshots"),)
 
     symbol: Mapped[str] = mapped_column(String(16), nullable=False)
     as_of: Mapped[date] = mapped_column(Date(), nullable=False)
@@ -167,9 +165,7 @@ class EarningsEventTable(Base):
     """Historical and scheduled earnings events."""
 
     __tablename__ = "earnings_events"
-    __table_args__ = (
-        PrimaryKeyConstraint("symbol", "report_date", name="pk_earnings_events"),
-    )
+    __table_args__ = (PrimaryKeyConstraint("symbol", "report_date", name="pk_earnings_events"),)
 
     symbol: Mapped[str] = mapped_column(String(16), nullable=False)
     report_date: Mapped[date] = mapped_column(Date(), nullable=False)
@@ -190,9 +186,7 @@ class NewsItemTable(Base):
     """Market news item records."""
 
     __tablename__ = "news_items"
-    __table_args__ = (
-        Index("ix_news_items_symbol_published_at", "symbol", "published_at"),
-    )
+    __table_args__ = (Index("ix_news_items_symbol_published_at", "symbol", "published_at"),)
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     symbol: Mapped[str] = mapped_column(String(16), nullable=False)
@@ -212,9 +206,7 @@ class DataSnapshotTable(Base):
     """AI input fact snapshots with SHA-256 hash deduplication."""
 
     __tablename__ = "data_snapshots"
-    __table_args__ = (
-        Index("ix_data_snapshots_symbol_as_of", "symbol", "as_of"),
-    )
+    __table_args__ = (Index("ix_data_snapshots_symbol_as_of", "symbol", "as_of"),)
 
     content_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
     symbol: Mapped[str] = mapped_column(String(16), nullable=False)
