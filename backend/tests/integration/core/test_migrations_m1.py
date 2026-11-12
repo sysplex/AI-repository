@@ -41,9 +41,36 @@ def _table_names(engine: AsyncEngine) -> set[str]:
     return asyncio.run(_run())
 
 
+def test_alembic_has_single_head() -> None:
+    """并行里程碑合入后仍只有一个 head，防 0002/0003 多头回归（见 #12）。
+
+    M2-T02 的 `0002_marketdata` 与 M1-T01 原本的 `0002_identity` 都挂在
+    `0001_initial` 上，曾导致 CI 全部集成测试报 MultipleHeads。
+    """
+    from alembic.script import ScriptDirectory
+
+    script = ScriptDirectory.from_config(_alembic_config())
+    assert list(script.get_heads()) == ["0003_identity"]
+    assert script.get_revision("0003_identity").down_revision == "0002_marketdata"
+
+
+def test_env_registers_identity_models_and_exempts_audit_fk() -> None:
+    """`env.py` 必须注册 identity 表，并排除只在库里存在的 audit_log 外键。
+
+    前者防止 `alembic check` 把 4 张新表判为应删除；后者防止它把
+    fk_audit_log_user_id_users 判为「多余约束」生成破坏性 DROP CONSTRAINT。
+    """
+    source = (Path(__file__).resolve().parents[3] / "alembic" / "env.py").read_text(
+        encoding="utf-8"
+    )
+    assert "import app.modules.identity.models" in source
+    assert "include_object=include_object" in source
+    assert '"fk_audit_log_user_id_users"' in source
+
+
 @pytest.mark.integration
 def test_identity_tables_exist_after_upgrade(db_engine: AsyncEngine) -> None:
-    """`0002_identity` 在空库建出全部 4 张表。"""
+    """`0003_identity` 在空库建出全部 4 张表。"""
     assert _table_names(db_engine) >= _TABLES
 
 
@@ -77,9 +104,11 @@ def test_downgrade_upgrade_roundtrip_and_orphan_cleanup(db_engine: AsyncEngine) 
                 {"user_id": orphan_id, "action": _ORPHAN_ACTION},
             )
 
-    asyncio.run(_insert_orphan())
     try:
+        # 必须先降到 0001（此时 audit_log 尚无 FK）才能写入孤儿行；在 head 上
+        # 直接插入会被 fk_audit_log_user_id_users 拒绝，无法验证迁移的清理逻辑。
         command.downgrade(config, "0001_initial")
+        asyncio.run(_insert_orphan())
         command.upgrade(config, "head")
     finally:
         # 任何失败也尝试恢复到 head，避免污染同会话的其它 DB 用例。

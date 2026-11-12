@@ -17,7 +17,8 @@
 - M0 地基 T10：共享测试基座、覆盖率门槛 80 与测试指南
 - M0 地基 T11：集成验收记录 `docs/acceptance/M0.md`、全链路冒烟与性能基线
 - M1 阶段 0：任务总览、接口契约与 T01–T07 任务卡（`docs/tasks/M1/`），M1 Identity 里程碑与 #36–#42 Issue
-- M1-T01（#36）：`argon2-cffi` / `PyJWT` / `email-validator` 依赖与 `uv.lock`、7 个可选认证配置项、identity 四张表的 ORM 模型与端口、`0002_identity` 迁移（含 `audit_log.user_id` 外键）、import-linter 契约修正、`docs/03 §3.1` 与环境变量模板登记
+- M1-T01（#36）：`argon2-cffi` / `PyJWT` / `email-validator` 依赖与 `uv.lock`、7 个可选认证配置项、identity 四张表的 ORM 模型与端口、`0003_identity` 迁移（含 `audit_log.user_id` 外键）、import-linter 契约修正、`docs/03 §3.1` 与环境变量模板登记
+- M1-T01 并行接缝：M2-T02/T03 先行合入 `0002_marketdata` 与 `yfinance` 依赖；M1 作为后合并者把迁移改为 `0003_identity` 并指向 `0002_marketdata`，保留 M2 的 `pyproject.toml` 规则与依赖，在 `alembic/env.py` 注册 identity 模型并用 `include_object` 排除 M0 模型未声明的 `audit_log` 反射外键，使 `alembic check` 不误报；保持单一 Alembic head，同时新增单头回归测试（详见 #12）
 
 ### Changed
 - CI：Dependabot 三个 ecosystem 忽略 `semver-major` 升级，避免跨大版本 PR 反复破坏 `uv --frozen` 与固定 SHA 基线（#28/#29 留待 M1 结项后评估）

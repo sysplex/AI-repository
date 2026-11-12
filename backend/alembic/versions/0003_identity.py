@@ -1,14 +1,15 @@
-"""0002_identity: M1 用户与多租户表 + audit_log 外键
+"""0003_identity: M1 用户与多租户表 + audit_log 外键
 
-Revision ID: 0002_identity
-Revises: 0001_initial
+Revision ID: 0003_identity
+Revises: 0002_marketdata
 Create Date: 2026-11-12
 
 `CONTRACTS.md §3`。M0 的 `0001_initial.py` 注释写明「user_id 不加外键（M1 再补）」，
 本迁移补上该外键（接缝 S1）：加约束前把历史孤儿 user_id 置 NULL，避免迁移失败。
 
-并行模块约定：M2 计划 `0002_marketdata.py`。若两个 0002 并存会形成 Alembic 多头，
-后合并者必须改为 0003 并指向本 revision（已在审计锚点 #12 登记协调请求）。
+并行模块约定（已在 #12 登记）：M2-T02 先行合入 `0002_marketdata.py`（同样基于
+`0001_initial`）。M1 作为后合并者改为 `0003_identity` 并指向 `0002_marketdata`，
+保证全仓库始终是单一 Alembic head；不得再把本文件改回 0002。
 """
 
 from __future__ import annotations
@@ -20,8 +21,8 @@ from sqlalchemy.dialects import postgresql
 
 from alembic import op
 
-revision: str = "0002_identity"
-down_revision: str | None = "0001_initial"
+revision: str = "0003_identity"
+down_revision: str | None = "0002_marketdata"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

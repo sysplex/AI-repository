@@ -102,12 +102,12 @@ def test_expiry_columns_are_timezone_aware() -> None:
 
 
 def test_migration_revision_and_symmetry() -> None:
-    """迁移声明 0001→0002，且 upgrade/downgrade 覆盖同样的 4 张表。"""
+    """迁移挂在 M2 的 0002_marketdata 之后，且 upgrade/downgrade 覆盖同样的 4 张表。"""
     source = (
-        Path(__file__).resolve().parents[4] / "alembic" / "versions" / "0002_identity.py"
+        Path(__file__).resolve().parents[4] / "alembic" / "versions" / "0003_identity.py"
     ).read_text(encoding="utf-8")
-    assert 'revision: str = "0002_identity"' in source
-    assert 'down_revision: str | None = "0001_initial"' in source
+    assert 'revision: str = "0003_identity"' in source
+    assert 'down_revision: str | None = "0002_marketdata"' in source
     for table in _TABLES:
         assert f'"{table}"' in source
     assert 'op.drop_constraint("fk_audit_log_user_id_users"' in source

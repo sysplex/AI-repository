@@ -13,7 +13,7 @@
 - 新增 3 个运行依赖并重算 `uv.lock`（裁定 C7）：`argon2-cffi>=23,<25`、`PyJWT>=2.9,<3`、`email-validator>=2.2,<3`。版本上界与 M0 一致用 `<major+1`；`exclude-newer` 截止日不变。三者分别只供 `adapters/password_hasher.py`、`adapters/token_codec.py`、Pydantic `EmailStr` 使用，**本任务不实现适配器**。
 - `app/core/config.py` 追加 `CONTRACTS §2` 的 7 个可选字段与正整数校验；不得改 M0 既有字段、不得破坏 `load_settings_or_exit()` 的三必填变量聚合提示。
 - `app/modules/identity/models.py`：`User` / `RefreshToken` / `PasswordResetToken` / `AiUsage` 四个 ORM 模型（`CONTRACTS §3`）；`app/modules/identity/ports.py`：`PasswordHasher` / `TokenCodec` / `MailSender` / `AccessClaims`（`§5`）。
-- `alembic/versions/0002_identity.py`：建 4 表、索引、外键；为 `audit_log.user_id` 补 FK（接缝 S1）；`downgrade` 完整可逆。
+- `alembic/versions/0003_identity.py`：建 4 表、索引、外键；为 `audit_log.user_id` 补 FK（接缝 S1）；`downgrade` 完整可逆。因 M2-T02 先行合入 `0002_marketdata.py`，本迁移顺延为 0003 并挂在它之后（接缝 S6）。
 - `backend/pyproject.toml` 的 `[tool.importlinter]`：按 `CONTRACTS §11` 修正第四条契约并新增第五条。
 - `docs/03-data-model.md §3.1` 补 4 张表说明与 C3/C6 注记；`deploy/env.example` 追加 6 个可选变量；`CHANGELOG.md` 追加本任务条目。
 
@@ -28,9 +28,11 @@
 | `backend/pyproject.toml`、`backend/uv.lock` | 修改（依赖 + import-linter 契约） |
 | `backend/app/core/config.py` | 修改（新增字段与校验） |
 | `backend/app/modules/identity/{__init__,models,ports}.py` | 新增/修改 |
-| `backend/alembic/versions/0002_identity.py` | 新增 |
+| `backend/alembic/versions/0003_identity.py` | 新增 |
 | `docs/03-data-model.md`（仅 §3.1）、`deploy/env.example`、`CHANGELOG.md` | 修改 |
-| `backend/tests/unit/core/test_config_m1.py`、`backend/tests/integration/core/test_migrations_m1.py`、`backend/tests/unit/modules/identity/test_models.py` | 新增 |
+| `backend/tests/unit/core/test_config_m1.py`、`backend/tests/integration/core/test_migrations_m1.py`、`backend/tests/unit/modules/identity/test_identity_models.py`、`test_enums_ports.py` | 新增 |
+| `backend/alembic/env.py`、`backend/tests/integration/core/test_migrations.py` | 并行接缝的最小必要修改（见 §7 D2/D3），不改动其它内容 |
+| `docs/tasks/M1/{README,CONTRACTS}.md`、本任务卡 | 随 PR 修订迁移编号与接缝登记（阶段 0 代拟文档的纠错） |
 
 ## 4. 接口
 
@@ -61,3 +63,9 @@
 - `ai_usage` 本阶段只建表不写入（C6）；Q4 配额数值默认值 20 待 M5 前拍板（C5）。
 - 补 `audit_log` 外键会改变 M0 表结构，属 M0 注释预留的接缝（S1），非越权改 M0 代码。
 - 依赖版本受 `exclude-newer` 限制，若解析不到满足上界的版本，在 Issue 申请调整截止日，不私自改 `[tool.uv]`。
+- **D1（并行合并，阻塞级）**：阶段 0 拆分时 M2 尚未落地，卡上写的是 `0002_identity.py`。M2-T02 先行合入 `0002_marketdata.py`（同样基于 `0001_initial`），PR #48 首轮 CI run `43188012509` 因 `MultipleHeads: 0002_identity, 0002_marketdata` 导致 13 errors + 2 failed。按 `README.md §6 S6` 约定 rebase 到 `f96a02f`，迁移改为 `0003_identity` / `down_revision = "0002_marketdata"`；合并即视为协调者追认该编号变更，已在 #12 与 Issue #36 登记。
+- **D2（越出所有权，最小必要）**：`alembic/env.py` 由 M2-T02 修改用于注册 marketdata 表。若不注册 `app.modules.identity.models`，`alembic check` 会把 4 张已建表判为模型漂移并生成 DROP 语句，`test_upgrade_downgrade_upgrade_and_check` 无法通过。故追加一行 import；另按 D6 增加 `include_object` 钩子并传给两处 `context.configure`。未改动迁移执行逻辑。
+- **D3（越出所有权，最小必要）**：`tests/integration/core/test_migrations.py` 是 M0 既有测试、已被 M2-T02 改过 head 断言。M1 后合并只把 `("0002_marketdata",)` 改为 `("0003_identity",)`，并把 `0003_identity.py` 加入硬编码凭据扫描列表，未改其它断言。
+- **D4（`pyproject.toml` / `uv.lock` 合并）**：M2-T03 加了 `yfinance` 依赖、`adapters/**` 的 TID251 豁免并重写 lock。本 PR 完整保留，仅追加 M1 的 3 个依赖与 import-linter 契约，再用 `uv lock` 重算，不手工编辑 lock。
+- **D5（测试发现）**：M2-T02 删除了 `tests/unit/modules/**/__init__.py`。本 PR 跟随删除 `identity/__init__.py`，并把 `test_models.py` 改名为 `test_identity_models.py`，避免与 `tests/unit/modules/marketdata/test_models.py` 在 pytest prepend 模式下模块名冲突。
+- **D6（`alembic check` 模型漂移）**：`env.py` 注册 identity 模型后，M0 `AuditLog` 模型仍不含 `user_id` 外键，而 0003 迁移已建该约束，Alembic autogenerate 会把它判为「多余外键」并生成破坏性 `DROP CONSTRAINT`。处理方式**不改 M0 冻结文件、也不改 M0 测试**：在 `alembic/env.py` 用 Alembic 官方的 `include_object` 钩子，精确排除「`audit_log` 上反射得到的 `fk_audit_log_user_id_users`」这一条约束，其余表/列/索引/约束照常比对。曾尝试在 `models.py` 里把 FK 追加进 `AuditLog.__table__`，但该全局副作用会让 M0 的 `test_audit_log_table_matches_data_model`（断言 `foreign_keys == []`）随导入顺序失败，故放弃。新增 `test_env_registers_identity_models_and_exempts_audit_fk` 守卫。

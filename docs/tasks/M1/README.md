@@ -38,7 +38,7 @@ T01 → T02 → T03 → T04 → T05 → T06 → T07
 | `backend/pyproject.toml`、`backend/uv.lock` | T01 | 其余任务不得改；新依赖一律在 T01 一次引入 |
 | `backend/app/core/config.py` | T01 | 其余任务只读 `Settings`，不得加字段 |
 | `backend/app/modules/identity/models.py`、`ports.py`、`__init__.py` | T01 | 后续任务只读 |
-| `backend/alembic/versions/0002_identity.py` | T01 | 其余任务不得新增迁移；需要改表先在 Issue 申请 |
+| `backend/alembic/versions/0003_identity.py` | T01 | 其余任务不得新增迁移；需要改表先在 Issue 申请；M2 后续迁移从 0004 起编号 |
 | `docs/03-data-model.md §3.1`、`deploy/env.example` | T01 | T05/T06 仅可在登记新端点时改 `docs/05` |
 | `backend/app/modules/identity/schemas.py`、`repo.py` | T02 | T04–T06 可扩展 `schemas.py`（不得改已发布签名），`repo.py` 只读 |
 | `backend/app/modules/identity/security.py`、`tokens.py`、`adapters/**` | T03 | 其余任务只读 |
@@ -86,11 +86,15 @@ T01 → T02 → T03 → T04 → T05 → T06 → T07
 
 | 编号 | 发现 | 处理 |
 |---|---|---|
-| S1 | `audit_log.user_id` 在 `0001_initial.py` 无外键（注释写「M1 再补」） | T01 的 `0002_identity.py` 补 `users` 外键（`ON DELETE SET NULL`），`downgrade` 先删约束。历史孤儿行由迁移前置检查处理，见 T01 验收项 |
+| S1 | `audit_log.user_id` 在 `0001_initial.py` 无外键（注释写「M1 再补」） | T01 的 `0003_identity.py` 补 `users` 外键（`ON DELETE SET NULL`），`downgrade` 先删约束。历史孤儿行由迁移前置检查处理，见 T01 验收项 |
 | S2 | C8 的 import-linter 契约冲突 | T01 修正 `pyproject.toml`，`lint-imports` 断言 5 条契约全 kept |
 | S3 | `app/core/config.py` 归 M0 T02，M1 需新增 7 个可选配置项 | 由本矩阵重新分配给 T01；全部带默认值，不改变三必填变量语义 |
 | S4 | `api/router.py` 的 `api_router` 是空壳 | T04 一次性 `include_router` 接入，M1 后续任务只在自己的 `api/identity.py` 里追加路由 |
 | S5 | Dependabot #28/#29 跨大版本升级会破坏 `--frozen` 与固定 SHA 基线 | 阶段 0 在 `.github/dependabot.yml` 为三个 ecosystem 加 `semver-major` ignore（协调者 #12 建议）；两个 PR 保持 open，M1 结项后统一评估 |
+| S6 | M2-T02 先行合入 `0002_marketdata.py`，与 T01 原计划的 `0002_identity.py` 形成 Alembic 多头 | T01 作为后合并者 rebase 到最新 `main`，迁移改名 `0003_identity` 且 `down_revision = "0002_marketdata"`；同步更新契约、任务卡、`docs/03`、`CHANGELOG`、`test_migrations.py` 的 head 断言；新增 `test_alembic_has_single_head` 回归用例。CI run `43188012509` 的 `MultipleHeads` 失败由此闭环 |
+| S7 | M2-T03 在 `pyproject.toml` 加 `yfinance` 依赖与 `app/modules/*/adapters/**` 的 TID251 豁免，并重写 `uv.lock` | T01 rebase 时保留 M2 全部改动，仅追加自己的 3 个依赖与 import-linter 契约；用 `uv lock` 重新生成合并后的 lock，不手工编辑 |
+| S8 | M2-T02 修改 `alembic/env.py` 注册 marketdata 表、删除 `tests/unit/modules/**/__init__.py` | T01 在 `env.py` 追加 `app.modules.identity.models` 注册（否则 `alembic check` 误报模型漂移）；测试侧跟随移除 `identity/__init__.py`，并把 `test_models.py` 改名为 `test_identity_models.py`，避免与 `tests/unit/modules/marketdata/test_models.py` 的模块名冲突 |
+| S9 | 0003 迁移给 `audit_log.user_id` 加了外键，但 M0 `AuditLog` 模型无此约束，`command.check` 会生成破坏性 `DROP CONSTRAINT` | T01 不改 M0 冻结文件与 M0 测试，在 `alembic/env.py` 用 `include_object` 钩子精确排除该反射外键；`test_env_registers_identity_models_and_exempts_audit_fk` 守卫 |
 
 ## 7. 附录 B：M1 数据来源与验证方式
 
