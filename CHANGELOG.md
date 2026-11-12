@@ -28,6 +28,7 @@
 - M2 数据服务 T06（#51）：`/api/v1/market/*` REST API 端点与路由接入，统一错误模型与 OpenAPI 契约
 - M2 数据服务 T07（#53）：全链路端到端集成验收测试 `test_marketdata_e2e.py`、NVDA 2024-06 10:1 拆股与复权验证、归档 `docs/acceptance/M2.md` 并标记 M2 里程碑结项
 - M1-T03（#38）：`adapters/password_hasher.py`（argon2id，参数常量化）、`adapters/token_codec.py`（HS256，claims 仅 `sub/role/iat/exp`，显式 `now` 判过期）、`adapters/mail.py`（`InMemoryMailSender` / `LoggingMailSender`，C1 不绑定外部服务商）、`security.py`（密码组合层与不透明令牌 SHA-256 摘要）、`tokens.py`（按 `ACCESS_TOKEN_TTL_SECONDS` 颁发 access）；第三方 SDK 的 `import` 仅存在于两个 adapter，失败统一收敛为 `UNAUTHENTICATED` / `TOKEN_EXPIRED` 且不泄露库异常文本
+- M1-T04（#39）：`IdentityService` 主链路（注册/登录/刷新/登出/access 校验）、`/api/v1/auth/{register,login,refresh,logout}` 四个端点、`app/api/deps.py`（Bearer 解析与 `current_user`）、Redis 登录失败限流（账号摘要键 + IP 键，429 带 `Retry-After`）、`auth.*` 审计；`docs/05 §2.1` 登记端点、成功码与错误映射（C2 路径基准）
 
 ### Changed
 - CI：Dependabot 三个 ecosystem 忽略 `semver-major` 升级，避免跨大版本 PR 反复破坏 `uv --frozen` 与固定 SHA 基线（#28/#29 留待 M1 结项后评估）

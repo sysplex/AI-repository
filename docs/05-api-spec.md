@@ -64,15 +64,25 @@ GET  /tasks/{task_id}/stream → SSE 推送进度（可选，前端可退化为�
 ## 2. 端点清单
 
 ### 2.1 认证与用户（M1）
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| POST | `/auth/register` | 注册 |
-| POST | `/auth/login` | 登录，返回 access/refresh |
-| POST | `/auth/refresh` | 刷新 |
-| POST | `/auth/logout` | 吊销刷新令牌 |
-| POST | `/auth/password/reset-request` `/reset-confirm` | 重置密码 |
-| GET/PATCH | `/me` | 个人信息与设置（风险偏好、语言） |
-| GET | `/me/usage` | 我的 AI 用量与配额 |
+
+> **路径基准（裁定 C2）**：本节及以下各节的路径均**相对 `/api/v1`**，完整地址为
+> `/api/v1` + 表中路径（如 `/api/v1/auth/login`）。响应遵循 §1.1 统一结构，
+> 错误码遵循 §1.2；认证失败一律 401，且不区分「账号不存在」与「密码错误」。
+
+| 方法 | 路径 | 成功 | 认证 | 说明 |
+|---|---|---|---|---|
+| POST | `/auth/register` | 201 `UserPublic` | 公开 | 注册；邮箱重复 409 `STATE_CONFLICT`，密码不满足复杂度 400 `VALIDATION_ERROR`；注册后**不自动登录** |
+| POST | `/auth/login` | 200 `TokenPair` | 公开 | 登录，返回 access/refresh；失败 401 `UNAUTHENTICATED`，超过 `LOGIN_RATE_LIMIT_MAX` 次 429 `RATE_LIMITED` + `Retry-After` |
+| POST | `/auth/refresh` | 200 `TokenPair` | refresh 令牌 | 轮换：旧 refresh 立即吊销，返回全新一对；失效 401，过期 401 `TOKEN_EXPIRED` |
+| POST | `/auth/logout` | 204 空 | Bearer access | 吊销提交的 refresh 令牌（幂等），需有效 access |
+| POST | `/auth/password/reset-request` | 202 `{"status":"accepted"}` | 公开 | 重置密码：无论账号是否存在都返回 202，不泄露枚举信息 |
+| POST | `/auth/password/reset-confirm` | 204 空 | 重置令牌 | 令牌一次性；成功后吊销该用户全部 refresh 令牌 |
+| GET | `/me` | 200 `UserPublic` | Bearer | 个人信息与设置（风险偏好、语言） |
+| PATCH | `/me` | 200 `UserPublic` | Bearer | 更新设置 |
+| GET | `/me/usage` | 200 `UsageResponse` | Bearer | 我的 AI 用量与配额（M1 只读，数据由 M6/M7 写入） |
+| GET | `/admin/users?page&page_size` | 200 `PaginatedUsers` | admin | 用户列表；非 admin 403 `FORBIDDEN` |
+
+实现归属：前 4 项由 M1-T04 交付，`/me*` 与 `/admin/users` 由 M1-T05，密码重置两项由 M1-T06。
 
 ### 2.2 行情与数据（M2）
 | 方法 | 路径 | 说明 |
