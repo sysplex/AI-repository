@@ -21,6 +21,12 @@ _REASONS: dict[str, str] = {
     "SECRET_KEY": "长度必须 ≥ 32 字符",
 }
 
+_CORS_WILDCARD_REASON = "CORS_ORIGINS: 启用凭据时不允许通配符 *，请列出明确来源"
+
+
+class _CorsWildcardError(ValueError):
+    """内部标记：cors_origins 含 `*`，供 `_problems_from` 生成专用提示。"""
+
 
 class SettingsError(Exception):
     """配置校验失败：消息含全部问题变量名与原因，不含任何输入值。"""
@@ -57,7 +63,11 @@ def _problems_from(exc: ValidationError) -> list[str]:
         if error.get("type") == "missing":
             problems.append(f"{env_name}: 缺失必填项")
         elif field == "cors_origins":
-            problems.append("CORS_ORIGINS: 需为 JSON 数组或逗号分隔字符串")
+            inner = error.get("ctx", {}).get("error")
+            if isinstance(inner, _CorsWildcardError):
+                problems.append(_CORS_WILDCARD_REASON)
+            else:
+                problems.append("CORS_ORIGINS: 需为 JSON 数组或逗号分隔字符串")
         elif field == "app_env":
             problems.append("APP_ENV: 必须是 local / ci / staging / production 之一")
         else:
@@ -126,6 +136,18 @@ class Settings(BaseSettings):
                 raise ValueError("cors_origins 必须是数组")
             return parsed
         return [item.strip() for item in text.split(",") if item.strip()]
+
+    @field_validator("cors_origins")
+    @classmethod
+    def _reject_cors_wildcard(cls, value: list[str]) -> list[str]:
+        """`install_middlewares` 固定 `allow_credentials=True`；`*` 会反射任意来源。
+
+        CORSMiddleware 在 allow_credentials=True 下遇到 `*` 会把请求 Origin 原样
+        回显，等同于允许任意站点携带凭据读取响应，故在配置层直接拒绝。
+        """
+        if any(origin.strip() == "*" for origin in value):
+            raise _CorsWildcardError("wildcard origin is unsafe with credentials")
+        return value
 
     @model_validator(mode="after")
     def _disable_docs_in_production(self) -> Settings:
