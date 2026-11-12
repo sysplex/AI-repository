@@ -53,7 +53,7 @@ gantt
 | 模块 | 状态 | 更新依据 |
 |---|---|---|
 | M0 地基 | ✅ Done | 2026-11-12 T11 归档 `docs/acceptance/M0.md` + tag `m0-foundation-v0.1.0` |
-| M1 用户与多租户 | 🚧 In Progress | 2026-11-12 T01 合并 PR #48 |
+| M1 用户与多租户 | ✅ Done | 2026-11-12 T07 归档 `docs/acceptance/M1.md` + tag `m1-identity-v0.2.0` |
 | M2 数据服务 | ✅ Done | 2026-11-12 T07 归档 `docs/acceptance/M2.md` |
 | M3–M10 | ☐ Todo | 各模块验收记录 `docs/acceptance/<module>.md` |
 

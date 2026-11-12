@@ -76,11 +76,11 @@
 - [ ] 迁移可升可降
 
 ### M1 用户与多租户
-- [ ] 注册→登录→刷新→登出流程正确，登出后刷新令牌失效
-- [ ] 登录失败限流生效
-- [ ] 越权测试覆盖全部私有端点
-- [ ] 审计日志记录登录/改密
-- [ ] 管理员接口仅管理员可访问
+- [x] 注册→登录→刷新→登出流程正确，登出后刷新令牌失效（`tests/integration/modules/identity/test_auth_flow.py`；CI 真实 Postgres）
+- [x] 登录失败限流生效（`test_login_rate_limit.py`：429 + `Retry-After` + TTL 落在窗口内）
+- [x] 越权测试覆盖全部私有端点（`test_tenant_isolation.py` 参数化矩阵 5 行 + `test_matrix_covers_every_private_endpoint` 同步守卫；两个 `/auth/password/*` 为公开/令牌认证，无租户维度）
+- [x] 审计日志记录登录/改密（`test_audit_actions.py` 断言 `auth.register/login/refresh/logout`；`test_password_reset.py` 断言 `auth.password_reset_requested` 与 `auth.password_changed`）
+- [x] 管理员接口仅管理员可访问（`test_admin_guard.py` 四态：匿名 401 / 普通 403 / admin 200 / 禁用 401）
 
 ### M2 数据服务
 - [ ] 契约测试通过（yfinance 适配器）
