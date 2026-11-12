@@ -3,6 +3,7 @@
 Provides domain models, provider ports, caching, and persistence for financial market data.
 """
 
+from app.modules.marketdata.cache import MarketDataCache
 from app.modules.marketdata.models import (
     AnalystRatings,
     Bar,
@@ -29,6 +30,7 @@ __all__ = [
     "FactsSnapshot",
     "FinancialStatements",
     "Fundamentals",
+    "MarketDataCache",
     "NewsItem",
     "Quote",
 ]
