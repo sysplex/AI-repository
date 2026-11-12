@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.logging import get_logger, request_id_var
+from app.core.middleware import SECURITY_HEADERS
 
 __all__ = [
     "AppError",
@@ -263,10 +264,16 @@ def _current_request_id() -> str | None:
 
 
 def _resolve_request_id(request: Request) -> str | None:
-    """优先取 ContextVar；ServerErrorMiddleware 位于请求中间件栈之外，
-    未捕获异常在 ContextVar 设置之前抛出，因此回退读取合法的请求头，
-    保证 500 响应仍可追踪（与 docs/05 §1「请求追踪」一致）。
+    """按「scope state → ContextVar → 合法请求头」的顺序恢复 request_id。
+
+    ServerErrorMiddleware 位于 RequestContextMiddleware 之外，未捕获异常传播到
+    500 handler 时 ContextVar 已被 finally 里的 reset 清掉；middleware 在同一
+    scope 的 ``state`` 里留了一份稳定的 ID，保证服务端生成与客户端带上的 ID
+    都能被找回（M0-F1）。
     """
+    state_value = getattr(request.state, "request_id", None)
+    if isinstance(state_value, str) and state_value:
+        return state_value
     current = _current_request_id()
     if current is not None:
         return current
@@ -352,22 +359,29 @@ async def _http_exception_handler(request: Request, exc: Exception) -> JSONRespo
 
 async def _unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """未捕获异常：对外固定文案，对内用 get_logger 记录完整堆栈与 request_id。"""
+    resolved = _resolve_request_id(request)
     logger = get_logger("app.errors")
     logger.error(
         "unhandled_exception",
         exc_info=(type(exc), exc, exc.__traceback__),
-        request_id=_resolve_request_id(request),
+        request_id=resolved,
         path=request.url.path,
         method=request.method,
         exception_type=type(exc).__name__,
     )
+    # ServerErrorMiddleware 在最外层，绕过 RequestContextMiddleware 与
+    # SecurityHeadersMiddleware 的 send_wrapper；这里直接补齐追踪头与安全头。
+    headers: dict[str, str] = {name: value for name, value in SECURITY_HEADERS}
+    if resolved is not None:
+        headers["X-Request-ID"] = resolved
     return JSONResponse(
         status_code=500,
         content=_payload(
             ErrorCode.INTERNAL_ERROR,
             DEFAULT_MESSAGES[ErrorCode.INTERNAL_ERROR],
-            request_id=_resolve_request_id(request),
+            request_id=resolved,
         ),
+        headers=headers,
     )
 
 

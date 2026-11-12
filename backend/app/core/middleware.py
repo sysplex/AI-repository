@@ -2,12 +2,15 @@
 
 T07 在本文件「指标中间件插入点」补唯一一行 `install_metrics(app, settings)`
 调用；T02 只留注释，不得自行调用。
+
+M0-F1：``SECURITY_HEADERS`` 公开给 ``app.core.errors`` 的 500 handler 复用，
+``RequestContextMiddleware`` 同时把 request_id 写进 ``scope["state"]``。
 """
 
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 from uuid import uuid4
 
 from starlette.datastructures import Headers, MutableHeaders
@@ -21,9 +24,16 @@ if TYPE_CHECKING:
 
     from app.core.config import Settings
 
+__all__ = [
+    "SECURITY_HEADERS",
+    "RequestContextMiddleware",
+    "SecurityHeadersMiddleware",
+    "install_middlewares",
+]
+
 _access_log = get_logger("app.access")
 
-_SECURITY_HEADERS: tuple[tuple[str, str], ...] = (
+SECURITY_HEADERS: tuple[tuple[str, str], ...] = (
     ("X-Content-Type-Options", "nosniff"),
     ("X-Frame-Options", "DENY"),
     ("Referrer-Policy", "no-referrer"),
@@ -60,6 +70,11 @@ class RequestContextMiddleware:
         else:
             request_id = str(uuid4())
         token = request_id_var.set(request_id)
+        # ServerErrorMiddleware 位于本中间件之外：未捕获异常传播到 500 handler 时
+        # ContextVar 已被 finally 里的 reset 清掉。scope 是同一个对象，这里留一份
+        # 稳定的 request_id，供 app.core.errors._unhandled_exception_handler 读取。
+        state = cast(dict[str, Any], scope.setdefault("state", {}))
+        state["request_id"] = request_id
         status_code = 500
         started = time.perf_counter()
 
@@ -98,7 +113,7 @@ class SecurityHeadersMiddleware:
         async def send_wrapper(message: Message) -> None:
             if message["type"] == "http.response.start":
                 headers = MutableHeaders(scope=message)
-                for name, value in _SECURITY_HEADERS:
+                for name, value in SECURITY_HEADERS:
                     headers[name] = value
             await send(message)
 
