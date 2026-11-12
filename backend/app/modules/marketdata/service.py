@@ -367,10 +367,16 @@ class DataService:
                             symbol=fundamentals.symbol,
                             as_of=fundamentals.as_of,
                             pe_trailing=fundamentals.pe_trailing,
+                            pe_forward=fundamentals.pe_forward,
                             pb=fundamentals.pb,
                             ps=fundamentals.ps,
+                            roe=fundamentals.roe,
+                            net_margin=fundamentals.net_margin,
+                            debt_to_equity=fundamentals.debt_to_equity,
                             market_cap=fundamentals.market_cap,
-                            metrics=fundamentals.model_dump(mode="json"),
+                            dividend_yield=fundamentals.dividend_yield,
+                            beta=fundamentals.beta,
+                            missing_fields=fundamentals.missing_fields,
                         )
                     )
                 await session.commit()
