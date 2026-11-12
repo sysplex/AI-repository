@@ -12,13 +12,26 @@ import sys
 from functools import lru_cache
 from typing import Annotated, Any, Literal
 
-from pydantic import SecretStr, ValidationError, field_validator, model_validator
+from pydantic import (
+    SecretStr,
+    ValidationError,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 _REASONS: dict[str, str] = {
     "DATABASE_URL": "必须以 postgresql+asyncpg:// 开头",
     "REDIS_URL": "必须以 redis:// 或 rediss:// 开头",
     "SECRET_KEY": "长度必须 ≥ 32 字符",
+    # M1-T01：所有时限/阈值必须为正整数，失败提示沿用「变量名 + 原因」格式。
+    "ACCESS_TOKEN_TTL_SECONDS": "必须为正整数",
+    "REFRESH_TOKEN_TTL_SECONDS": "必须为正整数",
+    "PASSWORD_RESET_TTL_SECONDS": "必须为正整数",
+    "LOGIN_RATE_LIMIT_MAX": "必须为正整数",
+    "LOGIN_RATE_LIMIT_WINDOW_SECONDS": "必须为正整数",
+    "AI_DAILY_QUOTA": "必须为非负整数",
 }
 
 _CORS_WILDCARD_REASON = "CORS_ORIGINS: 启用凭据时不允许通配符 *，请列出明确来源"
@@ -99,6 +112,37 @@ class Settings(BaseSettings):
     cors_origins: Annotated[list[str], NoDecode()] = []
     metrics_enabled: bool = True
     docs_enabled: bool = True  # production 下默认关闭，由部署环境变量覆盖
+
+    # M1-T01（CONTRACTS §2）：全部可选，不破坏 M0 的三必填变量语义。
+    jwt_algorithm: Literal["HS256"] = "HS256"
+    access_token_ttl_seconds: int = 900
+    refresh_token_ttl_seconds: int = 2592000
+    password_reset_ttl_seconds: int = 3600
+    login_rate_limit_max: int = 5
+    login_rate_limit_window_seconds: int = 60
+    ai_daily_quota: int = 20
+
+    @field_validator(
+        "access_token_ttl_seconds",
+        "refresh_token_ttl_seconds",
+        "password_reset_ttl_seconds",
+        "login_rate_limit_max",
+        "login_rate_limit_window_seconds",
+    )
+    @classmethod
+    def _check_positive_int(cls, value: int, info: ValidationInfo) -> int:
+        """令牌时限与限流阈值必须 > 0；字段名由 _problems_from 转成环境变量名。"""
+        if value <= 0:
+            raise ValueError(f"{info.field_name} 必须为正整数")
+        return value
+
+    @field_validator("ai_daily_quota")
+    @classmethod
+    def _check_non_negative_int(cls, value: int) -> int:
+        """配额允许 0（禁用 AI），但不得为负。"""
+        if value < 0:
+            raise ValueError("ai_daily_quota 必须为非负整数")
+        return value
 
     @field_validator("database_url")
     @classmethod

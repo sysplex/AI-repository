@@ -133,13 +133,14 @@ erDiagram
 
 ## 3. 表清单
 
-### 3.1 用户与安全
+### 3.1 用户与安全（M1 identity，字段与约束见 `docs/tasks/M1/CONTRACTS.md §3`）
 | 表 | 关键字段 | 说明 |
 |---|---|---|
-| `users` | email, password_hash, role, status, settings | settings 存风险偏好、语言、默认账户 |
-| `refresh_tokens` | user_id, token_hash, expires_at, revoked | 刷新令牌，可吊销 |
-| `audit_log` | user_id, action, entity, entity_id, ip, detail, created_at | 只增不改 |
-| `ai_usage` | user_id, date, calls, tokens_in, tokens_out, cost_usd | 配额与成本统计，按日聚合 |
+| `users` | id(UUID PK), email(唯一), password_hash(argon2), role, status, settings(JSONB), created_at/updated_at | settings 存风险偏好、语言、默认账户；email 规范化为小写 |
+| `refresh_tokens` | id, user_id(FK `users` CASCADE), token_hash(SHA-256，唯一), expires_at, revoked_at, created_at/updated_at | 刷新令牌；只存摘要，`revoked_at` 保证即时吊销 |
+| `password_reset_tokens` | id, user_id(FK `users` CASCADE), token_hash(SHA-256，唯一), expires_at, used_at, created_at/updated_at | 密码重置一次性令牌（M1 裁定 C3），只存摘要 |
+| `audit_log` | user_id(FK `users` SET NULL), action, entity, entity_id, ip, detail, created_at | 只增不改；M0 迁移未加外键，由 M1 的 `0003_identity`（接在 M2 `0002_marketdata` 之后）补上并清理历史孤儿行 |
+| `ai_usage` | id, user_id(FK `users` CASCADE), usage_date, calls, tokens_in, tokens_out, cost_usd(Numeric 18,6), created_at/updated_at | 配额与成本统计，按 `(user_id, usage_date)` 唯一；**M1 只读**，写入与扣减属 M5（裁定 C6） |
 
 ### 3.2 共享行情与快照（无 user_id）
 | 表 | 主键/索引 | 说明 |

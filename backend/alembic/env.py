@@ -8,12 +8,14 @@
 from __future__ import annotations
 
 import asyncio
+from typing import Any
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 import app.core.audit  # noqa: F401  # 导入以把 AuditLog 注册到 Base.metadata
+import app.modules.identity.models  # noqa: F401  # M1-T01：注册 identity 四表，供 alembic check 比对
 import app.modules.marketdata.tables  # noqa: F401  # 导入以把 marketdata 表注册到 Base.metadata
 from alembic import context
 from app.core.config import get_settings
@@ -29,6 +31,26 @@ config.set_main_option("sqlalchemy.url", get_settings().database_url.replace("%"
 target_metadata = Base.metadata
 
 
+def include_object(
+    obj: Any, name: str | None, type_: str, reflected: bool, compare_to: Any
+) -> bool:
+    """接缝 S1：让 autogenerate 忽略只在库里存在的 audit_log.user_id 外键。
+
+    M0 冻结的 `app/core/audit.py` 刻意不声明该外键（users 表到 M1 才存在），
+    而 `0003_identity` 已在库里建出 `fk_audit_log_user_id_users`。若照常比对，
+    autogenerate 会把它当成「多余约束」生成破坏性的 `DROP CONSTRAINT`，
+    使 `alembic check` / `test_upgrade_downgrade_upgrade_and_check` 失败。
+    这里用 Alembic 官方的 include_object 钩子精确排除这一条约束，
+    不影响其它表、列、索引、约束的漂移检测。
+    """
+    return not (
+        type_ == "foreign_key_constraint"
+        and reflected
+        and name == "fk_audit_log_user_id_users"
+        and getattr(getattr(obj, "table", None), "name", None) == "audit_log"
+    )
+
+
 def run_migrations_offline() -> None:
     """离线模式：只生成 SQL，不连接数据库。"""
     context.configure(
@@ -37,6 +59,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        include_object=include_object,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -48,6 +71,7 @@ def do_run_migrations(connection: Connection) -> None:
         connection=connection,
         target_metadata=target_metadata,
         compare_type=True,
+        include_object=include_object,
     )
     with context.begin_transaction():
         context.run_migrations()

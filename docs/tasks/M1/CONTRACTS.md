@@ -36,7 +36,7 @@ class Settings(BaseSettings):
 
 `field_validator` 保证三个 TTL、窗口与 `max` 均为正整数；校验失败沿用 `SettingsError` 的「变量名 + 原因」格式。JWT 签名密钥复用 `settings.secret_key.get_secret_value()`（C4）。
 
-## 3. 数据模型（`models.py` / `0002_identity.py`）
+## 3. 数据模型（`models.py` / `0003_identity.py`）
 
 所有表继承 `app.core.db.Base` / `UUIDPkMixin` / `TimestampMixin`；时间列 `DateTime(timezone=True)`，主键 `gen_random_uuid()`。
 
@@ -47,9 +47,11 @@ class Settings(BaseSettings):
 | `password_reset_tokens` | `user_id`(Uuid, FK `users.id` ON DELETE CASCADE)、`token_hash`(String(64), unique)、`expires_at`、`used_at`(nullable)、`created_at` | `ix_password_reset_tokens_user_id` |
 | `ai_usage` | `user_id`(Uuid, FK `users.id` ON DELETE CASCADE)、`usage_date`(Date)、`calls`/`tokens_in`/`tokens_out`(Integer, default 0)、`cost_usd`(Numeric(18,6), default 0) | `uq(user_id, usage_date)`；M1 只读（C6） |
 
-- `0002_identity.py`：`revision = "0002_identity"`，`down_revision = "0001_initial"`；`upgrade()` 建 4 表 + 索引，并为 `audit_log.user_id` 补外键 `fk_audit_log_user_id_users`（`ON DELETE SET NULL`，接缝 S1）；`downgrade()` 反向且完整可逆。
+- `0003_identity.py`：`revision = "0003_identity"`，`down_revision = "0002_marketdata"`；`upgrade()` 建 4 表 + 索引，并为 `audit_log.user_id` 补外键 `fk_audit_log_user_id_users`（`ON DELETE SET NULL`，接缝 S1）；`downgrade()` 反向且完整可逆。
+- **并行里程碑修订**：M2-T02 已先行合入同样基于 `0001_initial` 的 `0002_marketdata.py`。M1 为后合并者，按 `README.md §6 S1` / 审计锚点 #12 的约定把本迁移顺延为 0003 并挂在 `0002_marketdata` 之后，避免 Alembic 多头。`alembic/env.py` 同时注册 `app.modules.identity.models`，保证 `alembic check` 不误报模型漂移；`tests/integration/core/test_migrations.py` 的单一 head 断言相应改为 `0003_identity`。
+- **`command.check` 接缝**：M0 冻结的 `app/core/audit.py` 不声明 `user_id` 外键，而本迁移会建出 `fk_audit_log_user_id_users`。`alembic/env.py` 用 `include_object` 钩子精确排除这条「只在库里存在」的反射约束，避免 autogenerate 生成破坏性 `DROP CONSTRAINT`；M0 模型、M0 测试均不改动，其余对象仍正常比对。
 - 迁移前置检查：`audit_log` 若存在 `user_id` 非 NULL 且不在 `users` 中的历史行，先置 NULL 再加外键（M0 冒烟写的行无真实用户）。
-- **禁止**修改 `0001_initial.py`；**禁止**在 T02–T07 新增迁移。
+- **禁止**修改 `0001_initial.py`；**禁止**在 T02–T07 新增迁移；M2 后续迁移须从 `0003_identity` 继续编号（0004 起），不得再占用 0003。
 
 ## 4. 领域 schema（`schemas.py`）
 
