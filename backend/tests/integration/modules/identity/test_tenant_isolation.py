@@ -77,14 +77,20 @@ async def _make_actor(client: AsyncClient, email: str) -> Actor:
     return Actor(created, pair)
 
 
-async def _case_get_me(client: AsyncClient, other: Actor, mine: Actor) -> None:
+async def _case_get_me(
+    client: AsyncClient, session: AsyncSession, other: Actor, mine: Actor
+) -> None:
+    del session
     response = await client.get("/api/v1/me", headers=mine.headers())
     assert response.status_code == 200
     assert response.json()["id"] == str(mine.id)
     other.assert_hidden(response.text)
 
 
-async def _case_patch_me(client: AsyncClient, other: Actor, mine: Actor) -> None:
+async def _case_patch_me(
+    client: AsyncClient, session: AsyncSession, other: Actor, mine: Actor
+) -> None:
+    del session
     response = await client.patch(
         "/api/v1/me",
         headers=mine.headers(),
@@ -134,15 +140,21 @@ async def _case_usage(
     other.assert_hidden(response.text)
 
 
-async def _case_admin_users(client: AsyncClient, other: Actor, mine: Actor) -> None:
+async def _case_admin_users(
+    client: AsyncClient, session: AsyncSession, other: Actor, mine: Actor
+) -> None:
+    del session
     response = await client.get("/api/v1/admin/users", headers=mine.headers())
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "FORBIDDEN"
     other.assert_hidden(response.text)
 
 
-async def _case_logout(client: AsyncClient, other: Actor, mine: Actor) -> None:
+async def _case_logout(
+    client: AsyncClient, session: AsyncSession, other: Actor, mine: Actor
+) -> None:
     """A 用自己的 access 提交 B 的 refresh：不得吊销 B 的令牌。"""
+    del session
     response = await client.post(
         "/api/v1/auth/logout",
         headers=mine.headers(),
