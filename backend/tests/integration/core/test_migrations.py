@@ -69,7 +69,7 @@ def test_upgrade_downgrade_upgrade_and_check(test_database_url: str) -> None:
     command.downgrade(config, "base")
     command.upgrade(config, "head")
     versions = asyncio.run(_query(test_database_url, "SELECT version_num FROM alembic_version"))
-    assert versions == [("0001_initial",)]
+    assert versions == [("0002_marketdata",)]
 
     command.downgrade(config, "base")
     tables = asyncio.run(
@@ -120,7 +120,12 @@ def test_migrated_schema_and_indexes(test_database_url: str) -> None:
 
 def test_migration_file_has_no_hardcoded_credentials() -> None:
     """迁移与 env.py 不得含硬编码连接串/口令。"""
-    for path in (INI_PATH, ALEMBIC_DIR / "env.py", ALEMBIC_DIR / "versions" / "0001_initial.py"):
+    for path in (
+        INI_PATH,
+        ALEMBIC_DIR / "env.py",
+        ALEMBIC_DIR / "versions" / "0001_initial.py",
+        ALEMBIC_DIR / "versions" / "0002_marketdata.py",
+    ):
         content = path.read_text(encoding="utf-8")
         assert "postgresql+asyncpg://" not in content
         assert "sqlalchemy.url =" not in content
