@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Any
 
@@ -18,14 +17,10 @@ from app.core.config import (
     mask_redis_url,
 )
 
-# T02 阶段切换点兼容（见 PR「假设与偏差」）：CONTRACTS §2 自本任务起要求三个
-# 必填变量，而 T01 的 tests/unit/test_smoke.py 会在收集期导入 app.main（模块级
-# `app = create_app()`）。这两个文件都归 T01，T02 无权修改。本模块在收集顺序上
-# 早于 test_smoke.py，故在此提供**仅测试进程内的占位值**（非真实凭据），让既有
-# 冒烟测试仍可收集；各测试由 _isolated fixture 显式清理并验证缺失场景。
-os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test@db/app")
-os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
-os.environ.setdefault("SECRET_KEY", "t" * 40)
+# 收集期导入 `app.main`（模块级 `app = create_app()`）所需的三个必填变量，
+# 已由 T10 的 `tests/conftest.py` 在收集前统一提供；T02 阶段为本模块写的
+# `os.environ.setdefault` 兼容兜底由此成为无副作用冗余，按 M0-F3（Issue #26）移除。
+# 各测试仍由 `_isolated` fixture 显式清理环境变量并验证缺失场景。
 
 _PWD = "h" * 12
 _SECRET = "s" * 40

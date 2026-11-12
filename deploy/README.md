@@ -126,6 +126,7 @@ $COMPOSE up -d --build
 5. **备份**：`pgdata` 是命名卷，至少每日 `pg_dump -Fc` 到独立存储；Redis 仅作队列/缓存，AOF 用于缩短重启后的任务积压。
 6. **升级**：`migrate` 用 `alembic upgrade head`；回滚遵循 `backend/alembic/README.md` 的「先加后删、禁止在线重命名」约定，不要依赖 `downgrade` 处理生产数据。
 7. **健康检查**：编排层用 `/readyz`（依赖就绪）而不是 `/healthz` 做流量摘除，`/healthz` 只用于存活探测。
+8. **转发头信任前提**：镜像 CMD 里的 `--forwarded-allow-ips "*"` 仅在 `api` 不直接对外发布端口时才安全——当前 compose 只有 `nginx` 发布 `${NGINX_PORT:-8080}:80`，`api` 仅在 `backend` 网络 `expose 8000`，流量必经 nginx 且由 nginx 重写转发头。若日后把 `api:8000` 直接映射到宿主或公网，必须把 `*` 换成可信代理的具体 IP/网段，否则客户端可伪造 `X-Forwarded-For` / `X-Forwarded-Proto`。
 
 ## 8. 与 Makefile 的对应关系
 
