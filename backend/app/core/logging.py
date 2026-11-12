@@ -32,7 +32,6 @@ _HANDLER_FLAG = "_stockpilot_structlog_handler"
 _BRIDGED_LOGGERS = (
     "uvicorn",
     "uvicorn.error",
-    "uvicorn.access",
     "sqlalchemy.engine",
     "arq",
 )
@@ -95,6 +94,15 @@ def setup_logging(settings: Settings) -> None:
         external.propagate = True
         for existing in list(external.handlers):
             external.removeHandler(existing)
+
+    # 访问日志由 RequestContextMiddleware 统一输出 `http.access`（带 request_id）。
+    # uvicorn 依据 `uvicorn.access` 的 hasHandlers() 决定是否额外打一条，故这里
+    # 断开该 logger 的传播并清空 handler：既消除重复行，也让 `Dockerfile` 的
+    # --no-access-log 真正生效（T11 接缝修复，见 docs/acceptance/M0.md）。
+    access_logger = logging.getLogger("uvicorn.access")
+    for existing in list(access_logger.handlers):
+        access_logger.removeHandler(existing)
+    access_logger.propagate = False
 
     structlog.configure(
         processors=[

@@ -52,7 +52,7 @@ gantt
 
 | 模块 | 状态 | 更新依据 |
 |---|---|---|
-| M0 地基 | ☐ Todo | T11 `docs/acceptance/M0.md` 归档 + tag `m0-foundation-v0.1.0` |
+| M0 地基 | ✅ Done | 2026-11-12 T11 归档 `docs/acceptance/M0.md` + tag `m0-foundation-v0.1.0` |
 | M1–M10 | ☐ Todo | 各模块验收记录 `docs/acceptance/<module>.md` |
 
 **原则**：M0–M5 是地基，质量不达标不进入 M6+。M6–M8 本质是"新增一个提示词/策略 + 一个接口"，扩展成本低。
