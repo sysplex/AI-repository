@@ -125,12 +125,7 @@ async def test_full_reset_flow_changes_password_and_revokes_sessions(
     assert confirmed.status_code == 204
     assert confirmed.text == ""
 
-    assert (await _login(client, email)).status_code == 401
-    assert (await _login(client, email, _NEW_PASSWORD)).status_code == 200
-
-    rejected = await client.post(_REFRESH, json={"refresh_token": old_refresh})
-    assert rejected.status_code == 401
-
+    # 审计快照要在后续登录尝试之前取：成功登录本身也会写一条 auth.login。
     assert await _audit_actions(db_session, user_id) == [
         "auth.register",
         "auth.login",
@@ -141,6 +136,12 @@ async def test_full_reset_flow_changes_password_and_revokes_sessions(
     assert len(rows) == 1
     assert rows[0].used_at is not None
     assert rows[0].token_hash != token
+
+    assert (await _login(client, email)).status_code == 401
+    assert (await _login(client, email, _NEW_PASSWORD)).status_code == 200
+
+    rejected = await client.post(_REFRESH, json={"refresh_token": old_refresh})
+    assert rejected.status_code == 401
 
 
 async def test_reset_request_hides_account_existence(
