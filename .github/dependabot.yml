@@ -9,6 +9,10 @@ updates:
       time: "03:00"
       timezone: "Asia/Shanghai"
     open-pull-requests-limit: 5
+    # 协调者 #12：M0 冻结 uv --frozen 可复现基线，跨大版本升级留待里程碑结项后统一评估。
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "chore(deps)"
     groups:
@@ -27,6 +31,10 @@ updates:
       time: "03:30"
       timezone: "Asia/Shanghai"
     open-pull-requests-limit: 3
+    # Action 固定 commit SHA；major 升级需逐个核对权限与表达式，忽略自动 PR。
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "chore(ci)"
     # Action 已固定到 commit SHA，dependabot 会同时更新 SHA 与注释里的版本号。
@@ -42,5 +50,9 @@ updates:
       time: "04:00"
       timezone: "Asia/Shanghai"
     open-pull-requests-limit: 3
+    # 基础镜像 major 升级需同步验证 Dockerfile 与 compose，忽略自动 PR。
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "chore(docker)"
