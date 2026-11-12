@@ -393,3 +393,69 @@ async def test_request_id_follows_context_var() -> None:
         assert _decode(response)["error"]["request_id"] == "context-value"
     finally:
         request_id_var.reset(token)
+
+
+async def test_500_response_echoes_request_id_and_security_headers(
+    client: httpx.AsyncClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    """M0-F1：500 由最外层 ServerErrorMiddleware 处理，仍需回写追踪头与安全头。"""
+    from app.core.middleware import SECURITY_HEADERS
+
+    with caplog.at_level(logging.ERROR):
+        response = await client.get("/boom", headers={"X-Request-ID": "f1-trace"})
+    assert response.status_code == 500
+    assert response.headers["X-Request-ID"] == "f1-trace"
+    assert response.json()["error"]["request_id"] == "f1-trace"
+    for name, value in SECURITY_HEADERS:
+        assert response.headers[name] == value
+    assert "f1-trace" in caplog.text
+    assert "RuntimeError" not in response.text
+    assert "division-by-zero-secret" not in response.text
+
+
+async def test_500_generated_request_id_is_consistent_across_header_body_and_logs(
+    client: httpx.AsyncClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    """M0-F1：不带追踪头时，服务端 UUID4 在响应头、响应体、访问日志三处一致。"""
+    import uuid
+
+    from app.core.middleware import SECURITY_HEADERS
+
+    with caplog.at_level(logging.INFO):
+        response = await client.get("/boom")
+    assert response.status_code == 500
+    generated = response.headers.get("X-Request-ID")
+    assert generated is not None
+    assert str(uuid.UUID(generated)) == generated
+    assert response.json()["error"]["request_id"] == generated
+    for name, value in SECURITY_HEADERS:
+        assert response.headers[name] == value
+    access_records = [record for record in caplog.records if "http.access" in record.getMessage()]
+    assert access_records, "访问日志未捕获"
+    assert generated in access_records[-1].getMessage()
+
+
+async def test_resolve_request_id_prefers_scope_state() -> None:
+    """M0-F1：scope state 优先于 ContextVar 与请求头，保证 500 场景拿到同一个 ID。"""
+    from starlette.requests import Request
+
+    from app.core.errors import _resolve_request_id
+
+    scope: dict[str, Any] = {
+        "type": "http",
+        "method": "GET",
+        "path": "/boom",
+        "root_path": "",
+        "scheme": "http",
+        "query_string": b"",
+        "headers": [(b"x-request-id", b"header-rid")],
+        "server": ("testserver", 80),
+        "client": ("testclient", 1234),
+        "http_version": "1.1",
+        "state": {"request_id": "state-rid"},
+    }
+    token = request_id_var.set("ctx-rid")
+    try:
+        assert _resolve_request_id(Request(scope)) == "state-rid"
+    finally:
+        request_id_var.reset(token)
