@@ -27,6 +27,7 @@
 - M2 数据服务 T05（#50）：DataService 核心编排服务与 AI 事实快照（build_facts），确定性规范化 JSON + SHA-256 哈希与 missing_fields 追踪
 - M2 数据服务 T06（#51）：`/api/v1/market/*` REST API 端点与路由接入，统一错误模型与 OpenAPI 契约
 - M2 数据服务 T07（#53）：全链路端到端集成验收测试 `test_marketdata_e2e.py`、NVDA 2024-06 10:1 拆股与复权验证、归档 `docs/acceptance/M2.md` 并标记 M2 里程碑结项
+- M1-T03（#38）：`adapters/password_hasher.py`（argon2id，参数常量化）、`adapters/token_codec.py`（HS256，claims 仅 `sub/role/iat/exp`，显式 `now` 判过期）、`adapters/mail.py`（`InMemoryMailSender` / `LoggingMailSender`，C1 不绑定外部服务商）、`security.py`（密码组合层与不透明令牌 SHA-256 摘要）、`tokens.py`（按 `ACCESS_TOKEN_TTL_SECONDS` 颁发 access）；第三方 SDK 的 `import` 仅存在于两个 adapter，失败统一收敛为 `UNAUTHENTICATED` / `TOKEN_EXPIRED` 且不泄露库异常文本
 
 ### Changed
 - CI：Dependabot 三个 ecosystem 忽略 `semver-major` 升级，避免跨大版本 PR 反复破坏 `uv --frozen` 与固定 SHA 基线（#28/#29 留待 M1 结项后评估）
