@@ -1,1 +1,34 @@
-"""`marketdata` 模块（M0 空包，由后续里程碑填充）。"""
+"""Market data module (M2).
+
+Provides domain models, provider ports, caching, and persistence for financial market data.
+"""
+
+from app.modules.marketdata.models import (
+    AnalystRatings,
+    Bar,
+    CompanyProfile,
+    CorporateAction,
+    EarningsEvent,
+    EarningsHistory,
+    FactsSnapshot,
+    FinancialStatements,
+    Fundamentals,
+    NewsItem,
+    Quote,
+)
+from app.modules.marketdata.ports import DataProvider
+
+__all__ = [
+    "AnalystRatings",
+    "Bar",
+    "CompanyProfile",
+    "CorporateAction",
+    "DataProvider",
+    "EarningsEvent",
+    "EarningsHistory",
+    "FactsSnapshot",
+    "FinancialStatements",
+    "Fundamentals",
+    "NewsItem",
+    "Quote",
+]
