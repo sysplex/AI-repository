@@ -14,6 +14,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 import app.core.audit  # noqa: F401  # 导入以把 AuditLog 注册到 Base.metadata
+import app.modules.marketdata.tables  # noqa: F401  # 导入以把 marketdata 表注册到 Base.metadata
 from alembic import context
 from app.core.config import get_settings
 from app.core.db import Base
