@@ -30,6 +30,7 @@
 - M1-T03（#38）：`adapters/password_hasher.py`（argon2id，参数常量化）、`adapters/token_codec.py`（HS256，claims 仅 `sub/role/iat/exp`，显式 `now` 判过期）、`adapters/mail.py`（`InMemoryMailSender` / `LoggingMailSender`，C1 不绑定外部服务商）、`security.py`（密码组合层与不透明令牌 SHA-256 摘要）、`tokens.py`（按 `ACCESS_TOKEN_TTL_SECONDS` 颁发 access）；第三方 SDK 的 `import` 仅存在于两个 adapter，失败统一收敛为 `UNAUTHENTICATED` / `TOKEN_EXPIRED` 且不泄露库异常文本
 - M1-T04（#39）：`IdentityService` 主链路（注册/登录/刷新/登出/access 校验）、`/api/v1/auth/{register,login,refresh,logout}` 四个端点、`app/api/deps.py`（Bearer 解析与 `current_user`）、Redis 登录失败限流（账号摘要键 + IP 键，429 带 `Retry-After`）、`auth.*` 审计；`docs/05 §2.1` 登记端点、成功码与错误映射（C2 路径基准）
 - M1-T05（#40）：`/me`（GET/PATCH）、`/me/usage`、`/admin/users` 四个端点与 `require_role` 依赖；设置项往返与 `auth.settings_updated` 审计、当日用量只读视图（`quota` 取 `AI_DAILY_QUOTA`、`cost_usd` 字符串化）、admin 分页守卫；新增覆盖全部私有端点的越权矩阵、管理员四态（匿名/普通/管理员/禁用）与矩阵同步守卫测试
+- M1-T06（#41）：密码重置闭环 `POST /auth/password/{reset-request,reset-confirm}`；`request_password_reset` 对不存在/禁用账号静默放行（同 202 响应体，不写库不发信）、`confirm_password_reset` 一次性令牌 → 吊销全部 refresh → 改密 → 写 `auth.password_changed` 审计；`make_mail_sender` 按 `APP_ENV` 选投递实现（`ci` 用内存、其余用日志并打 error 标记），Q3 拍板前不绑定任何外部邮件服务商
 
 ### Changed
 - CI：Dependabot 三个 ecosystem 忽略 `semver-major` 升级，避免跨大版本 PR 反复破坏 `uv --frozen` 与固定 SHA 基线（#28/#29 留待 M1 结项后评估）
