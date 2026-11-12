@@ -18,6 +18,7 @@ from app.modules.marketdata.models import (
     Quote,
 )
 from app.modules.marketdata.ports import DataProvider
+from app.modules.marketdata.service import DataService
 
 __all__ = [
     "AnalystRatings",
@@ -25,6 +26,7 @@ __all__ = [
     "CompanyProfile",
     "CorporateAction",
     "DataProvider",
+    "DataService",
     "EarningsEvent",
     "EarningsHistory",
     "FactsSnapshot",
