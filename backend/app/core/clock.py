@@ -6,8 +6,11 @@
 
 from __future__ import annotations
 
+import os
 from datetime import UTC, datetime, timedelta
 from typing import Protocol, runtime_checkable
+
+NEGATIVE_PROBE: int = "not-an-int"
 
 __all__ = [
     "Clock",
