@@ -1,0 +1,4 @@
+{
+  "sp500": ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA", "BRK-B", "JPM", "V"],
+  "nasdaq100": ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA", "COST", "AVGO", "ADBE"]
+}

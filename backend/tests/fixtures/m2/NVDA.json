@@ -1,0 +1,98 @@
+{
+  "symbol": "NVDA",
+  "quote": {
+    "price": "145.50",
+    "change": "3.20",
+    "change_pct": "2.25",
+    "volume": 68500000,
+    "as_of": "2026-11-10T20:00:00Z",
+    "delayed_seconds": 0,
+    "stale": false
+  },
+  "profile": {
+    "name": "NVIDIA Corporation",
+    "exchange": "NASDAQ",
+    "sector": "Technology",
+    "industry": "Semiconductors",
+    "description": "NVIDIA pioneered GPU-accelerated computing and leads modern AI hardware architecture.",
+    "website": "https://www.nvidia.com",
+    "employees": 29600,
+    "country": "US"
+  },
+  "fundamentals": {
+    "as_of": "2026-11-01",
+    "pe_trailing": "58.4",
+    "pe_forward": "38.2",
+    "pb": "42.1",
+    "ps": "26.3",
+    "roe": "1.15",
+    "net_margin": "0.55",
+    "debt_to_equity": "0.18",
+    "market_cap": "3500000000000",
+    "dividend_yield": "0.0003",
+    "beta": "1.68",
+    "missing_fields": []
+  },
+  "financial_statements": {
+    "period_end": "2026-01-31",
+    "balance_sheet": { "total_assets": 115000000000, "total_liabilities": 25000000000 },
+    "income_statement": { "total_revenue": 120000000000, "net_income": 65000000000 },
+    "cash_flow": { "operating_cash_flow": 70000000000 }
+  },
+  "earnings": [
+    {
+      "report_date": "2024-05-22",
+      "eps_estimated": "5.59",
+      "eps_actual": "6.12",
+      "revenue_estimated": "24650000000",
+      "revenue_actual": "26040000000",
+      "reaction_1d_pct": "9.32"
+    }
+  ],
+  "news": [
+    {
+      "id": "nvda-news-1",
+      "title": "NVIDIA Blackwell AI Architecture Ramps Global Shipments",
+      "summary": "Next-gen Blackwell platforms see surging enterprise and sovereign cloud demand.",
+      "source": "TechCrunch",
+      "url": "https://example.com/nvda/1",
+      "published_at": "2026-11-10T16:00:00Z"
+    }
+  ],
+  "analyst_ratings": {
+    "as_of": "2026-11-01",
+    "consensus_rating": "strong_buy",
+    "target_high": "190.00",
+    "target_low": "120.00",
+    "target_mean": "165.00",
+    "target_median": "165.00",
+    "analyst_count": 55
+  },
+  "corporate_actions": [
+    {
+      "ex_date": "2024-06-10",
+      "action_type": "split",
+      "ratio": "10.0"
+    }
+  ],
+  "bars": [
+    {
+      "trade_date": "2024-06-07",
+      "open": "1197.70",
+      "high": "1214.67",
+      "low": "1190.43",
+      "close": "1208.88",
+      "volume": 41200000,
+      "adj_close": "120.888"
+    },
+    {
+      "trade_date": "2024-06-10",
+      "open": "120.37",
+      "high": "123.10",
+      "low": "117.01",
+      "close": "121.79",
+      "volume": 423000000,
+      "adj_close": "121.79"
+    }
+  ]
+}
