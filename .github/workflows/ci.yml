@@ -23,9 +23,17 @@ jobs:
   lint:
     name: lint (ruff)
     runs-on: ubuntu-latest
+    outputs:
+      # 供 docker 作业的 job 级守卫使用：hashFiles 不能出现在 jobs.<job_id>.if。
+      dockerfile_present: ${{ steps.dockerfile.outputs.present }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Detect deploy/Dockerfile (guard input)
+        id: dockerfile
+        # hashFiles 只允许在 step 级键中使用；文件不存在时本 step 跳过，输出为空串。
+        if: hashFiles('deploy/Dockerfile') != ''
+        run: echo "present=true" >> "$GITHUB_OUTPUT"
       - name: Install uv
         uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
         with:
@@ -191,8 +199,11 @@ jobs:
 
   docker:
     name: docker build
-    # T08 之后该文件一定存在；守卫用于在 T08 未合并时明确 skipped 而不是凭空失败。
-    if: hashFiles('deploy/Dockerfile') != ''
+    needs: lint
+    # hashFiles 不能用于 job 级 if（该位置只允许 github/needs/vars/inputs 与状态函数）。
+    # 等价守卫：lint 的 step 级 hashFiles 检测写成 output，这里用 needs 在 job 级判断。
+    # deploy/Dockerfile 不存在（T08 未合并）→ 本作业 skipped；存在 → 实跑构建与冒烟。
+    if: ${{ needs.lint.outputs.dockerfile_present == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

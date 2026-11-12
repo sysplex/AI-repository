@@ -6,12 +6,12 @@
 
 | 作业 | 名称 | 做什么 | 失败含义 |
 |---|---|---|---|
-| `lint` | lint (ruff) | `ruff check .` + `ruff format --check .` | 风格或静态问题 |
+| `lint` | lint (ruff) | `ruff check .` + `ruff format --check .`；并用 step 级 `hashFiles` 输出 `dockerfile_present` 供 docker 守卫使用 | 风格或静态问题 |
 | `typecheck` | typecheck (mypy --strict) | `mypy --strict app tests` | 类型不严格 |
 | `architecture` | architecture (import-linter) | `lint-imports`，4 条分层/独立/禁止契约 | 跨层引用或模块越界 |
 | `test` | test (pytest + postgres + redis) | 服务容器 `postgres:16`、`redis:7`；`pytest` 全量 + 覆盖率（门槛取 `pyproject.toml` 的 `fail_under`） | 用例失败或覆盖率不足 |
 | `security` | security (pip-audit + gitleaks) | 锁定依赖漏洞扫描 + 全历史密钥扫描 | 已知漏洞或疑似密钥 |
-| `docker` | docker build | `docker build -f deploy/Dockerfile`（不推送）+ 镜像冒烟（非 root、无 `.env/.git/tests`） | 镜像构建或镜像内容不合规 |
+| `docker` | docker build | `needs: lint`，由 lint 的 step 级 `hashFiles` 输出驱动 job 级守卫；`docker build -f deploy/Dockerfile`（不推送）+ 镜像冒烟（非 root、无 `.env/.git/tests`） | 镜像构建或镜像内容不合规；T08 未合并时为 skipped |
 | `docs` | docs (markdown links) | `docs/**` 与根 `README.md` 的相对链接存在性（阻断）+ 外链探测（非阻断） | 文档里有断链 |
 
 触发：`pull_request`（任意分支）与 `push` 到 `main`。
@@ -32,11 +32,25 @@
 
 `gitleaks` 不走官方 Action：其 v2 Action 对私有仓库需要付费 license，因此 `security` 作业直接下载固定版本 `8.24.0` 的 CLI 二进制运行。
 
+### 2.1 docker 守卫为何分两步（GitHub 表达式限制）
+
+GitHub 的上下文可用性表里，`hashFiles()` **只允许**出现在 `jobs.<job_id>.steps.*` 的若干键中，**不能**用于 `jobs.<job_id>.if`——该位置只允许 `github`、`needs`、`vars`、`inputs` 和 `always/cancelled/success/failure`。把 `if: hashFiles(...)` 写在 job 级会让**整个工作流解析失败**，Actions 里表现为一个 0 job、创建即 `failure` 的运行（本地 `actionlint` 能直接报出）。
+
+因此 `ci.yml` 用两步等价实现任务卡要求的守卫，作业数仍为 7 个：
+
+1. `lint` 在 checkout 后用 step 级 `if: hashFiles('deploy/Dockerfile') != ''` 检测，命中时把 `present=true` 写入 step output，并暴露为 job output `dockerfile_present`；
+2. `docker` 作业 `needs: lint`，用 job 级 `if: ${{ needs.lint.outputs.dockerfile_present == 'true' }}` 判断。
+
+`deploy/Dockerfile` 不存在（T08 未合并）→ 检测 step 被跳过、输出为空 → `docker` 作业 **skipped** 而不是凭空失败；文件存在 → 作业实跑构建与冒烟。守卫表达式 `hashFiles('deploy/Dockerfile') != ''` 仍保留在文件中，只是落在 GitHub 允许的 step 级位置。若 `lint` 失败，`needs` 不满足也会使 `docker` 为 skipped，属 GitHub 的正常依赖语义。
+
 ## 3. 本地复现每个作业
 
 以下命令都在仓库根执行，Windows 需 GNU make + uv（或直接在 `backend/` 下用等价的 `uv run --frozen ...`）。
 
 ```bash
+# workflow 静态校验（可选工具，捕获 GitHub 表达式/上下文限制，如 job 级 hashFiles）
+actionlint .github/workflows/ci.yml
+
 # lint
 cd backend && uv run --frozen ruff check . && uv run --frozen ruff format --check .
 
@@ -83,7 +97,8 @@ CI 里的连接串刻意写成 `postgresql+asyncpg://postgres@localhost:5432/ci`
 | `test` 报 `未设置 TEST_DATABASE_URL` 而 skip | 环境变量没注入 | 检查 `test` 作业的 `env:` 段；`db_engine` fixture 在没有 `TEST_DATABASE_URL` 且无 docker 时会 skip |
 | `security` pip-audit 报新 CVE | 上游依赖出现漏洞 | 升级该依赖并同步 `uv.lock`；若暂无修复版本，在 PR 里注明并加 `--ignore-vuln`（需协调者批准） |
 | `security` gitleaks 命中 | 提交里出现疑似密钥 | **不要**在 CI 里加 allowlist 掩盖；轮换该密钥并从历史移除（`git filter-repo`），再重推 |
-| `docker` 作业 skipped | `deploy/Dockerfile` 不存在 | 该守卫用于 T08 未合并时；T08 合并后必须实际运行 |
+| Actions 运行 0 个 job 且创建即 failure | workflow 解析失败，典型是把 `hashFiles()` 写在 job 级 `if` | 本地 `actionlint .github/workflows/ci.yml` 可直接报出；按 §2.1 把守卫拆到 step 级 |
+| `docker` 作业 skipped | `deploy/Dockerfile` 不存在（T08 未合并），或 `lint` 失败使 `needs` 未满足 | T08 未合并时属预期；T08 合并后必须实际运行。若因 lint 红而 skipped，先修 lint |
 | `docker` 构建慢 | 缓存未命中 | 首次运行正常；后续依赖 `type=gha` 缓存，改动 `uv.lock` 会让依赖层失效 |
 | `docs` 相对链接失败 | 文件被移动/删除 | 按报错的 `文件: 目标` 修正路径；外链探测失败不影响结论 |
 
