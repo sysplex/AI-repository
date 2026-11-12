@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncIterator
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any
@@ -98,9 +99,12 @@ def sample_profile() -> CompanyProfile:
 
 
 @pytest.fixture
-def cache(redis: Any) -> MarketDataCache:
-    """Fast cache for testing with minimal backoff delay (1ms)."""
-    return MarketDataCache(redis_client=redis, base_delay=0.001, max_retries=2)
+async def cache(redis: Any) -> AsyncIterator[MarketDataCache]:
+    """Fast cache for testing with minimal backoff delay (1ms) and clean redis state."""
+    await redis.flushdb()
+    cache_instance = MarketDataCache(redis_client=redis, base_delay=0.001, max_retries=2)
+    yield cache_instance
+    await redis.flushdb()
 
 
 # =============================================================================
