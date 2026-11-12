@@ -80,7 +80,10 @@ async def test_register_login_refresh_logout_flow(
     assert rotated.status_code == 200, rotated.text
     second = rotated.json()
     assert second["refresh_token"] != first["refresh_token"]
-    assert second["access_token"] != first["access_token"]
+    # access 令牌的 claims 只有 sub/role/iat/exp（CONTRACTS §5/§8），没有 jti，
+    # 因此同一秒内为同一用户签发的 access 可能逐字节相同——这是契约的必然结果，
+    # 不作为「轮换是否生效」的判据；这里只断言它仍然有效且属于同一用户。
+    assert _user_id_from(second) == _user_id_from(first)
     await db_session.commit()
 
     # 轮换后旧 refresh 立即失效（OAuth 刷新令牌轮换语义）
