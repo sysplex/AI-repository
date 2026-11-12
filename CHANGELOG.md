@@ -20,6 +20,13 @@
 - M1-T01（#36）：`argon2-cffi` / `PyJWT` / `email-validator` 依赖与 `uv.lock`、7 个可选认证配置项、identity 四张表的 ORM 模型与端口、`0003_identity` 迁移（含 `audit_log.user_id` 外键）、import-linter 契约修正、`docs/03 §3.1` 与环境变量模板登记
 - M1-T01 并行接缝：M2-T02/T03 先行合入 `0002_marketdata` 与 `yfinance` 依赖；M1 作为后合并者把迁移改为 `0003_identity` 并指向 `0002_marketdata`，保留 M2 的 `pyproject.toml` 规则与依赖，在 `alembic/env.py` 注册 identity 模型并用 `include_object` 排除 M0 模型未声明的 `audit_log` 反射外键，使 `alembic check` 不误报；保持单一 Alembic head，同时新增单头回归测试（详见 #12）
 - M1-T02（#37）：`CONTRACTS §4` 全部领域 schema（含密码复杂度校验与 `SecretStr` 脱敏）、`TenantRepository` 泛型基类与用户/刷新令牌/重置令牌/AI 用量四个仓储；新增租户隔离、SQL 谓词、令牌有效性过滤的单元与真实 PG 集成用例
+- M2 数据服务 T01（#43）：领域模型（Bar、Quote、CompanyProfile、Fundamentals、FinancialStatements、EarningsEvent、EarningsHistory、NewsItem、AnalystRatings、CorporateAction、FactsSnapshot）与 DataProvider 端口协议
+- M2 数据服务 T02（#45）：SQLAlchemy 2.0 异步表映射与 Alembic 0002_marketdata 迁移，覆盖 8 张核心市场数据表
+- M2 数据服务 T03（#47）：YFinance 数据源适配器与离线 JSON Fixture 回放机制（AAPL/MSFT/NVDA/universes），12 个契约测试通过
+- M2 数据服务 T04（#49）：MarketDataCache 缓存代理，双键架构（active + backup）、NYSE 日历动态 TTL（盘中 60s / 闭盘 300s）、指数退避重试（200ms, 400ms）与降级（stale=True）
+- M2 数据服务 T05（#50）：DataService 核心编排服务与 AI 事实快照（build_facts），确定性规范化 JSON + SHA-256 哈希与 missing_fields 追踪
+- M2 数据服务 T06（#51）：`/api/v1/market/*` REST API 端点与路由接入，统一错误模型与 OpenAPI 契约
+- M2 数据服务 T07（#53）：全链路端到端集成验收测试 `test_marketdata_e2e.py`、NVDA 2024-06 10:1 拆股与复权验证、归档 `docs/acceptance/M2.md` 并标记 M2 里程碑结项
 
 ### Changed
 - CI：Dependabot 三个 ecosystem 忽略 `semver-major` 升级，避免跨大版本 PR 反复破坏 `uv --frozen` 与固定 SHA 基线（#28/#29 留待 M1 结项后评估）
@@ -30,3 +37,4 @@
 - M0-F3（#26）：worker 改用 `load_settings_or_exit()`、关闭 uvicorn 重复访问日志、清理 T02 冗余测试兜底
 - T11 接缝：`app/core/logging.py` 不再桥接 `uvicorn.access`，使 `--no-access-log` 真正生效（每次请求仅 1 条带 `request_id` 的 `http.access`）
 - T09：`hashFiles()` 不得用于 job 级 `if` 导致 0 job failure，改为 step 级输出 + `needs` 守卫
+- M2-T07：修复 `DataService._persist_fundamentals` 中 `FundamentalsSnapshotTable` 初始化时错误传入 `metrics` 参数导致的落库异常
