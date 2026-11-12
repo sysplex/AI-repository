@@ -16,6 +16,10 @@
 - M0 地基 T09：GitHub Actions 7 个门禁 job、Dependabot、CODEOWNERS，以及私有仓库无分支保护的替代做法（`docs/ci.md §6.2`）
 - M0 地基 T10：共享测试基座、覆盖率门槛 80 与测试指南
 - M0 地基 T11：集成验收记录 `docs/acceptance/M0.md`、全链路冒烟与性能基线
+- M1 阶段 0：任务总览、接口契约与 T01–T07 任务卡（`docs/tasks/M1/`），M1 Identity 里程碑与 #36–#42 Issue
+
+### Changed
+- CI：Dependabot 三个 ecosystem 忽略 `semver-major` 升级，避免跨大版本 PR 反复破坏 `uv --frozen` 与固定 SHA 基线（#28/#29 留待 M1 结项后评估）
 
 ### Fixed
 - M0-F1（#24）：500 响应回写 `X-Request-ID` 与三项安全头，服务端生成的 `request_id` 不再丢失
