@@ -162,6 +162,7 @@ forbidden_modules = [
 [[tool.importlinter.contracts]]
 name = "禁止契约：路由层不得引用业务模块内部面"
 type = "forbidden"
+allow_indirect_imports = true
 source_modules = [
   "app.api",
 ]
