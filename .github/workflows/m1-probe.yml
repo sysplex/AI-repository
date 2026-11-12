@@ -3,6 +3,10 @@
 name: m1-probe
 
 on:
+  # 本仓库的 PAT 无 Actions: write，无法用 workflow_dispatch 触发；
+  # 改为仅在本探针分支上 push 触发（该分支验证后整体删除）。
+  push:
+    branches: [chore/m1-t07-acceptance]
   workflow_dispatch:
 
 permissions:
