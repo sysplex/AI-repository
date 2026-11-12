@@ -84,6 +84,11 @@ GET  /tasks/{task_id}/stream → SSE 推送进度（可选，前端可退化为�
 
 实现归属：前 4 项由 M1-T04 交付，`/me*` 与 `/admin/users` 由 M1-T05，密码重置两项由 M1-T06。
 
+补充约定（M1-T05 落地）：
+- **越权与不存在同码（C10）**：访问他人私有资源一律 404 `NOT_FOUND`，不返回 403，避免探测资源是否存在；角色不足（非 admin 访问 `/admin/users`）才返回 403 `FORBIDDEN`。
+- `/me/usage` 的 `quota` 取自 `AI_DAILY_QUOTA`（裁定 C5，M1 只读、不扣减）；`quota_used` 等于当日 `calls`；`cost_usd` 按 §1 以字符串返回（`Numeric(18,6)`）。
+- `/admin/users` 的 `page ≥ 1`、`1 ≤ page_size ≤ 100`，越界或非整数一律 400 `VALIDATION_ERROR`。
+
 ### 2.2 行情与数据（M2）
 | 方法 | 路径 | 说明 |
 |---|---|---|

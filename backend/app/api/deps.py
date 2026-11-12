@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from typing import Annotated
 
 import redis.asyncio as aioredis
@@ -15,12 +16,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
 from app.core.db import get_session
-from app.core.errors import Unauthenticated
+from app.core.errors import Forbidden, Unauthenticated
 from app.core.redis import get_redis
+from app.modules.identity.enums import UserRole
 from app.modules.identity.schemas import AuthenticatedUser
 from app.modules.identity.service import IdentityService, build_identity_service
 
-__all__ = ["bearer_token", "client_ip", "current_user", "get_identity_service"]
+__all__ = [
+    "bearer_token",
+    "client_ip",
+    "current_user",
+    "get_identity_service",
+    "require_role",
+]
 
 _SCHEME = "bearer"
 
@@ -58,3 +66,20 @@ async def current_user(
 ) -> AuthenticatedUser:
     """解析 Bearer access 并回读用户；所有私有端点的认证入口。"""
     return await service.authenticate_access_token(token)
+
+
+def require_role(role: UserRole) -> Callable[..., Awaitable[AuthenticatedUser]]:
+    """生成「角色不足即 403」的依赖工厂（`CONTRACTS §10`）。
+
+    用工厂而不是 `Depends(require_role(...))` 常量，避免 FastAPI 把不同角色的
+    依赖缓存成同一个 key；返回值同时携带当前用户，供端点直接使用。
+    """
+
+    async def _dependency(
+        user: Annotated[AuthenticatedUser, Depends(current_user)],
+    ) -> AuthenticatedUser:
+        if user.role != role:
+            raise Forbidden()
+        return user
+
+    return _dependency

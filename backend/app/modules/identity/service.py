@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timedelta
+from decimal import Decimal
 from typing import Any, Final
 
 import redis.asyncio as aioredis
@@ -24,7 +25,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.audit import record_audit
 from app.core.clock import get_clock
 from app.core.config import Settings
-from app.core.errors import RateLimited, StateConflict, TokenExpired, Unauthenticated
+from app.core.errors import (
+    NotFound,
+    RateLimited,
+    StateConflict,
+    TokenExpired,
+    Unauthenticated,
+)
 from app.modules.identity.adapters.mail import LoggingMailSender
 from app.modules.identity.adapters.password_hasher import Argon2PasswordHasher
 from app.modules.identity.adapters.token_codec import JWTTokenCodec
@@ -32,6 +39,7 @@ from app.modules.identity.enums import UserRole, UserStatus
 from app.modules.identity.models import RefreshToken, User
 from app.modules.identity.ports import MailSender, PasswordHasher, TokenCodec
 from app.modules.identity.repo import (
+    AiUsageRepository,
     PasswordResetTokenRepository,
     RefreshTokenRepository,
     UserRepository,
@@ -40,9 +48,12 @@ from app.modules.identity.schemas import (
     AuthenticatedUser,
     LoginRequest,
     LogoutRequest,
+    PaginatedUsers,
     RefreshRequest,
     RegisterRequest,
+    SettingsUpdate,
     TokenPair,
+    UsageResponse,
     UserPublic,
 )
 from app.modules.identity.security import (
@@ -239,7 +250,70 @@ class IdentityService:
             raise Unauthenticated()
         return AuthenticatedUser.model_validate(user)
 
+    # ------------------------------------------------------------------ T05
+
+    async def get_profile(self, user: AuthenticatedUser) -> UserPublic:
+        """回读本人资料；记录已被删除时按「私有资源不存在」返回 404（C10）。"""
+        record = await self._require_user(user.id)
+        return UserPublic.model_validate(record)
+
+    async def update_settings(self, user: AuthenticatedUser, update: SettingsUpdate) -> UserPublic:
+        """整体替换 `users.settings`（`UserSettings` 已 `extra="forbid"`），并审计。"""
+        record = await self._require_user(user.id)
+        record.settings = update.settings.model_dump(mode="json")
+        await self._users.save(record)
+        await self._audit(
+            "auth.settings_updated",
+            user_id=record.id,
+            ip=None,
+            detail={"keys": sorted(record.settings)},
+        )
+        return UserPublic.model_validate(record)
+
+    async def get_usage(self, user: AuthenticatedUser) -> UsageResponse:
+        """当日 AI 用量（M1 只读，C6）；无记录返回全 0 + 配置里的配额上限。"""
+        today = get_clock().now().date()
+        repo = AiUsageRepository(self._session, user_id=user.id)
+        record = await repo.get_for_date(usage_date=today)
+        quota = self._settings.ai_daily_quota
+        if record is None:
+            return UsageResponse(
+                usage_date=today,
+                calls=0,
+                tokens_in=0,
+                tokens_out=0,
+                cost_usd=Decimal("0"),
+                quota=quota,
+                quota_used=0,
+            )
+        return UsageResponse(
+            usage_date=record.usage_date,
+            calls=record.calls,
+            tokens_in=record.tokens_in,
+            tokens_out=record.tokens_out,
+            cost_usd=record.cost_usd,
+            quota=quota,
+            quota_used=record.calls,
+        )
+
+    async def list_users(self, *, page: int, page_size: int) -> PaginatedUsers:
+        """分页列出全部用户（admin 专用；鉴权在路由层 `require_role`）。"""
+        items, total = await self._users.list_paginated(page=page, page_size=page_size)
+        return PaginatedUsers(
+            items=[UserPublic.model_validate(user) for user in items],
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
+
     # ------------------------------------------------------------- 内部工具
+
+    async def _require_user(self, user_id: uuid.UUID) -> User:
+        """取用户，缺失即 404；用于「令牌有效但用户已被删」的边界。"""
+        record = await self._users.get_by_id(user_id)
+        if record is None:
+            raise NotFound("用户不存在")
+        return record
 
     async def _issue_pair(self, user: User, *, now: datetime) -> TokenPair:
         """签发 access（JWT，只含 sub/role/iat/exp）+ refresh（不透明随机串落摘要）。"""
