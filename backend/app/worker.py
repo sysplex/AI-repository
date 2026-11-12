@@ -10,7 +10,7 @@ from typing import Any, ClassVar
 
 from arq.connections import RedisSettings
 
-from app.core.config import get_settings, mask_redis_url
+from app.core.config import load_settings_or_exit, mask_redis_url
 from app.core.logging import get_logger, setup_logging
 
 logger = get_logger(__name__)
@@ -23,7 +23,7 @@ async def ping(ctx: dict[str, Any]) -> str:
 
 async def on_startup(ctx: dict[str, Any]) -> None:
     """worker 进程启动：配置结构化日志并打印一次启动信息。"""
-    settings = get_settings()
+    settings = load_settings_or_exit()
     setup_logging(settings)
     logger.info(
         "worker.startup",
@@ -45,7 +45,11 @@ class WorkerSettings:
     on_shutdown: ClassVar[Any] = on_shutdown
 
     # 与 Settings.redis_url 单一来源，避免 worker 与 api 连到不同实例。
-    redis_settings: ClassVar[RedisSettings] = RedisSettings.from_dsn(get_settings().redis_url)
+    # 类属性在 import 期求值：配置缺失时由 load_settings_or_exit 一次性列出问题
+    # 并以退出码 1 终止，而不是让 ARQ 打印 traceback（M0-F3 / Issue #26）。
+    redis_settings: ClassVar[RedisSettings] = RedisSettings.from_dsn(
+        load_settings_or_exit().redis_url
+    )
 
     max_jobs: ClassVar[int] = 10
     job_timeout: ClassVar[int] = 300
