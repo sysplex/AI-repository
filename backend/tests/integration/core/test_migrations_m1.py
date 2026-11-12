@@ -1,0 +1,105 @@
+"""M1-T01 迁移集成测试：真实 Postgres 下的表、外键、可逆性与孤儿行清理。
+
+无 `TEST_DATABASE_URL` 且无 Docker 时由 conftest 的 `db_engine` fixture 自动 skip。
+Alembic `env.py` 的在线模式内部用 `asyncio.run`，因此本文件的测试必须是同步函数，
+且对 async engine 的访问各自用 `asyncio.run` 包一层。
+"""
+
+from __future__ import annotations
+
+import asyncio
+import uuid
+from pathlib import Path
+from typing import Any
+
+import pytest
+from alembic.config import Config
+from sqlalchemy import inspect, text
+from sqlalchemy.ext.asyncio import AsyncEngine
+
+from alembic import command
+
+_TABLES = {"users", "refresh_tokens", "password_reset_tokens", "ai_usage"}
+_ORPHAN_ACTION = "test.m1.orphan"
+
+
+def _alembic_config() -> Config:
+    backend = Path(__file__).resolve().parents[3]
+    config = Config(str(backend / "alembic.ini"))
+    config.set_main_option("script_location", str(backend / "alembic"))
+    return config
+
+
+def _table_names(engine: AsyncEngine) -> set[str]:
+    async def _run() -> set[str]:
+        async with engine.connect() as connection:
+            names = await connection.run_sync(
+                lambda sync_connection: inspect(sync_connection).get_table_names()
+            )
+        return set(names)
+
+    return asyncio.run(_run())
+
+
+@pytest.mark.integration
+def test_identity_tables_exist_after_upgrade(db_engine: AsyncEngine) -> None:
+    """`0002_identity` 在空库建出全部 4 张表。"""
+    assert _table_names(db_engine) >= _TABLES
+
+
+@pytest.mark.integration
+def test_audit_log_user_id_foreign_key_exists(db_engine: AsyncEngine) -> None:
+    """接缝 S1：audit_log.user_id 指向 users.id（ON DELETE SET NULL）。"""
+
+    async def _run() -> Any:
+        async with db_engine.connect() as connection:
+            return await connection.run_sync(
+                lambda sync_connection: inspect(sync_connection).get_foreign_keys("audit_log")
+            )
+
+    foreign_keys = asyncio.run(_run())
+    assert any(
+        fk.get("constrained_columns") == ["user_id"] and fk.get("referred_table") == "users"
+        for fk in foreign_keys
+    )
+
+
+@pytest.mark.integration
+def test_downgrade_upgrade_roundtrip_and_orphan_cleanup(db_engine: AsyncEngine) -> None:
+    """降到 0001 再升回 head 可逆；历史孤儿 user_id 在加 FK 前被置 NULL。"""
+    config = _alembic_config()
+    orphan_id = uuid.uuid4()
+
+    async def _insert_orphan() -> None:
+        async with db_engine.begin() as connection:
+            await connection.execute(
+                text("INSERT INTO audit_log (user_id, action) VALUES (:user_id, :action)"),
+                {"user_id": orphan_id, "action": _ORPHAN_ACTION},
+            )
+
+    asyncio.run(_insert_orphan())
+    try:
+        command.downgrade(config, "0001_initial")
+        command.upgrade(config, "head")
+    finally:
+        # 任何失败也尝试恢复到 head，避免污染同会话的其它 DB 用例。
+        command.upgrade(config, "head")
+
+    async def _verify_and_cleanup() -> Any:
+        async with db_engine.connect() as connection:
+            result = await connection.execute(
+                text("SELECT user_id FROM audit_log WHERE action = :action"),
+                {"action": _ORPHAN_ACTION},
+            )
+            rows = list(result.all())
+        async with db_engine.begin() as connection:
+            await connection.execute(
+                text("DELETE FROM audit_log WHERE action = :action"),
+                {"action": _ORPHAN_ACTION},
+            )
+        return rows
+
+    rows = asyncio.run(_verify_and_cleanup())
+    assert len(rows) == 1
+    assert rows[0][0] is None
+    assert _table_names(db_engine) >= _TABLES
