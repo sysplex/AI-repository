@@ -4,12 +4,15 @@
 非作者也能跑：只依赖 `httpx`（已在 `backend/pyproject.toml` 中）与标准库，按顺序演示
 注册 → 登录 → 资料 → 设置 → 用量 → 刷新 → 登出 → 密码重置，每步打印期望/实际状态码。
 
-用法（服务端已启动，且 `APP_ENV=local` 让邮件走 `LoggingMailSender`）::
+用法（服务端已启动、`APP_ENV=local` 且**未配置 SMTP 凭据**，让邮件走
+`LoggingMailSender`）::
 
     python scripts/m1_demo.py --base-url http://127.0.0.1:8000
 
 密码重置需要从服务端日志里取一次性令牌。若日志不在默认位置，用
 ``--reset-log`` 指定；确实拿不到时加 ``--skip-reset`` 跳过最后两步。
+Q3 裁决后若已启用 Gmail / Outlook 真实投递，令牌只会发到邮箱、不再写日志，
+此时必须加 ``--skip-reset``（见 `docs/09-adr.md` ADR-015）。
 
 退出码：全部符合预期为 0；有失败为 1；只有跳过为 0。
 """
