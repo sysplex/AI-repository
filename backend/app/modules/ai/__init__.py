@@ -12,6 +12,12 @@ from app.modules.ai.adapters import (
     MockFaultMode,
     MockLLMClient,
 )
+from app.modules.ai.circuit_breaker import (
+    DEFAULT_DAILY_BUDGET_USD,
+    DEFAULT_MONTHLY_BUDGET_USD,
+    BudgetCircuitBreaker,
+    CircuitState,
+)
 from app.modules.ai.exceptions import (
     AIServiceError,
     AIServiceUnavailableError,
@@ -53,6 +59,10 @@ from app.modules.ai.prompts import (
     register_prompt_template,
     sanitize_untrusted_text,
 )
+from app.modules.ai.quota import (
+    QuotaService,
+    ai_usage_table,
+)
 from app.modules.ai.retry import (
     RetryableLLMCaller,
     ValidatedLLMResult,
@@ -66,6 +76,7 @@ from app.modules.ai.schemas import (
     AIReportCreate,
     AIReportResponse,
     AnalysisReport,
+    BudgetCircuitStatus,
     DataSnapshotCreate,
     DataSnapshotResponse,
     FactTracingResult,
@@ -105,15 +116,20 @@ __all__ = [
     "AIServiceUnavailableError",
     "AnalysisReport",
     "BaseLLMClient",
+    "BudgetCircuitBreaker",
     "BudgetCircuitOpenError",
+    "BudgetCircuitStatus",
+    "CircuitState",
     "COST_DECIMAL_PLACES",
     "COST_QUANTIZE_EXPONENT",
     "DEFAULT_BANNED_TERMS",
+    "DEFAULT_DAILY_BUDGET_USD",
     "DEFAULT_EXEMPT_NUMBERS",
     "DEFAULT_FACTS_SUMMARY_TEMPLATE",
     "DEFAULT_FALLBACK_PRICING",
     "DEFAULT_HEALTH_CHECK_TEMPLATE",
     "DEFAULT_MOCK_PAYLOAD",
+    "DEFAULT_MONTHLY_BUDGET_USD",
     "DEFAULT_STOCK_ANALYSIS_TEMPLATE",
     "DEFAULT_TOLERANCE",
     "DataSnapshotCreate",
@@ -134,6 +150,7 @@ __all__ = [
     "PromptRegistryProtocol",
     "PromptTemplate",
     "QuotaExceededError",
+    "QuotaService",
     "QuotaServiceProtocol",
     "QuotaStatus",
     "ReportStatus",
@@ -142,6 +159,7 @@ __all__ = [
     "SchemaValidationResult",
     "SchemaValidator",
     "ValidatedLLMResult",
+    "ai_usage_table",
     "calculate_cost",
     "clean_and_extract_json",
     "default_prompt_registry",
