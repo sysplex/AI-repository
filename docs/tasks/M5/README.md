@@ -13,7 +13,7 @@
 |---|---|---|---|---|---|---|---|
 | [T01](T01-domain-models-schemas-migration.md) | #101 | 领域数据模型、SQLAlchemy 实体、Alembic 迁移（0005_ai）与 DTO Schema | `feat/m5-t01-models-schemas-migration` | M4 已结项 | 中 | Antigravity | ✅ Merged (PR #109) |
 | [T02](T02-llm-client-and-pricing.md) | #102 | LLMClient 适配器抽象、Mock 实现与高精 Token 计费器 | `feat/m5-t02-llm-client-pricing` | T01 | 中 | Antigravity | ✅ Merged (PR #110) |
-| [T03](T03-prompt-registry-and-templates.md) | #103 | 提示词仓库注册表、版本管理与防提示注入模板引擎 | `feat/m5-t03-prompt-registry` | T01 | 中 | Antigravity | Todo |
+| [T03](T03-prompt-registry-and-templates.md) | #103 | 提示词仓库注册表、版本管理与防提示注入模板引擎 | `feat/m5-t03-prompt-registry` | T01 | 中 | Antigravity | 🔄 PR Ready |
 | [T04](T04-schema-validation-and-retry.md) | #104 | 输出 Schema 校验器、JSON 清洗与单次自动重试包装 | `feat/m5-t04-schema-validation-retry` | T01, T02, T03 | 中 | Antigravity | Todo |
 | [T05](T05-fact-tracing-and-hallucination-defense.md) | #105 | 数字溯源校验引擎与 AI 输出防编造防御（docs/08 §4.3） | `feat/m5-t05-fact-tracing-defense` | T01, T03 | 中 | Antigravity | Todo |
 | [T06](T06-quota-and-budget-circuit-breaker.md) | #106 | 配额管理服务、成本追踪统计与预算熔断器 | `feat/m5-t06-quota-budget-breaker` | T01, T02 | 中 | Antigravity | Todo |
