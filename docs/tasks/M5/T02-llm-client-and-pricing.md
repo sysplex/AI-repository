@@ -44,7 +44,7 @@
 ---
 
 ## 4. 验收标准
-- [ ] `pricing.py` 严格使用 Decimal 运算，杜绝浮点精度丢失
-- [ ] `MockLLMClient` 满足各种单测场景与故障注入要求
-- [ ] 外部 SDK 导入严格限制在 `adapters/` 内部（通过 `ruff check` 与 `TID251`）
-- [ ] 单元测试覆盖率 $\ge 90\%$，`make check` 全绿
+- [x] `pricing.py` 严格使用 Decimal 运算，杜绝浮点精度丢失
+- [x] `MockLLMClient` 满足各种单测场景与故障注入要求
+- [x] 外部 SDK 导入严格限制在 `adapters/` 内部（通过 `ruff check` 与 `TID251`）
+- [x] 单元测试覆盖率 $\ge 90\%$，`make check` 全绿
