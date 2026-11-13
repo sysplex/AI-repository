@@ -2,7 +2,9 @@
 
 from app.modules.simbroker import (
     accounting,
+    corporate_actions,
     fee,
+    market_close,
     matcher,
     models,
     pdt,
@@ -13,8 +15,10 @@ from app.modules.simbroker import (
 
 __all__ = [
     "accounting",
+    "corporate_actions",
     "fee",
     "matcher",
+    "market_close",
     "models",
     "pdt",
     "ports",
