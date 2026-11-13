@@ -6,6 +6,7 @@ formulas (aligned with TA-Lib / standard technical analysis) with error < 1e-6.
 """
 
 from collections.abc import Sequence
+from datetime import date
 from decimal import Decimal
 from typing import Protocol, runtime_checkable
 
@@ -13,6 +14,9 @@ from typing import Protocol, runtime_checkable
 @runtime_checkable
 class Bar(Protocol):
     """Protocol for candlestick bars used in technical indicator calculations."""
+
+    @property
+    def trade_date(self) -> date: ...
 
     @property
     def open(self) -> Decimal: ...
