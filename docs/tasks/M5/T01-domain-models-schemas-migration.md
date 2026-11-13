@@ -41,14 +41,16 @@
   - `backend/app/modules/ai/schemas.py`
   - `backend/app/modules/ai/ports.py`
   - `backend/alembic/versions/0005_ai.py`
-  - `backend/tests/unit/modules/ai/test_models_schemas.py`
+  - `backend/tests/unit/modules/ai/test_ai_models_schemas.py`
 - **协同修改**：
   - `backend/app/modules/ai/__init__.py`
+  - `backend/alembic/env.py`
+  - `backend/tests/integration/core/test_migrations_m1.py`
 
 ---
 
 ## 4. 验收标准
-- [ ] ORM 实体字段类型与 `docs/03-data-model.md §3.4` 及 `CONTRACTS.md` 100% 对齐
-- [ ] Alembic 迁移 `upgrade()` 与 `downgrade()` 双向可逆测试通过
-- [ ] Pydantic Schemas 严格校验与不可变性生效
-- [ ] 单元测试覆盖率 $\ge 90\%$，`make check` 全绿
+- [x] ORM 实体字段类型与 `docs/03-data-model.md §3.4` 及 `CONTRACTS.md` 100% 对齐
+- [x] Alembic 迁移 `upgrade()` 与 `downgrade()` 双向可逆测试通过
+- [x] Pydantic Schemas 严格校验与不可变性生效
+- [x] 单元测试覆盖率 $\ge 90\%$（实际达到 100%），`make check` 全绿
