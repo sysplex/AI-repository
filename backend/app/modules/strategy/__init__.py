@@ -1,5 +1,6 @@
 """Strategy engine module for technical indicators and quantitative strategies."""
 
+import app.modules.strategy.strategies  # noqa: F401
 from app.modules.strategy.backtest import BacktestEngine
 from app.modules.strategy.indicators import (
     Bar,
