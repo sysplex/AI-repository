@@ -47,7 +47,7 @@
 ---
 
 ## 4. 验收标准
-- [ ] 7 项 E2E 验收用例 100% 通过
-- [ ] 全局测试覆盖率 ≥ 80.0%
-- [ ] `make check`（ruff check, ruff format, mypy --strict, import-linter, pip-audit）全部绿灯
-- [ ] 输出完整的 `docs/acceptance/M4.md` 报告
+- [x] 7 项 E2E 验收用例 100% 通过（实际完成 8 项，全部绿灯通过）
+- [x] 全局测试覆盖率 ≥ 80.0%（实际达到 92.00%，全库 832 个测试用例）
+- [x] `make check`（ruff check, ruff format, mypy --strict, import-linter, pip-audit）全部绿灯
+- [x] 输出完整的 `docs/acceptance/M4.md` 报告

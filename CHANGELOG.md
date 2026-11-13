@@ -40,6 +40,14 @@
 - M3 指标与策略引擎 T05（#82）：ATR 动态止损与目标位计算（compute_atr_levels），轻量事件驱动日线回测引擎（BacktestEngine），严格逐日防未来函数，资金守恒恒等验证
 - M3 指标与策略引擎 T06（#83）：StrategyService 统一编排门面与 `/api/v1/strategy/*` REST API 接入（/list, /evaluate, /scan, /technical/{symbol}, /backtest），HARD-01 鉴权守卫
 - M3 指标与策略引擎 T07（#84）：全链路端到端集成验收测试 `test_strategy_e2e.py`（指标误差 < 1e-6、全部 7 策略防未来函数篡改压力测试、触发/非触发样例、数据不足兜底、回测数学闭环闭环验证）、归档 `docs/acceptance/M3.md` 并标记 M3 里程碑结项
+- M4 模拟盘引擎 T01（#85）：领域数据模型（SimAccount、SimOrder、SimTrade、SimPosition、EquitySnapshot、SimTradeJournal）与 SQLAlchemy 2.0 ORM 表映射、Alembic `0004_simbroker` 迁移（含级联删除与外键索引）、Broker 接口协议与 DTO Schemas
+- M4 模拟盘引擎 T02（#86）：费用模型计算（零费、每股、bps、阶梯费率）、滑点模型（固定 bps 与双向滑点）、PDT 规则引擎（典型 5 日滚动窗口、3 次日内交易限制与预警）以及订单事前验证器（OrderValidator：资金充足性、持仓非负性、最小交易单位等）
+- M4 模拟盘引擎 T03（#87）：高精度撮合引擎（MatchingEngine：市价单、限价单、止损单），支持 DAY/GTC 订单有效期（TIF）、当日行情缺失安全防御（拒绝陈旧行情撮合）与审计日志追踪
+- M4 模拟盘引擎 T04（#88）：实时记账引擎（AccountingEngine）与持仓状态管理（PositionState），严格执行平均成本法（Weighted Average Cost）、已实现盈亏结转与现金守恒/净值恒等/持仓非负性财务不变量
+- M4 模拟盘引擎 T05（#89）：公司行动处理引擎（CorporateActionsEngine：前向拆股、反向合股、现金分红派息，持仓成本及权益严格守恒）与收盘批处理任务（MarketCloseBatch：DAY 订单过期、持仓市值重估、峰值更新与每日净值快照记录）
+- M4 模拟盘引擎 T06（#90）：绩效与风险分析引擎（PerformanceAnalyzer：总回报、最大回撤、胜率、盈亏比、对比 SPY 跑赢超额收益 Alpha；RiskAnalyzer：现金水位、个股集中度、行业分布、PDT 监控）
+- M4 模拟盘引擎 T07（#91）：SimService 门面服务、标准化 SimBroker 适配器（实现 `ports.Broker` 协议）与 12 个 `/api/v1/sim/*` REST API 端点（账户、资金出入金、下单、撤单、持仓、成交历史、绩效分析、持仓风险体检及复盘日记录入），严格 HARD-01 鉴权与租户数据隔离
+- M4 模拟盘引擎 T08（#92）：全链路端到端集成验收测试 `test_simbroker_e2e.py`（8 大验收项、财务不变量闭环证明、手算撮合精度对齐、公司行动价值守恒、REST API 全生命周期闭环）、归档 `docs/acceptance/M4.md` 并标记 M4 里程碑结项
 
 ### Changed
 - CI：Dependabot 三个 ecosystem 忽略 `semver-major` 升级，避免跨大版本 PR 反复破坏 `uv --frozen` 与固定 SHA 基线（#28/#29 留待 M1 结项后评估）
