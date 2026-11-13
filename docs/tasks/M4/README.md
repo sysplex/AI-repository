@@ -17,8 +17,8 @@
 | [T04](T04-accounting-and-positions.md) | #88 | 记账引擎、持仓管理、平均成本法与财务不变量 | `feat/m4-t04-accounting-and-positions` | T01、T03 | 中 | Antigravity | ✅ Merged (PR #96) |
 | [T05](T05-corporate-actions-and-close.md) | #89 | 公司行动（拆股/分红）、收盘批处理与净值快照 | `feat/m4-t05-corporate-actions-and-close` | T01、T04 | 中 | Antigravity | ✅ Merged (PR #97) |
 | [T06](T06-performance-and-risk.md) | #90 | 绩效分析、回撤胜率、SPY 跑赢对比与持仓风险体检诊断 | `feat/m4-t06-performance-and-risk` | T01、T04、T05 | 中 | Antigravity | ✅ Merged (PR #98) |
-| [T07](T07-simservice-and-api.md) | #91 | SimService 门面服务、Broker 适配器与 /api/v1/sim/* REST API 路由 | `feat/m4-t07-simservice-and-api` | T01–T06 | 中–大 | Antigravity | In Review (PR #99) |
-| [T08](T08-integration-and-acceptance.md) | #92 | 全链路端到端集成验收、不变量全矩阵校验与 M4 结项报告 | `feat/m4-t08-integration-acceptance` | T01–T07 | 中 | _待认领_ | Todo |
+| [T07](T07-simservice-and-api.md) | #91 | SimService 门面服务、Broker 适配器与 /api/v1/sim/* REST API 路由 | `feat/m4-t07-simservice-and-api` | T01–T06 | 中–大 | Antigravity | ✅ Merged (PR #99) |
+| [T08](T08-integration-and-acceptance.md) | #92 | 全链路端到端集成验收、不变量全矩阵校验与 M4 结项报告 | `feat/m4-t08-integration-acceptance` | T01–T07 | 中 | Antigravity | ✅ Completed (PR #100) |
 
 ---
 

@@ -56,7 +56,7 @@ gantt
 | M1 用户与多租户 | ✅ Done | 2026-11-12 T07 归档 `docs/acceptance/M1.md` + tag `m1-identity-v0.2.0` |
 | M2 数据服务 | ✅ Done | 2026-11-12 T07 归档 `docs/acceptance/M2.md` + tag `m2-marketdata-v0.2.0` |
 | M3 指标与策略引擎 | ✅ Done | 2026-11-13 T07 归档 `docs/acceptance/M3.md` + tag `m3-strategy-v0.3.0` |
-| M4 模拟盘引擎 | 🔄 In Progress | [docs/tasks/M4/README.md](tasks/M4/README.md)（T01–T08 规划与 Issue #85–#92 已建立） |
+| M4 模拟盘引擎 | ✅ Done | 2026-11-13 T08 归档 `docs/acceptance/M4.md` + tag `m4-simbroker-v0.4.0` |
 | M5–M10 | ☐ Todo | 各模块验收记录 `docs/acceptance/<module>.md` |
 
 **原则**：M0–M5 是地基，质量不达标不进入 M6+。M6–M8 本质是"新增一个提示词/策略 + 一个接口"，扩展成本低。
