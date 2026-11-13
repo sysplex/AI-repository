@@ -216,3 +216,5 @@ class AIPromptInfo(BaseModel):
     use_case: str
     version: str
     description: str
+    is_active: bool = True
+    output_schema: dict[str, Any] = Field(default_factory=dict)
