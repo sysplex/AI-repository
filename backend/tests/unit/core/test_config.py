@@ -34,6 +34,15 @@ _ENV_KEYS = (
     "DOCS_ENABLED",
     "LOG_JSON",
     "LOG_LEVEL",
+    # Q3：避免开发机上的 SMTP_* 环境变量污染本模块的隔离测试
+    "SMTP_PROVIDER",
+    "SMTP_HOST",
+    "SMTP_PORT",
+    "SMTP_USER",
+    "SMTP_PASSWORD",
+    "SMTP_FROM",
+    "SMTP_STARTTLS",
+    "SMTP_TIMEOUT_SECONDS",
 )
 
 
@@ -222,3 +231,93 @@ def test_production_disables_docs_by_default() -> None:
     assert _settings(app_env="production").docs_enabled is False
     assert _settings(app_env="production", docs_enabled=True).docs_enabled is True
     assert _settings(app_env="local").docs_enabled is True
+
+
+# ---------------------------------------------------------------- Q3 / Q4 裁决
+
+
+def test_q4_ai_daily_quota_default_is_20() -> None:
+    """Q4 已裁决：每用户每日默认 20 次，后续只允许显式覆盖。"""
+    assert _settings().ai_daily_quota == 20
+
+
+def test_env_example_keeps_smtp_opt_in_and_quota_at_20() -> None:
+    """模板里的 SMTP_* 必须全部注释，否则默认就会尝试真实外发（含 CI/演示）。"""
+    path = Path(__file__).resolve().parents[4] / "deploy" / "env.example"
+    lines = path.read_text(encoding="utf-8").splitlines()
+    assert [line for line in lines if line.startswith("SMTP_")] == []
+    assert "AI_DAILY_QUOTA=20" in lines
+
+
+def test_smtp_disabled_by_default_keeps_m1_behavior() -> None:
+    settings = _settings()
+    assert settings.smtp_configured is False
+    assert settings.smtp_resolved_host == "smtp.gmail.com"
+    assert settings.smtp_resolved_from == ""
+    assert settings.smtp_starttls is True
+    assert settings.smtp_timeout_seconds == 10.0
+
+
+def test_smtp_partial_config_is_rejected() -> None:
+    """半配置启动即失败，避免「以为在发信、其实在写日志」。"""
+    with pytest.raises(ValidationError) as caught:
+        _settings(smtp_user="bot@gmail.com")
+    assert "SMTP_PASSWORD" in str(caught.value)
+
+
+def test_smtp_partial_config_problem_is_readable_via_get_settings(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _required_env(monkeypatch)
+    monkeypatch.setenv("SMTP_USER", "bot@gmail.com")
+    get_settings.cache_clear()
+    with pytest.raises(SettingsError) as caught:
+        get_settings()
+    assert any("SMTP 配置不完整" in problem for problem in caught.value.problems)
+    assert all("(UNKNOWN)" not in problem for problem in caught.value.problems)
+
+
+def test_smtp_full_config_and_repr_masks_app_password() -> None:
+    settings = _settings(
+        smtp_user="bot@gmail.com",
+        smtp_password=SecretStr("gmail-app-password"),
+    )
+    assert settings.smtp_configured is True
+    assert settings.smtp_resolved_from == "bot@gmail.com"
+    assert "gmail-app-password" not in repr(settings) + str(settings)
+
+
+def test_smtp_provider_and_explicit_host_resolution() -> None:
+    assert _settings(smtp_provider="outlook").smtp_resolved_host == "smtp.office365.com"
+    assert _settings(smtp_provider="custom").smtp_resolved_host == ""
+    custom = _settings(smtp_provider="custom", smtp_host="mail.internal:2525")
+    assert custom.smtp_resolved_host == "mail.internal:2525"
+
+
+def test_smtp_custom_provider_without_host_fails_fast() -> None:
+    with pytest.raises(ValidationError) as caught:
+        _settings(
+            smtp_provider="custom",
+            smtp_user="bot@internal.test",
+            smtp_password=SecretStr("pw"),
+        )
+    assert "SMTP_HOST" in str(caught.value)
+
+
+@pytest.mark.parametrize("port", [0, 65536])
+def test_smtp_invalid_port_is_reported(monkeypatch: pytest.MonkeyPatch, port: int) -> None:
+    _required_env(monkeypatch)
+    monkeypatch.setenv("SMTP_PORT", str(port))
+    get_settings.cache_clear()
+    with pytest.raises(SettingsError) as caught:
+        get_settings()
+    assert "SMTP_PORT" in str(caught.value)
+
+
+def test_smtp_non_positive_timeout_is_reported(monkeypatch: pytest.MonkeyPatch) -> None:
+    _required_env(monkeypatch)
+    monkeypatch.setenv("SMTP_TIMEOUT_SECONDS", "0")
+    get_settings.cache_clear()
+    with pytest.raises(SettingsError) as caught:
+        get_settings()
+    assert "SMTP_TIMEOUT_SECONDS" in str(caught.value)

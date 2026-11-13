@@ -11,6 +11,7 @@ from app.modules.identity.adapters.mail import (
     MailMessage,
 )
 from app.modules.identity.adapters.password_hasher import Argon2PasswordHasher
+from app.modules.identity.adapters.smtp_mail import SmtpMailSender
 from app.modules.identity.adapters.token_codec import JWTTokenCodec
 
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     "JWTTokenCodec",
     "LoggingMailSender",
     "MailMessage",
+    "SmtpMailSender",
 ]

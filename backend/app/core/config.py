@@ -32,6 +32,9 @@ _REASONS: dict[str, str] = {
     "LOGIN_RATE_LIMIT_MAX": "必须为正整数",
     "LOGIN_RATE_LIMIT_WINDOW_SECONDS": "必须为正整数",
     "AI_DAILY_QUOTA": "必须为非负整数",
+    # Q3（2026-11-13 裁决）：Gmail / Outlook SMTP 投递配置。
+    "SMTP_PORT": "必须为 1–65535 的整数",
+    "SMTP_TIMEOUT_SECONDS": "必须为正数",
 }
 
 _CORS_WILDCARD_REASON = "CORS_ORIGINS: 启用凭据时不允许通配符 *，请列出明确来源"
@@ -71,7 +74,13 @@ def _problems_from(exc: ValidationError) -> list[str]:
     problems: list[str] = []
     for error in exc.errors():
         location = error.get("loc", ())
-        field = str(location[0]) if location else "(unknown)"
+        if not location:
+            # model_validator(mode="after") 抛出的根级错误：消息本身已是完整可读文案，
+            # 不能套「变量名 + 原因」模板，否则会退化成 `(UNKNOWN): 取值不合法`。
+            message = str(error.get("msg", "")).removeprefix("Value error, ")
+            problems.append(message or "配置取值不合法")
+            continue
+        field = str(location[0])
         env_name = field.upper()
         if error.get("type") == "missing":
             problems.append(f"{env_name}: 缺失必填项")
@@ -120,7 +129,19 @@ class Settings(BaseSettings):
     password_reset_ttl_seconds: int = 3600
     login_rate_limit_max: int = 5
     login_rate_limit_window_seconds: int = 60
-    ai_daily_quota: int = 20
+    ai_daily_quota: int = 20  # Q4（2026-11-13 裁决）：每用户每日默认 20 次
+
+    # Q3（2026-11-13 裁决）：真实邮件走 Gmail / Outlook 的 SMTP + STARTTLS。
+    # 全部可选：只有显式提供 SMTP_USER + SMTP_PASSWORD 才启用真实投递，
+    # 未配置时保持 M1 结项时的内存 / 日志行为，CI 与本地演示零影响。
+    smtp_provider: Literal["gmail", "outlook", "custom"] = "gmail"
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_user: str | None = None
+    smtp_password: SecretStr | None = None
+    smtp_from: str | None = None
+    smtp_starttls: bool = True
+    smtp_timeout_seconds: float = 10.0
 
     @field_validator(
         "access_token_ttl_seconds",
@@ -142,6 +163,20 @@ class Settings(BaseSettings):
         """配额允许 0（禁用 AI），但不得为负。"""
         if value < 0:
             raise ValueError("ai_daily_quota 必须为非负整数")
+        return value
+
+    @field_validator("smtp_port")
+    @classmethod
+    def _check_smtp_port(cls, value: int) -> int:
+        if not 1 <= value <= 65535:
+            raise ValueError("smtp_port 必须在 1–65535 之间")
+        return value
+
+    @field_validator("smtp_timeout_seconds")
+    @classmethod
+    def _check_smtp_timeout(cls, value: float) -> float:
+        if value <= 0:
+            raise ValueError("smtp_timeout_seconds 必须为正数")
         return value
 
     @field_validator("database_url")
@@ -194,15 +229,67 @@ class Settings(BaseSettings):
         return value
 
     @model_validator(mode="after")
+    def _check_smtp_is_complete(self) -> Settings:
+        """半配置的 SMTP 一律启动失败：避免「以为在发信、其实在写日志」。
+
+        只要显式设置了任一认证项（`SMTP_USER` / `SMTP_PASSWORD` / `SMTP_FROM`），
+        就视为意图启用真实投递，此时 `SMTP_USER` / `SMTP_PASSWORD` 必须同时存在；
+        `custom` 且已启用投递时还要求 `SMTP_HOST`。仅填连接参数（如 `SMTP_HOST`）
+        不视为启用，允许先写模板、后补凭据。
+        """
+        intended = {"smtp_user", "smtp_password", "smtp_from"} & self.model_fields_set
+        if not intended:
+            return self
+        missing = [
+            name.upper() for name in ("smtp_user", "smtp_password") if getattr(self, name) is None
+        ]
+        if (
+            self.smtp_provider == "custom"
+            and self.smtp_host is None
+            and self.smtp_user is not None
+            and self.smtp_password is not None
+        ):
+            missing.append("SMTP_HOST")
+        if missing:
+            raise ValueError(
+                "SMTP 配置不完整：启用真实投递需同时设置 "
+                + ", ".join(sorted(missing))
+                + "（或全部留空以使用本地适配器）"
+            )
+        return self
+
+    @model_validator(mode="after")
     def _disable_docs_in_production(self) -> Settings:
         if self.app_env == "production" and "docs_enabled" not in self.model_fields_set:
             self.docs_enabled = False
         return self
 
+    @property
+    def smtp_configured(self) -> bool:
+        """是否启用真实 SMTP 投递（凭据齐全且通过完整性校验）。"""
+        return self.smtp_user is not None and self.smtp_password is not None
+
+    @property
+    def smtp_resolved_host(self) -> str:
+        """`SMTP_PROVIDER` 解析为厂商默认主机；显式 `SMTP_HOST` 优先。"""
+        if self.smtp_host:
+            return self.smtp_host
+        if self.smtp_provider == "outlook":
+            return "smtp.office365.com"
+        if self.smtp_provider == "custom":
+            return ""
+        return "smtp.gmail.com"
+
+    @property
+    def smtp_resolved_from(self) -> str:
+        """未设置 `SMTP_FROM` 时直接用登录账号作为发件人。"""
+        return self.smtp_from or self.smtp_user or ""
+
     def __repr__(self) -> str:
         """显式遮蔽 secret_key 与连接串密码，避免 repr 泄露。"""
         data = self.model_dump()
         data["secret_key"] = "***"  # noqa: S105 - 这是遮蔽后的占位符，不是真实口令
+        data["smtp_password"] = "***"  # noqa: S105 - 同上，SMTP 应用专用密码
         data["database_url"] = mask_database_url(self.database_url)
         data["redis_url"] = mask_redis_url(self.redis_url)
         body = ", ".join(f"{key}={value!r}" for key, value in data.items())

@@ -58,7 +58,7 @@ class TokenCodec(Protocol):
 
 
 class MailSender(Protocol):
-    """邮件投递端口（Q3 未拍板，M1 用内存/日志适配器实现）。"""
+    """邮件投递端口（Q3 裁决：内存 / 日志 / Gmail·Outlook SMTP 三种实现）。"""
 
     async def send(self, *, to: str, subject: str, body: str) -> None:
         """发送一封纯文本邮件；实现不得记录完整令牌到生产日志。"""

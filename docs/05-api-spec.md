@@ -86,14 +86,14 @@ GET  /tasks/{task_id}/stream → SSE 推送进度（可选，前端可退化为�
 
 补充约定（M1-T05 落地）：
 - **越权与不存在同码（C10）**：访问他人私有资源一律 404 `NOT_FOUND`，不返回 403，避免探测资源是否存在；角色不足（非 admin 访问 `/admin/users`）才返回 403 `FORBIDDEN`。
-- `/me/usage` 的 `quota` 取自 `AI_DAILY_QUOTA`（裁定 C5，M1 只读、不扣减）；`quota_used` 等于当日 `calls`；`cost_usd` 按 §1 以字符串返回（`Numeric(18,6)`）。
+- `/me/usage` 的 `quota` 取自 `AI_DAILY_QUOTA`（裁定 C5；Q4 已裁决默认 **20**，M1 只读、不扣减，见 ADR-016）；`quota_used` 等于当日 `calls`；`cost_usd` 按 §1 以字符串返回（`Numeric(18,6)`）。
 - `/admin/users` 的 `page ≥ 1`、`1 ≤ page_size ≤ 100`，越界或非整数一律 400 `VALIDATION_ERROR`。
 
 补充约定（M1-T06 落地）：
 - **账号枚举防护**：`/auth/password/reset-request` 无论邮箱是否存在、账号是否被禁用，都返回同一个 `202 {"status":"accepted"}`，且不透露是否发信；只有存在且启用的账号才会落库一次性令牌并经 `MailSender` 投递。
 - **令牌语义**：明文令牌只出现在邮件正文一次，库中仅存 SHA-256 摘要；有效期 `PASSWORD_RESET_TTL_SECONDS`（默认 3600 s），仅可使用一次。`/reset-confirm` 对「无效 / 过期 / 已用 / 伪造」一律 401 `UNAUTHENTICATED`，不区分原因。
 - **改密后的会话**：该用户此前签发的全部 refresh 令牌立即失效；已签发的 access 令牌按原 TTL 自然过期（M1 不引入全局 token version，见 `docs/tasks/M1/T06` 偏差 D3）。
-- **投递实现**：Q3 未拍板，M1 只有端口 + 本地适配器（`APP_ENV=ci` 用内存实现、其余用日志实现并在非 local 环境打 error 标记）。上线前必须替换为真实服务商适配器；`LoggingMailSender` 会把含令牌的正文写进日志，**严禁直接用于生产**。
+- **投递实现（Q3 于 2026-11-13 裁决，ADR-015）**：`MailSender` 端口共三种实现，由 `make_mail_sender` 选择 —— ① `APP_ENV=ci` 强制 `InMemoryMailSender`，**绝不外发**；② 已配置 `SMTP_USER` + `SMTP_PASSWORD` 时用 `SmtpMailSender`（`SMTP_PROVIDER=gmail` → `smtp.gmail.com:587`，`outlook` → `smtp.office365.com:587`，STARTTLS，凭据全部来自环境变量）；③ 未配置时 `local` 用 `LoggingMailSender` 便于联调，`staging`/`production` 仍回落日志实现但打 `mail.adapter.placeholder` error 标记。真实投递的成功日志只记收件人 SHA-256 前缀，**绝不记录含令牌的正文**；投递故障收敛为 `mail.smtp.failed` 并静默返回，保证「存在 / 不存在邮箱」响应一致（账号枚举防护）。`LoggingMailSender` 仍**严禁直接用于生产**。
 
 ### 2.2 行情与数据（M2）
 | 方法 | 路径 | 说明 |

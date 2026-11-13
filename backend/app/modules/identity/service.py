@@ -10,9 +10,10 @@ T05 / T06 只允许在本类追加方法，不得改动已有签名。
   （`_DUMMY_PASSWORD_HASH`），避免通过响应时间枚举账号。
 * 审计 `detail` 只放摘要类信息（邮箱 SHA-256 前缀），不放明文密码、令牌或邮箱本身。
 
-邮件投递（T06）：服务只依赖 `MailSender` 端口，具体实现由 `make_mail_sender`
-按 `APP_ENV` 选择。**Q3 未拍板前没有任何外发通道**，重置令牌只出现在邮件正文里，
-响应体、审计与访问日志均不含明文令牌。
+邮件投递（T06 装配 / Q3 裁决 2026-11-13）：服务只依赖 `MailSender` 端口，具体实现由
+`make_mail_sender` 按 `APP_ENV` 与 SMTP 配置选择（`ci` 内存 / 已配置则 Gmail·Outlook
+SMTP / 未配置时本地日志）。明文重置令牌只出现在邮件正文里，响应体、审计与访问日志
+均不含；真实投递的日志只记录收件人摘要与连接信息。
 """
 
 from __future__ import annotations
@@ -39,6 +40,7 @@ from app.core.errors import (
 from app.core.logging import get_logger
 from app.modules.identity.adapters.mail import InMemoryMailSender, LoggingMailSender
 from app.modules.identity.adapters.password_hasher import Argon2PasswordHasher
+from app.modules.identity.adapters.smtp_mail import SmtpMailSender
 from app.modules.identity.adapters.token_codec import JWTTokenCodec
 from app.modules.identity.enums import UserRole, UserStatus
 from app.modules.identity.models import RefreshToken, User
@@ -460,16 +462,31 @@ class IdentityService:
 
 
 def make_mail_sender(settings: Settings) -> MailSender:
-    """按 `APP_ENV` 选择 `MailSender` 实现（T06），不读任何外部密钥。
+    """按 `APP_ENV` 与 SMTP 配置选择 `MailSender` 实现（Q3 裁决 2026-11-13）。
 
-    * `ci`：`InMemoryMailSender` —— 令牌不外泄到 CI 日志，测试自行注入实例断言。
-    * `local`：`LoggingMailSender` —— 开发者在控制台直接看到重置令牌，便于手工联调。
-    * `staging` / `production`：暂时同样回落到 `LoggingMailSender`，但打 **error** 级
-      标记，因为正文含一次性令牌（T06 偏差 D2）。Q3 拍板后新增一个 `adapters/*`
-      实现并改这里一行即可，service 签名不变（裁定 C1）。
+    优先级从高到低：
+
+    1. `ci`：`InMemoryMailSender` —— **即使配了 SMTP 也不外发**，令牌不进 CI 日志，
+       测试自行注入实例断言；保证集成测试与 `scripts/m1_demo.py` 行为不变。
+    2. `smtp_configured`：`SmtpMailSender` —— Gmail / Outlook STARTTLS 真实投递；
+       凭据以 `SecretStr` 保持到最后一步，service 业务逻辑不接触明文。
+    3. `local` 未配 SMTP：`LoggingMailSender` —— 控制台可见令牌，便于手工联调。
+    4. `staging` / `production` 未配 SMTP：仍回落日志实现，但打 **error** 级
+       `mail.adapter.placeholder` 标记（T06 D2 保留，作为上线门槛告警）。
     """
     if settings.app_env == "ci":
         return InMemoryMailSender()
+    password = settings.smtp_password
+    if settings.smtp_configured and password is not None:
+        return SmtpMailSender(
+            host=settings.smtp_resolved_host,
+            port=settings.smtp_port,
+            user=settings.smtp_user or "",
+            password=password,
+            sender=settings.smtp_resolved_from,
+            use_starttls=settings.smtp_starttls,
+            timeout=settings.smtp_timeout_seconds,
+        )
     if settings.app_env != "local":
         _LOGGER.error(
             "mail.adapter.placeholder",

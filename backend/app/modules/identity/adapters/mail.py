@@ -1,8 +1,9 @@
-"""邮件投递适配器（T03），裁定 C1：Q3 未拍板，不绑定任何外部服务商。
+"""本地邮件投递适配器（T03）：测试用内存实现、本地联调用日志实现。
 
-`InMemoryMailSender` 供测试断言；`LoggingMailSender` 供本地开发查看重置链接。
+Q3 已于 2026-11-13 裁决为 Gmail / Outlook SMTP，真实投递见 `smtp_mail.py`；
+本文件只保留「零网络调用」的两个实现，供 `ci` 与未配置 SMTP 的 `local` 使用。
 **生产禁用 `LoggingMailSender`**：邮件正文含一次性重置令牌，只应在本地/测试环境
-出现；上线前必须换成真实 adapter 并关闭日志输出。
+出现；未配置 SMTP 的非本地环境会由组合根打 error 级占位告警。
 """
 
 from __future__ import annotations

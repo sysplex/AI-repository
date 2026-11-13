@@ -32,6 +32,7 @@
 - M1-T05（#40）：`/me`（GET/PATCH）、`/me/usage`、`/admin/users` 四个端点与 `require_role` 依赖；设置项往返与 `auth.settings_updated` 审计、当日用量只读视图（`quota` 取 `AI_DAILY_QUOTA`、`cost_usd` 字符串化）、admin 分页守卫；新增覆盖全部私有端点的越权矩阵、管理员四态（匿名/普通/管理员/禁用）与矩阵同步守卫测试
 - M1-T06（#41）：密码重置闭环 `POST /auth/password/{reset-request,reset-confirm}`；`request_password_reset` 对不存在/禁用账号静默放行（同 202 响应体，不写库不发信）、`confirm_password_reset` 一次性令牌 → 吊销全部 refresh → 改密 → 写 `auth.password_changed` 审计；`make_mail_sender` 按 `APP_ENV` 选投递实现（`ci` 用内存、其余用日志并打 error 标记），Q3 拍板前不绑定任何外部邮件服务商
 - M1-T07（#42）：验收记录 `docs/acceptance/M1.md`（五项清单逐项证据、越权矩阵复核、接缝检查、安全自检、偏差与遗留问题）、`docs/08 §5 M1` 五项勾选、可复现演示脚本 `scripts/m1_demo.py`（15 步全链路，支持从服务端日志读取一次性重置令牌）、`docs/README` 路线图把 M1 置为 ✅；一次性全栈探针（`docker compose up --build` + 迁移升降 + 演示脚本 + OpenAPI/CONTRACTS 接缝 + 非 root 与 `/metrics` 403）验证后删除，未进入 main；M1 结项并打 tag `m1-identity-v0.2.0`
+- Q3 / Q4 裁决落地（ADR-015 / ADR-016，M1 结项后增量）：邮件服务商定为 **Gmail / Outlook SMTP over STARTTLS**，新增零第三方依赖的 `SmtpMailSender`（标准库 `smtplib` + `EmailMessage` + `asyncio.to_thread`）、8 个可选 `SMTP_*` 配置（`SecretStr` 口令、`repr` 遮蔽、半配置启动快速失败）与 `make_mail_sender` 的真实投递分支；`APP_ENV=ci` 仍强制内存实现绝不外发，日志只记收件人摘要且不含令牌/凭据，投递故障静默收敛以保账号枚举防护；`AI_DAILY_QUOTA` 默认 **20** 正式拍板并由测试锁定；`deploy/env.example` 的 SMTP 项全部注释为 `CHANGE_ME_*` 占位，默认不启用
 
 ### Changed
 - CI：Dependabot 三个 ecosystem 忽略 `semver-major` 升级，避免跨大版本 PR 反复破坏 `uv --frozen` 与固定 SHA 基线（#28/#29 留待 M1 结项后评估）
