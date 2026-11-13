@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from app.modules.simbroker.schemas import (
     AccountOverview,
@@ -26,6 +26,7 @@ __all__ = [
 ]
 
 
+@runtime_checkable
 class BarProtocol(Protocol):
     """行情 K 线结构化鸭子类型协议"""
 
@@ -37,6 +38,7 @@ class BarProtocol(Protocol):
     volume: int
 
 
+@runtime_checkable
 class Broker(Protocol):
     """系统统一定义的 Broker 端口协议（docs/02-architecture.md）"""
 
@@ -55,6 +57,7 @@ class Broker(Protocol):
     def process_bar(self, account_id: str, bar_time: datetime) -> Sequence[TradeResponse]: ...
 
 
+@runtime_checkable
 class MarketDataFeedProtocol(Protocol):
     """行情数据注入协议（解耦 marketdata 模块实体）"""
 
@@ -67,6 +70,7 @@ class MarketDataFeedProtocol(Protocol):
     def get_symbol_sector(self, symbol: str) -> str | None: ...
 
 
+@runtime_checkable
 class CorporateActionFeedProtocol(Protocol):
     """公司行动数据源协议（拆股与分红）"""
 

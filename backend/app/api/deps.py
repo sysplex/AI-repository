@@ -74,11 +74,14 @@ def bearer_token(request: Request) -> str:
 
 
 async def current_user(
+    request: Request,
     token: Annotated[str, Depends(bearer_token)],
     service: Annotated[IdentityService, Depends(get_identity_service)],
 ) -> AuthenticatedUser:
     """解析 Bearer access 并回读用户；所有私有端点的认证入口。"""
-    return await service.authenticate_access_token(token)
+    user = await service.authenticate_access_token(token)
+    request.state.user = user
+    return user
 
 
 def require_role(role: UserRole) -> Callable[..., Awaitable[AuthenticatedUser]]:

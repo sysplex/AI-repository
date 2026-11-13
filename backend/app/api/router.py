@@ -13,6 +13,9 @@ from app.api.health import router as health_router
 from app.api.identity import router as identity_router
 from app.modules.marketdata.api import get_data_service
 from app.modules.marketdata.api import router as market_router
+from app.modules.simbroker.api import (
+    router as sim_router,
+)
 from app.modules.strategy.api import (
     router as strategy_router,
 )
@@ -25,7 +28,8 @@ root_router = APIRouter()
 root_router.include_router(health_router)
 
 # Wire market data service into strategy service facade
-set_strategy_service(StrategyService(data_service=get_data_service()))
+data_service = get_data_service()
+set_strategy_service(StrategyService(data_service=data_service))
 
 api_router = APIRouter()
 api_router.include_router(market_router, prefix="/market", tags=["marketdata"])
@@ -34,5 +38,11 @@ api_router.include_router(
     strategy_router,
     prefix="/strategy",
     tags=["strategy"],
+    dependencies=[Depends(current_user)],
+)
+api_router.include_router(
+    sim_router,
+    prefix="/sim",
+    tags=["simbroker"],
     dependencies=[Depends(current_user)],
 )
