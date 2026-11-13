@@ -2,6 +2,8 @@
 
 from app.modules.simbroker import (
     accounting,
+    adapter,
+    api,
     corporate_actions,
     fee,
     market_close,
@@ -12,11 +14,14 @@ from app.modules.simbroker import (
     ports,
     risk,
     schemas,
+    service,
     validator,
 )
 
 __all__ = [
     "accounting",
+    "adapter",
+    "api",
     "corporate_actions",
     "fee",
     "market_close",
@@ -27,5 +32,6 @@ __all__ = [
     "ports",
     "risk",
     "schemas",
+    "service",
     "validator",
 ]

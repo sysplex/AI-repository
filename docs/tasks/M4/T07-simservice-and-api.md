@@ -8,7 +8,8 @@
 | 分支 | `feat/m4-t07-simservice-and-api` |
 | Issue | #91 |
 | 建议规模 | 中–大（1 天） |
-| 负责 Agent | _待认领_ |
+| 负责 Agent | Antigravity |
+| 状态 | ✅ 已完成 |
 
 ---
 
@@ -47,8 +48,8 @@
      - `PUT /api/v1/sim/trades/{tid}/journal`：交易日志录入
 4. `backend/app/api/router.py`：
    - 挂载 `sim_router`，配置 `dependencies=[Depends(current_user)]`（HARD-01 鉴权规范）。
-5. `backend/tests/integration/modules/simbroker/test_simbroker_api.py`：
-   - 接口集成测试，覆盖认证、幂等性、下单撤单全流程、持仓与业绩查询。
+5. `backend/tests/integration/modules/simbroker/test_simbroker_api.py` 与 `backend/tests/unit/modules/simbroker/test_sim_service.py`：
+   - 接口集成测试与门面单元测试，覆盖认证、幂等性、下单撤单全流程、持仓与业绩查询。
 
 ---
 
@@ -58,14 +59,15 @@
   - `backend/app/modules/simbroker/adapter.py`
   - `backend/app/modules/simbroker/api.py`
   - `backend/tests/integration/modules/simbroker/test_simbroker_api.py`
+  - `backend/tests/unit/modules/simbroker/test_sim_service.py`
 - **协同修改**：
   - `backend/app/api/router.py`（仅挂载 sim router）
 
 ---
 
 ## 4. 验收标准
-- [ ] 12 个 REST 端点均正常工作，状态码与响应体符合 `docs/05-api-spec.md §2.4`
-- [ ] 未登录请求统一被 HARD-01 拦截返回 401 UNAUTHENTICATED
-- [ ] `Idempotency-Key` 重复提交返回原订单且无重复撮合
-- [ ] `Broker` 端口适配器完整实现 `ports.Broker` 协议
-- [ ] `import-linter` 5 项架构契约保持 100% 通过
+- [x] 12 个 REST 端点均正常工作，状态码与响应体符合 `docs/05-api-spec.md §2.4`
+- [x] 未登录请求统一被 HARD-01 拦截返回 401 UNAUTHENTICATED
+- [x] `Idempotency-Key` 重复提交返回原订单且无重复撮合
+- [x] `Broker` 端口适配器完整实现 `ports.Broker` 协议
+- [x] `import-linter` 5 项架构契约保持 100% 通过
