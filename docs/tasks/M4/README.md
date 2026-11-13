@@ -14,8 +14,8 @@
 | [T01](T01-domain-models-and-ports.md) | #85 | 领域数据模型、SQLAlchemy 实体、Alembic 迁移（0004_simbroker）与 DTO Schema | `feat/m4-t01-models-schemas-migration` | M3 已结项 | 中 | Antigravity | ✅ Merged (PR #93) |
 | [T02](T02-fee-slippage-pdt-validation.md) | #86 | 费用模型、滑点、PDT 规则与订单验证引擎 | `feat/m4-t02-validation-fee-pdt` | T01 | 中 | Antigravity | ✅ Merged (PR #94) |
 | [T03](T03-matching-engine.md) | #87 | 撮合引擎（市价/限价/止损单规则、TIF 与行情缺失防御） | `feat/m4-t03-matching-engine` | T01、T02 | 中–大 | Antigravity | ✅ Merged (PR #95) |
-| [T04](T04-accounting-and-positions.md) | #88 | 记账引擎、持仓管理、平均成本法与财务不变量 | `feat/m4-t04-accounting-and-positions` | T01、T03 | 中 | Antigravity | 🔄 PR Review |
-| [T05](T05-corporate-actions-and-close.md) | #89 | 公司行动（拆股/分红）、收盘批处理与净值快照 | `feat/m4-t05-corporate-actions-and-close` | T01、T04 | 中 | _待认领_ | Todo |
+| [T04](T04-accounting-and-positions.md) | #88 | 记账引擎、持仓管理、平均成本法与财务不变量 | `feat/m4-t04-accounting-and-positions` | T01、T03 | 中 | Antigravity | ✅ Merged (PR #96) |
+| [T05](T05-corporate-actions-and-close.md) | #89 | 公司行动（拆股/分红）、收盘批处理与净值快照 | `feat/m4-t05-corporate-actions-and-close` | T01、T04 | 中 | Antigravity | 🔄 PR Review |
 | [T06](T06-performance-and-risk.md) | #90 | 绩效分析、回撤胜率、SPY 跑赢对比与持仓风险体检诊断 | `feat/m4-t06-performance-and-risk` | T01、T04、T05 | 中 | _待认领_ | Todo |
 | [T07](T07-simservice-and-api.md) | #91 | SimService 门面服务、Broker 适配器与 /api/v1/sim/* REST API 路由 | `feat/m4-t07-simservice-and-api` | T01–T06 | 中–大 | _待认领_ | Todo |
 | [T08](T08-integration-and-acceptance.md) | #92 | 全链路端到端集成验收、不变量全矩阵校验与 M4 结项报告 | `feat/m4-t08-integration-acceptance` | T01–T07 | 中 | _待认领_ | Todo |

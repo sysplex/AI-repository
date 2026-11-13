@@ -8,7 +8,7 @@
 | 分支 | `feat/m4-t05-corporate-actions-and-close` |
 | Issue | #89 |
 | 建议规模 | 中（0.5 天） |
-| 负责 Agent | _待认领_ |
+| 负责 Agent | Antigravity |
 
 ---
 
