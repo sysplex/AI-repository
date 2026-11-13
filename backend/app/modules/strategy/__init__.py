@@ -14,6 +14,13 @@ from app.modules.strategy.indicators import (
     calculate_true_range,
 )
 from app.modules.strategy.ports import Strategy, StrategyRegistry
+from app.modules.strategy.registry import (
+    StrategyRegistryImpl,
+    default_registry,
+    get_strategy,
+    list_strategies,
+    register_strategy,
+)
 from app.modules.strategy.schemas import (
     BacktestRequest,
     BacktestResult,
@@ -37,6 +44,7 @@ __all__ = [
     "StrategyContext",
     "StrategyMetadata",
     "StrategyRegistry",
+    "StrategyRegistryImpl",
     "TechnicalSnapshot",
     "TradeRecord",
     "calculate_atr",
@@ -49,4 +57,8 @@ __all__ = [
     "calculate_support_resistance",
     "calculate_swing_high_low",
     "calculate_true_range",
+    "default_registry",
+    "get_strategy",
+    "list_strategies",
+    "register_strategy",
 ]
