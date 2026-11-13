@@ -69,9 +69,9 @@ def test_upgrade_downgrade_upgrade_and_check(test_database_url: str) -> None:
     command.downgrade(config, "base")
     command.upgrade(config, "head")
     versions = asyncio.run(_query(test_database_url, "SELECT version_num FROM alembic_version"))
-    # M1-T01 后合并：迁移链为 0001_initial → 0002_marketdata → 0003_identity，
-    # 单一 head 为 0003_identity（见 docs/tasks/M1/README.md §6 S1 / 审计锚点 #12）。
-    assert versions == [("0003_identity",)]
+    # M4-T01: 迁移链为 0001_initial → 0002_marketdata → 0003_identity → 0004_simbroker，
+    # 单一 head 为 0004_simbroker。
+    assert versions == [("0004_simbroker",)]
 
     command.downgrade(config, "base")
     tables = asyncio.run(

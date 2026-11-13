@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 import app.core.audit  # noqa: F401  # 导入以把 AuditLog 注册到 Base.metadata
 import app.modules.identity.models  # noqa: F401  # M1-T01：注册 identity 四表，供 alembic check 比对
 import app.modules.marketdata.tables  # noqa: F401  # 导入以把 marketdata 表注册到 Base.metadata
+import app.modules.simbroker.models  # noqa: F401  # M4-T01：注册 simbroker 六表，供 alembic check 比对
 from alembic import context
 from app.core.config import get_settings
 from app.core.db import Base

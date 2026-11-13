@@ -50,7 +50,8 @@ def test_alembic_has_single_head() -> None:
     from alembic.script import ScriptDirectory
 
     script = ScriptDirectory.from_config(_alembic_config())
-    assert list(script.get_heads()) == ["0003_identity"]
+    assert list(script.get_heads()) == ["0004_simbroker"]
+    assert script.get_revision("0004_simbroker").down_revision == "0003_identity"
     assert script.get_revision("0003_identity").down_revision == "0002_marketdata"
 
 
