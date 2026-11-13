@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stockpilot-config
+  namespace: stockpilot
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  CORS_ORIGINS: "http://localhost:8080,http://192.168.50.36"

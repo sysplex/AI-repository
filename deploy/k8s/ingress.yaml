@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stockpilot-ingress
+  namespace: stockpilot
+  labels:
+    app.kubernetes.io/name: stockpilot
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: "16m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+spec:
+  rules:
+    - host: stockpilot.internal
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: stockpilot-api
+                port:
+                  number: 8000
