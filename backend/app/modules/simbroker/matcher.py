@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import uuid
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -215,7 +215,7 @@ class MatchingEngine:
     def match_orders(
         cls,
         orders: Sequence[Any],
-        bars_by_symbol: dict[str, BarProtocol | None],
+        bars_by_symbol: Mapping[str, BarProtocol | None],
         slippage_bps: Decimal,
         fee_model: FeeModelConfig,
         is_market_close: bool = False,

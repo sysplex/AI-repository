@@ -10,6 +10,7 @@ from decimal import Decimal
 import pytest
 
 from app.modules.simbroker.matcher import MatchingEngine
+from app.modules.simbroker.ports import BarProtocol
 from app.modules.simbroker.schemas import FeeModelConfig
 
 
@@ -386,7 +387,7 @@ class TestMissingBarAndEdgeCases:
         )
         ord3 = MockOrder(uuid.uuid4(), "GOOGL", "buy", "market", Decimal("8"))  # missing bar
 
-        bars = {"AAPL": b_aapl, "MSFT": b_msft, "GOOGL": None}
+        bars: dict[str, BarProtocol | None] = {"AAPL": b_aapl, "MSFT": b_msft, "GOOGL": None}
         results = MatchingEngine.match_orders(
             [ord1, ord2, ord3],
             bars,
