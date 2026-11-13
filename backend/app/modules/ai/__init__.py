@@ -53,6 +53,11 @@ from app.modules.ai.prompts import (
     register_prompt_template,
     sanitize_untrusted_text,
 )
+from app.modules.ai.retry import (
+    RetryableLLMCaller,
+    ValidatedLLMResult,
+    execute_with_retry,
+)
 from app.modules.ai.schemas import (
     AIAnalyzeRequest,
     AIPromptInfo,
@@ -69,6 +74,12 @@ from app.modules.ai.schemas import (
     LLMResult,
     QuotaStatus,
     ReportStatus,
+)
+from app.modules.ai.validator import (
+    SchemaValidationResult,
+    SchemaValidator,
+    clean_and_extract_json,
+    validate_json_schema,
 )
 
 __all__ = [
@@ -112,9 +123,15 @@ __all__ = [
     "QuotaServiceProtocol",
     "QuotaStatus",
     "ReportStatus",
+    "RetryableLLMCaller",
     "SchemaValidationError",
+    "SchemaValidationResult",
+    "SchemaValidator",
+    "ValidatedLLMResult",
     "calculate_cost",
+    "clean_and_extract_json",
     "default_prompt_registry",
+    "execute_with_retry",
     "format_untrusted_facts",
     "get_model_pricing",
     "get_prompt_template",
@@ -123,4 +140,5 @@ __all__ = [
     "register_prompt_template",
     "reset_pricing_registry",
     "sanitize_untrusted_text",
+    "validate_json_schema",
 ]
