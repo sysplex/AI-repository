@@ -20,6 +20,7 @@ __all__ = [
     "AIReportCreate",
     "AIReportResponse",
     "AnalysisReport",
+    "BudgetCircuitStatus",
     "DataSnapshotCreate",
     "DataSnapshotResponse",
     "FactTracingResult",
@@ -175,6 +176,21 @@ class QuotaStatus(BaseModel):
     daily_quota: int
     remaining_calls: int
     is_exceeded: bool
+
+
+class BudgetCircuitStatus(BaseModel):
+    """全局或用户预算熔断器状态"""
+
+    model_config = ConfigDict(frozen=True)
+
+    state: Literal["CLOSED", "OPEN", "HALF_OPEN"]
+    daily_cost_usd: Decimal
+    daily_budget_usd: Decimal
+    monthly_cost_usd: Decimal
+    monthly_budget_usd: Decimal
+    is_open: bool
+    tripped_at: datetime | None = None
+    tripped_reason: str | None = None
 
 
 class FactTracingViolation(BaseModel):

@@ -44,7 +44,7 @@
 ---
 
 ## 4. 验收标准
-- [ ] 超出当日配额立即抛出 `QUOTA_EXCEEDED` 错误
-- [ ] 熔断器触发后立即抛出 `BUDGET_CIRCUIT_OPEN`
-- [ ] 每次真实调用消耗的 tokens 与成本准确持久化入库 `ai_usage`
-- [ ] 单元测试覆盖率 $\ge 90\%$，`make check` 全绿
+- [x] 超出当日配额立即抛出 `QUOTA_EXCEEDED` 错误
+- [x] 熔断器触发后立即抛出 `BUDGET_CIRCUIT_OPEN`
+- [x] 每次真实调用消耗的 tokens 与成本准确持久化入库 `ai_usage`
+- [x] 单元测试覆盖率 $\ge 90\%$，`make check` 全绿
