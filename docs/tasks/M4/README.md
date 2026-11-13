@@ -12,7 +12,7 @@
 | ID | Issue | 任务名称 | 建议分支 | 依赖 | 规模 | 负责 Agent | 状态 |
 |---|---|---|---|---|---|---|---|
 | [T01](T01-domain-models-and-ports.md) | #85 | 领域数据模型、SQLAlchemy 实体、Alembic 迁移（0004_simbroker）与 DTO Schema | `feat/m4-t01-models-schemas-migration` | M3 已结项 | 中 | Antigravity | ✅ Merged (PR #93) |
-| [T02](T02-fee-slippage-pdt-validation.md) | #86 | 费用模型、滑点、PDT 规则与订单验证引擎 | `feat/m4-t02-validation-fee-pdt` | T01 | 中 | _待认领_ | Todo |
+| [T02](T02-fee-slippage-pdt-validation.md) | #86 | 费用模型、滑点、PDT 规则与订单验证引擎 | `feat/m4-t02-validation-fee-pdt` | T01 | 中 | Antigravity | ✅ Merged (PR #94) |
 | [T03](T03-matching-engine.md) | #87 | 撮合引擎（市价/限价/止损单规则、TIF 与行情缺失防御） | `feat/m4-t03-matching-engine` | T01、T02 | 中–大 | _待认领_ | Todo |
 | [T04](T04-accounting-and-positions.md) | #88 | 记账引擎、持仓管理、平均成本法与财务不变量 | `feat/m4-t04-accounting-and-positions` | T01、T03 | 中 | _待认领_ | Todo |
 | [T05](T05-corporate-actions-and-close.md) | #89 | 公司行动（拆股/分红）、收盘批处理与净值快照 | `feat/m4-t05-corporate-actions-and-close` | T01、T04 | 中 | _待认领_ | Todo |
