@@ -6,8 +6,10 @@ Defines the abstract contracts for Strategy implementations and StrategyRegistry
 from __future__ import annotations
 
 from collections.abc import Sequence
+from datetime import date
 from typing import Any, Protocol, runtime_checkable
 
+from app.modules.strategy.indicators import Bar
 from app.modules.strategy.schemas import Signal, StrategyContext
 
 
@@ -45,3 +47,19 @@ class StrategyRegistry(Protocol):
     def list_all(self) -> Sequence[Strategy]:
         """List all registered strategy implementations."""
         ...
+
+
+@runtime_checkable
+class MarketDataServiceProtocol(Protocol):
+    """Protocol for data service dependency providing historical bars and fundamentals."""
+
+    async def get_bars(
+        self,
+        symbol: str,
+        start: date,
+        end: date,
+        interval: str = "1d",
+        adjusted: bool = True,
+    ) -> Sequence[Bar]: ...
+
+    async def get_fundamentals(self, symbol: str) -> Any: ...

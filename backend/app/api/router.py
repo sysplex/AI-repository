@@ -6,15 +6,33 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from app.api.deps import current_user
 from app.api.health import router as health_router
 from app.api.identity import router as identity_router
+from app.modules.marketdata.api import get_data_service
 from app.modules.marketdata.api import router as market_router
+from app.modules.strategy.api import (
+    router as strategy_router,
+)
+from app.modules.strategy.api import (
+    set_strategy_service,
+)
+from app.modules.strategy.service import StrategyService
 
 root_router = APIRouter()
 root_router.include_router(health_router)
 
+# Wire market data service into strategy service facade
+set_strategy_service(StrategyService(data_service=get_data_service()))
+
 api_router = APIRouter()
 api_router.include_router(market_router, prefix="/market", tags=["marketdata"])
 api_router.include_router(identity_router)
+api_router.include_router(
+    strategy_router,
+    prefix="/strategy",
+    tags=["strategy"],
+    dependencies=[Depends(current_user)],
+)

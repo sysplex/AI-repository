@@ -15,7 +15,11 @@ from app.modules.strategy.indicators import (
     calculate_true_range,
 )
 from app.modules.strategy.levels import compute_atr_levels
-from app.modules.strategy.ports import Strategy, StrategyRegistry
+from app.modules.strategy.ports import (
+    MarketDataServiceProtocol,
+    Strategy,
+    StrategyRegistry,
+)
 from app.modules.strategy.registry import (
     StrategyRegistryImpl,
     default_registry,
@@ -27,6 +31,8 @@ from app.modules.strategy.schemas import (
     BacktestRequest,
     BacktestResult,
     EquityPoint,
+    EvaluateRequest,
+    ScanRequest,
     Signal,
     SignalDirection,
     StrategyContext,
@@ -34,6 +40,7 @@ from app.modules.strategy.schemas import (
     TechnicalSnapshot,
     TradeRecord,
 )
+from app.modules.strategy.service import StrategyService
 
 __all__ = [
     "BacktestEngine",
@@ -41,6 +48,9 @@ __all__ = [
     "BacktestResult",
     "Bar",
     "EquityPoint",
+    "EvaluateRequest",
+    "MarketDataServiceProtocol",
+    "ScanRequest",
     "Signal",
     "SignalDirection",
     "Strategy",
@@ -48,6 +58,7 @@ __all__ = [
     "StrategyMetadata",
     "StrategyRegistry",
     "StrategyRegistryImpl",
+    "StrategyService",
     "TechnicalSnapshot",
     "TradeRecord",
     "calculate_atr",

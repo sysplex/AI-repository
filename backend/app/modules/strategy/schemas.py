@@ -32,6 +32,28 @@ class Signal(BaseModel):
     metrics: dict[str, Any] = Field(default_factory=dict)
 
 
+class EvaluateRequest(BaseModel):
+    """Request payload to evaluate strategy signal for a symbol."""
+
+    model_config = ConfigDict(frozen=True)
+
+    strategy_id: str
+    symbol: str
+    as_of: date
+    params: dict[str, Any] = Field(default_factory=dict)
+
+
+class ScanRequest(BaseModel):
+    """Request payload to scan an equity universe for signals."""
+
+    model_config = ConfigDict(frozen=True)
+
+    strategy_id: str
+    symbols: list[str] = Field(min_length=1)
+    as_of: date
+    params: dict[str, Any] = Field(default_factory=dict)
+
+
 class TechnicalSnapshot(BaseModel):
     """Comprehensive technical indicators snapshot for a symbol at a given date."""
 
