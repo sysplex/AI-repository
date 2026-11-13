@@ -8,7 +8,7 @@
 | 分支 | `feat/m4-t04-accounting-and-positions` |
 | Issue | #88 |
 | 建议规模 | 中（0.5–1 天） |
-| 负责 Agent | _待认领_ |
+| 负责 Agent | Antigravity |
 
 ---
 
