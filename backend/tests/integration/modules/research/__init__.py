@@ -1,0 +1,1 @@
+"""Research module integration tests."""
