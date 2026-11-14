@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
 from typing import Any, Protocol, runtime_checkable
 from uuid import UUID
@@ -51,7 +52,13 @@ class PromptRegistryProtocol(Protocol):
 class QuotaServiceProtocol(Protocol):
     """配额与成本审计协议。"""
 
-    async def check(self, user_id: UUID) -> QuotaStatus:
+    async def check(
+        self,
+        user_id: UUID,
+        *,
+        usage_date: date | None = None,
+        raise_on_exceeded: bool = True,
+    ) -> QuotaStatus:
         """检查用户当日 AI 配额。"""
         ...
 

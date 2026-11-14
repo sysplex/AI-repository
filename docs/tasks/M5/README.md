@@ -17,7 +17,7 @@
 | [T04](T04-schema-validation-and-retry.md) | #104 | 输出 Schema 校验器、JSON 清洗与单次自动重试包装 | `feat/m5-t04-schema-validation-retry` | T01, T02, T03 | 中 | Antigravity | ✅ Merged (PR #112) |
 | [T05](T05-fact-tracing-and-hallucination-defense.md) | #105 | 数字溯源校验引擎与 AI 输出防编造防御（docs/08 §4.3） | `feat/m5-t05-fact-tracing-defense` | T01, T03 | 中 | Antigravity | ✅ Merged (PR #113) |
 | [T06](T06-quota-and-budget-circuit-breaker.md) | #106 | 配额管理服务、成本追踪统计与预算熔断器 | `feat/m5-t06-quota-budget-breaker` | T01, T02 | 中 | Antigravity | ✅ Merged (PR #114) |
-| [T07](T07-aiservice-cache-and-api.md) | #107 | AIService 核心编排门面、智能快照缓存与 `/api/v1/ai/*` REST API | `feat/m5-t07-aiservice-cache-api` | T01–T06 | 中–大 | Antigravity | Todo |
+| [T07](T07-aiservice-cache-and-api.md) | #107 | AIService 核心编排门面、智能快照缓存与 `/api/v1/ai/*` REST API | `feat/m5-t07-aiservice-cache-api` | T01–T06 | 中–大 | Antigravity | PR Ready |
 | [T08](T08-integration-and-acceptance.md) | #108 | 全链路端到端集成验收、防编造压力拦截与 M5 结项报告 | `feat/m5-t08-integration-acceptance` | T01–T07 | 中 | Antigravity | Todo |
 
 ---

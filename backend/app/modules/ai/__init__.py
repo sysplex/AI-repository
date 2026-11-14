@@ -12,6 +12,10 @@ from app.modules.ai.adapters import (
     MockFaultMode,
     MockLLMClient,
 )
+from app.modules.ai.api import (
+    get_ai_service,
+    set_ai_service_factory,
+)
 from app.modules.ai.circuit_breaker import (
     DEFAULT_DAILY_BUDGET_USD,
     DEFAULT_MONTHLY_BUDGET_USD,
@@ -86,6 +90,11 @@ from app.modules.ai.schemas import (
     QuotaStatus,
     ReportStatus,
 )
+from app.modules.ai.service import (
+    AIService,
+    get_budget_circuit_breaker,
+    set_budget_circuit_breaker,
+)
 from app.modules.ai.tracing import (
     DEFAULT_BANNED_TERMS,
     DEFAULT_EXEMPT_NUMBERS,
@@ -112,6 +121,7 @@ __all__ = [
     "AIReport",
     "AIReportCreate",
     "AIReportResponse",
+    "AIService",
     "AIServiceError",
     "AIServiceUnavailableError",
     "AnalysisReport",
@@ -167,6 +177,8 @@ __all__ = [
     "extract_numeric_facts",
     "extract_numbers_from_text",
     "format_untrusted_facts",
+    "get_ai_service",
+    "get_budget_circuit_breaker",
     "get_model_pricing",
     "get_prompt_template",
     "list_supported_models",
@@ -175,6 +187,8 @@ __all__ = [
     "reset_pricing_registry",
     "resolve_path_value",
     "sanitize_untrusted_text",
+    "set_ai_service_factory",
+    "set_budget_circuit_breaker",
     "validate_json_schema",
     "verify_fact_tracing",
 ]
