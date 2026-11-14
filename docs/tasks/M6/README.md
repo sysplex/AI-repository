@@ -15,7 +15,7 @@
 | [T02](T02-prompts-and-output-schemas.md) | #118 | 提示词模板注册与输出 Schema 约束（4 大核心用例） | `feat/m6-t02-prompts-output-schemas` | T01 | 中 | Antigravity | ✅ Merged (PR #126) |
 | [T03](T03-fact-aggregator-and-quantitative-engine.md) | #119 | 事实聚合器与代码量化派生引擎（Quantitative Metrics & Facts Aggregator） | `feat/m6-t03-fact-aggregator-quantitative` | T01 | 中 | Antigravity | ✅ Merged (PR #127) |
 | [T04](T04-research-service-facade-and-pipeline.md) | #120 | 核心编排服务 ResearchService 门面与用例管道实现 | `feat/m6-t04-research-service-facade` | T01, T02, T03 | 中–大 | Antigravity | ✅ Merged (PR #128) |
-| [T05](T05-novice-readability-and-compliance.md) | #121 | 新手可读性校验与强制合规包装器（Novice Readability & Compliance Guardrail） | `feat/m6-t05-novice-compliance` | T01, T04 | 中 | Antigravity | 待开始 |
+| [T05](T05-novice-readability-and-compliance.md) | #121 | 新手可读性校验与强制合规包装器（Novice Readability & Compliance Guardrail） | `feat/m6-t05-novice-compliance` | T01, T04 | 中 | Antigravity | ✅ Merged (PR #129) |
 | [T06](T06-rest-api-endpoints.md) | #122 | REST API 路由与端点交付（`/api/v1/ai/*` & `/api/v1/research/*`） | `feat/m6-t06-rest-api-endpoints` | T04, T05 | 中 | Antigravity | 待开始 |
 | [T07](T07-golden-dataset-validation.md) | #123 | 黄金集 5 类代表性股票多场景集成验证（Golden Dataset Integration） | `feat/m6-t07-golden-dataset-validation` | T04, T05, T06 | 中 | Antigravity | 待开始 |
 | [T08](T08-integration-acceptance-and-closeout.md) | #124 | 全链路端到端验收、文档与 M6 结项报告 | `feat/m6-t08-integration-acceptance` | T01–T07 | 中 | Antigravity | 待开始 |
