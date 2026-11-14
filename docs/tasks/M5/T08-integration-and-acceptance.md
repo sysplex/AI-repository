@@ -47,7 +47,7 @@
 ---
 
 ## 4. 验收标准
-- [ ] 验收用例 100% 通过
-- [ ] 全局测试覆盖率 $\ge 80.0\%$
-- [ ] `make check`（ruff check, ruff format, mypy --strict, import-linter, pip-audit）全部绿灯
-- [ ] 输出完整的 `docs/acceptance/M5.md` 报告
+- [x] 验收用例 100% 通过
+- [x] 全局测试覆盖率 $\ge 80.0\%$
+- [x] `make check`（ruff check, ruff format, mypy --strict, import-linter, pip-audit）全部绿灯
+- [x] 输出完整的 `docs/acceptance/M5.md` 报告

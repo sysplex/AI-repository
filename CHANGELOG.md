@@ -48,6 +48,14 @@
 - M4 模拟盘引擎 T06（#90）：绩效与风险分析引擎（PerformanceAnalyzer：总回报、最大回撤、胜率、盈亏比、对比 SPY 跑赢超额收益 Alpha；RiskAnalyzer：现金水位、个股集中度、行业分布、PDT 监控）
 - M4 模拟盘引擎 T07（#91）：SimService 门面服务、标准化 SimBroker 适配器（实现 `ports.Broker` 协议）与 12 个 `/api/v1/sim/*` REST API 端点（账户、资金出入金、下单、撤单、持仓、成交历史、绩效分析、持仓风险体检及复盘日记录入），严格 HARD-01 鉴权与租户数据隔离
 - M4 模拟盘引擎 T08（#92）：全链路端到端集成验收测试 `test_simbroker_e2e.py`（8 大验收项、财务不变量闭环证明、手算撮合精度对齐、公司行动价值守恒、REST API 全生命周期闭环）、归档 `docs/acceptance/M4.md` 并标记 M4 里程碑结项
+- M5 AI 核心框架 T01（#101）：领域数据模型（AIReport、AIUsage、AIRecommendationOutcome、DataSnapshot）、Alembic `0005_ai` 迁移（含枚举与复合索引）、Ports 协议与 DTO Schemas
+- M5 AI 核心框架 T02（#102）：LLMClient 抽象适配器与 MockLLMClient、高精 Decimal 计费计算器（pricing.py，支持 GPT-4o / Claude 3.5 / DeepSeek 等主流模型）
+- M5 AI 核心框架 T03（#103）：提示词仓库注册表（PromptRegistry）、多版本管理与防注入 XML CDATA 隔离模板引擎（PromptTemplate）
+- M5 AI 核心框架 T04（#104）：输出 Schema 校验器（OutputSchemaValidator）、JSON 清洗与单次自动反馈重试机制（RetryableLLMCaller）
+- M5 AI 核心框架 T05（#105）：数字溯源校验引擎（FactTracingEngine）、虚假幻觉数字检测、合规禁用词（保本稳赚）过滤与反向事实索引（docs/08 §4.3）
+- M5 AI 核心框架 T06（#106）：配额管理服务（QuotaService，支持每日限额与原子扣减账本）、预算熔断器（BudgetCircuitBreaker，日/月预算超限自动熔断与手动干预）
+- M5 AI 核心框架 T07（#107）：AIService 核心编排门面、输入快照 SHA-256 去重与多维智能缓存、`/api/v1/ai/*` 6 个 REST API 端点（/analyze, /reports, /facts, /quota, /prompts）与 HARD-01 鉴权
+- M5 AI 核心框架 T08（#108）：全链路端到端集成验收测试 `test_ai_e2e.py`（7 大验收项、Mock LLM 全流程、§4.3 拦截矩阵、提示注入沙箱防御、缓存命中零成本、配额熔断拒绝、REST API 端到端闭环）、归档 `docs/acceptance/M5.md` 并标记 M5 里程碑结项
 
 ### Changed
 - CI：Dependabot 三个 ecosystem 忽略 `semver-major` 升级，避免跨大版本 PR 反复破坏 `uv --frozen` 与固定 SHA 基线（#28/#29 留待 M1 结项后评估）
