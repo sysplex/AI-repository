@@ -74,7 +74,7 @@ class MarketDataServiceProtocol(Protocol):
 class StrategyServiceProtocol(Protocol):
     """技术指标与策略计算服务协议。"""
 
-    def compute_technical_snapshot(
+    async def compute_technical_snapshot(
         self,
         symbol: str,
         as_of: date | None = None,
