@@ -72,11 +72,14 @@ class DataSnapshotResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True, frozen=True)
 
-    id: UUID
     content_hash: str
+    symbol: str = "MARKET"
+    scope: list[str] = Field(default_factory=list)
     facts: dict[str, Any]
+    missing_fields: list[str] = Field(default_factory=list)
     as_of: datetime
     created_at: datetime
+    id: UUID | None = None
 
 
 class AIReportCreate(BaseModel):

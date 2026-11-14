@@ -11,6 +11,9 @@ from fastapi import APIRouter, Depends
 from app.api.deps import current_user
 from app.api.health import router as health_router
 from app.api.identity import router as identity_router
+from app.modules.ai.api import (
+    router as ai_router,
+)
 from app.modules.marketdata.api import get_data_service
 from app.modules.marketdata.api import router as market_router
 from app.modules.simbroker.api import (
@@ -44,5 +47,11 @@ api_router.include_router(
     sim_router,
     prefix="/sim",
     tags=["simbroker"],
+    dependencies=[Depends(current_user)],
+)
+api_router.include_router(
+    ai_router,
+    prefix="/ai",
+    tags=["ai"],
     dependencies=[Depends(current_user)],
 )
