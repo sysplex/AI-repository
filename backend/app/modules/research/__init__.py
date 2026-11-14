@@ -4,6 +4,7 @@
 - 领域 DTO Schemas
 - 端口协议
 - 业务异常
+- 提示词模板与注册器
 """
 
 from __future__ import annotations
@@ -22,6 +23,17 @@ from app.modules.research.ports import (
     QuantitativeEngineProtocol,
     ResearchServiceProtocol,
     StrategyServiceProtocol,
+)
+from app.modules.research.prompts import (
+    BUY_DECISION_V1_TEMPLATE,
+    EARNINGS_V1_TEMPLATE,
+    RESEARCH_PROMPT_TEMPLATES,
+    RESEARCH_V1_TEMPLATE,
+    TECHNICAL_V1_TEMPLATE,
+    ResearchPromptInfo,
+    ResearchPromptTemplate,
+    get_research_prompt_template,
+    register_research_prompts,
 )
 from app.modules.research.schemas import (
     BuyDecisionPayload,
@@ -55,9 +67,11 @@ from app.modules.research.schemas import (
 
 __all__ = [
     "AIServiceProtocol",
+    "BUY_DECISION_V1_TEMPLATE",
     "BuyDecisionPayload",
     "BuyDecisionRequest",
     "BuyVerdict",
+    "EARNINGS_V1_TEMPLATE",
     "EarningsAnalysisRequest",
     "EarningsAssessment",
     "EarningsMetric",
@@ -76,9 +90,13 @@ __all__ = [
     "PricePosition",
     "QuantitativeCalculationError",
     "QuantitativeEngineProtocol",
+    "RESEARCH_PROMPT_TEMPLATES",
+    "RESEARCH_V1_TEMPLATE",
     "ResearchEnvelope",
     "ResearchError",
     "ResearchPayload",
+    "ResearchPromptInfo",
+    "ResearchPromptTemplate",
     "ResearchRequest",
     "ResearchServiceProtocol",
     "RevenueSourceItem",
@@ -88,8 +106,11 @@ __all__ = [
     "Scenarios",
     "StrategyServiceProtocol",
     "SymbolNotFoundError",
+    "TECHNICAL_V1_TEMPLATE",
     "TechnicalAnalysisRequest",
     "TechnicalMetricExplanation",
     "TechnicalPayload",
     "TradePlan",
+    "get_research_prompt_template",
+    "register_research_prompts",
 ]
