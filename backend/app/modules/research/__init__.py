@@ -80,6 +80,7 @@ from app.modules.research.schemas import (
     TechnicalPayload,
     TradePlan,
 )
+from app.modules.research.service import ResearchService
 
 __all__ = [
     "AIServiceProtocol",
@@ -116,6 +117,7 @@ __all__ = [
     "ResearchPromptInfo",
     "ResearchPromptTemplate",
     "ResearchRequest",
+    "ResearchService",
     "ResearchServiceProtocol",
     "RevenueSourceItem",
     "RiskItem",
