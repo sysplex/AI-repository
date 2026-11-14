@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Protocol, runtime_checkable
 from uuid import UUID
@@ -40,12 +40,12 @@ class AIServiceProtocol(Protocol):
 
     async def run(
         self,
-        *,
         use_case: str,
         facts: dict[str, Any],
         params: dict[str, Any] | None = None,
-        user_id: UUID,
-        **kwargs: Any,
+        user_id: UUID | None = None,
+        as_of: datetime | None = None,
+        prompt_version: str | None = None,
     ) -> Any:
         """驱动大模型完成特定用例的分析并返回报告。"""
         ...

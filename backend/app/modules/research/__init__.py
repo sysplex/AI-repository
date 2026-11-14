@@ -19,6 +19,15 @@ from app.modules.research.aggregator import (
     VALID_USE_CASES,
     FactAggregator,
 )
+from app.modules.research.api import (
+    get_current_user,
+    get_research_service,
+    set_research_service,
+    set_research_service_provider,
+)
+from app.modules.research.api import (
+    router as research_router,
+)
 from app.modules.research.compliance import (
     DEFAULT_DISCLAIMER,
     FORBIDDEN_PROFIT_TERMS,
@@ -155,8 +164,13 @@ __all__ = [
     "compute_target_vs_price_pct",
     "compute_technical_trade_plan",
     "ensure_compliance_disclaimer",
+    "get_current_user",
     "get_research_prompt_template",
+    "get_research_service",
     "normalize_missing_earnings_fields",
     "register_research_prompts",
+    "research_router",
     "sanitize_forbidden_terms",
+    "set_research_service",
+    "set_research_service_provider",
 ]
