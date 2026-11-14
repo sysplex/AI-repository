@@ -29,6 +29,7 @@ from app.modules.research.aggregator import (
     USE_CASE_RESEARCH,
     USE_CASE_TECHNICAL,
 )
+from app.modules.research.compliance import ComplianceGuardrail
 from app.modules.research.exceptions import (
     InvalidParameterError,
     ResearchError,
@@ -129,10 +130,12 @@ class ResearchService:
         ai_service: AIServiceProtocol,
         fact_aggregator: FactAggregatorProtocol,
         clock: Any | None = None,
+        compliance_guardrail: ComplianceGuardrail | None = None,
     ) -> None:
         self._ai_service = ai_service
         self._fact_aggregator = fact_aggregator
         self._clock = clock or get_clock()
+        self._compliance_guardrail = compliance_guardrail or ComplianceGuardrail()
 
     async def get_stock_research(
         self,
@@ -290,8 +293,8 @@ class ResearchService:
         else:
             as_of_date = self._clock.now().date()
 
-        # 7. 组装最终信封
-        envelope = ResearchEnvelope(
+        # 7. 组装初始信封并经由合规防线处理
+        raw_envelope = ResearchEnvelope(
             schema_version="1.0",
             use_case=use_case,
             symbol=sym,
@@ -302,6 +305,7 @@ class ResearchService:
             data_gaps=missing_fields,
             disclaimer="本内容仅供研究与学习，不构成投资建议",
         )
+        envelope = self._compliance_guardrail.process_envelope(raw_envelope)
 
         logger.info(
             "Research pipeline completed: symbol={sym}, use_case={uc}, gaps={gaps}",
