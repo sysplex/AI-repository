@@ -43,7 +43,7 @@
 ---
 
 ## 4. 验收标准
-- [ ] 核心公式使用 `Decimal` 高精度计算，除零与极值场景安全降级
-- [ ] 交易计划 `risk_reward = (target - entry) / (entry - stop)` 精确计算
-- [ ] 事实聚合器完整映射 F2/F3/F6/F7 各用例所需数据，缺失数据正确加入 `missing_fields`
-- [ ] 单元测试覆盖率 $\ge 90\%$，全部检查通过
+- [x] 核心公式使用 `Decimal` 高精度计算，除零与极值场景安全降级
+- [x] 交易计划 `risk_reward = (target - entry) / (entry - stop)` 精确计算
+- [x] 事实聚合器完整映射 F2/F3/F6/F7 各用例所需数据，缺失数据正确加入 `missing_fields`
+- [x] 单元测试覆盖率 $\ge 90\%$，全部检查通过

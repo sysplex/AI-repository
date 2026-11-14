@@ -5,10 +5,20 @@
 - 端口协议
 - 业务异常
 - 提示词模板与注册器
+- 事实聚合器 (FactAggregator)
+- 代码量化衍生指标引擎 (QuantitativeEngine)
 """
 
 from __future__ import annotations
 
+from app.modules.research.aggregator import (
+    USE_CASE_BUY_DECISION,
+    USE_CASE_EARNINGS,
+    USE_CASE_RESEARCH,
+    USE_CASE_TECHNICAL,
+    VALID_USE_CASES,
+    FactAggregator,
+)
 from app.modules.research.exceptions import (
     InsufficientDataError,
     InvalidParameterError,
@@ -34,6 +44,12 @@ from app.modules.research.prompts import (
     ResearchPromptTemplate,
     get_research_prompt_template,
     register_research_prompts,
+)
+from app.modules.research.quantitative import (
+    QuantitativeEngine,
+    compute_pos_in_52w_range,
+    compute_target_vs_price_pct,
+    compute_technical_trade_plan,
 )
 from app.modules.research.schemas import (
     BuyDecisionPayload,
@@ -77,6 +93,7 @@ __all__ = [
     "EarningsMetric",
     "EarningsPayload",
     "EvidenceItem",
+    "FactAggregator",
     "FactAggregatorProtocol",
     "FactorAssessment",
     "FactorItem",
@@ -89,6 +106,7 @@ __all__ = [
     "MoatStrength",
     "PricePosition",
     "QuantitativeCalculationError",
+    "QuantitativeEngine",
     "QuantitativeEngineProtocol",
     "RESEARCH_PROMPT_TEMPLATES",
     "RESEARCH_V1_TEMPLATE",
@@ -111,6 +129,14 @@ __all__ = [
     "TechnicalMetricExplanation",
     "TechnicalPayload",
     "TradePlan",
+    "USE_CASE_BUY_DECISION",
+    "USE_CASE_EARNINGS",
+    "USE_CASE_RESEARCH",
+    "USE_CASE_TECHNICAL",
+    "VALID_USE_CASES",
+    "compute_pos_in_52w_range",
+    "compute_target_vs_price_pct",
+    "compute_technical_trade_plan",
     "get_research_prompt_template",
     "register_research_prompts",
 ]
