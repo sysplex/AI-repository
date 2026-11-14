@@ -11,7 +11,7 @@
 
 | ID | Issue | 任务名称 | 建议分支 | 依赖 | 规模 | 负责 Agent | 状态 |
 |---|---|---|---|---|---|---|---|
-| [T01](T01-domain-models-schemas-ports.md) | #117 | 领域数据模型、DTO Schemas 与端口协议（schemas & ports） | `feat/m6-t01-models-schemas-ports` | M5 已结项 | 中 | Antigravity | PR Ready |
+| [T01](T01-domain-models-schemas-ports.md) | #117 | 领域数据模型、DTO Schemas 与端口协议（schemas & ports） | `feat/m6-t01-models-schemas-ports` | M5 已结项 | 中 | Antigravity | ✅ Merged (PR #125) |
 | [T02](T02-prompts-and-output-schemas.md) | #118 | 提示词模板注册与输出 Schema 约束（4 大核心用例） | `feat/m6-t02-prompts-output-schemas` | T01 | 中 | Antigravity | 待开始 |
 | [T03](T03-fact-aggregator-and-quantitative-engine.md) | #119 | 事实聚合器与代码量化派生引擎（Quantitative Metrics & Facts Aggregator） | `feat/m6-t03-fact-aggregator-quantitative` | T01 | 中 | Antigravity | 待开始 |
 | [T04](T04-research-service-facade-and-pipeline.md) | #120 | 核心编排服务 ResearchService 门面与用例管道实现 | `feat/m6-t04-research-service-facade` | T01, T02, T03 | 中–大 | Antigravity | 待开始 |
