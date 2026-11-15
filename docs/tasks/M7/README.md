@@ -18,7 +18,7 @@
 | [T05](T05-thesis-breaker-monitoring-and-compliance.md) | #137 | 论文破裂条件（thesis_breakers）监控元数据与合规包装器 | `feat/m7-t05-thesis-breaker-compliance` | T01, T04 | 中 | Antigravity | ✅ 已完成 (PR #145) |
 | [T06](T06-rest-api-endpoints.md) | #138 | REST API 路由与端点交付（/compare, /long-term, /portfolio） | `feat/m7-t06-rest-api-endpoints` | T04, T05 | 中 | Antigravity | ✅ 已完成 (PR #146) |
 | [T07](T07-golden-dataset-multi-stock-validation.md) | #139 | 黄金数据集多标的场景集成验证（横向对比、长投价值、投资组合全矩阵） | `feat/m7-t07-golden-dataset-multi-stock` | T04, T05, T06 | 中 | Antigravity | ✅ 已完成 (PR #147) |
-| [T08](T08-integration-acceptance-and-closeout.md) | #140 | 全链路端到端验收、文档与 M7 结项报告 | `feat/m7-t08-integration-acceptance` | T01–T07 | 中 | Antigravity | 待开始 |
+| [T08](T08-integration-acceptance-and-closeout.md) | #140 | 全链路端到端验收、文档与 M7 结项报告 | `feat/m7-t08-integration-acceptance` | T01–T07 | 中 | Antigravity | ✅ 已完成 (PR #148) |
 
 ---
 
