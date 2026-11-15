@@ -78,7 +78,7 @@
 | 编号 | 问题 | 需要决策的时间点 |
 |---|---|---|
 | Q1 | 授权数据源选型（价格、延迟、覆盖财报/新闻/评级） | M2 前评估，开放前落地 |
-| Q2 | 前端框架（Vue 或 React） | M9 前 |
+| Q2 | 前端框架（Vue 或 React） | ✅ 2026-11-15 已裁决（React + Vite + TS + Tailwind） → ADR-017 |
 | Q3 | 邮件服务商（密码重置/通知） | ✅ 2026-11-13 已裁决 → ADR-015 |
 | Q4 | 每用户默认 AI 配额与全局日预算 | ✅ 2026-11-13 已裁决（默认 20）→ ADR-016；**全局日预算**仍待 M5 前评估 |
 | Q5 | 云厂商与区域、备份存储 | M0 前 |
@@ -114,3 +114,17 @@
 - **决策**：每用户每日默认配额固定为 **20 次**，可由 `AI_DAILY_QUOTA` 覆盖（必须为非负整数，0 表示禁用）；M1/M2 只做只读展示，扣减与熔断在 M5/M6 落地。**全局日预算不在本次裁决范围内**，仍是 M5 前的待决项。
 - **备选**：更低（10）会限制内测体验；更高（100）在 AI 调用计费接入前缺少成本上限；按角色分级会增加 RBAC 复杂度，M1 不引入。
 - **后果**：`docs/05 §2.1` 与 `deploy/env.example` 已明确 20；新增 `test_q4_ai_daily_quota_default_is_20` 锁定默认值，后续调整必须同步改测试与文档。
+
+## ADR-017 前端技术栈决策：React 18/19 + Vite + TypeScript + Tailwind CSS + Lightweight Charts
+- **状态**：已接受（Q2 裁决，2026-11-15）
+- **背景**：M9 前端需实现仪表盘、个股行情、Lightweight Charts K 线叠加策略信号、AI 深度研报、股票对比、模拟盘工作台与筛选器。需要高性能图表渲染、响应式布局、完善的 TypeScript 生态与快速迭代能力。
+- **决策**：
+  1. 核心框架：React 18/19 + Vite（现代极速 ESM 打包构建工具链）；
+  2. 语言规范：TypeScript 严格模式（`strict: true`）；
+  3. UI 与样式：Tailwind CSS + Lucide Icons；
+  4. 行情图表：TradingView `lightweight-charts`（金融行业标准轻量级 K 线引擎）；
+  5. 路由与请求：React Router DOM + TanStack Query（React Query）；
+  6. 接口契约：由 FastAPI 后端 OpenAPI 规范自动导出 `openapi.json` 并通过 OpenAPI 代码生成器生成强类型 TypeScript 客户端，保证前后端零契约漂移。
+- **备选**：Vue 3（生态优秀，但在金融 K 线轻量级图表生态与 OpenAPI CodeGen 结合上 React 生态更丰富通用）；Next.js（本项目后端已由 FastAPI 统一承担，前端仅作为单页应用 SPA 消费 `/api/v1`，使用 Vite SPA 部署运维更精炼，支持纯静态 CDN/Nginx 分发）。
+- **后果**：前后端完全解耦；开发体验流畅；类型安全性极高；支持独立容器化构建与 Nginx 反向代理。
+

@@ -61,7 +61,8 @@ gantt
 | M6 投研分析与买入决策 | ✅ Done | 2026-11-15 T08 归档 `docs/acceptance/M6.md` + tag `m6-research-v0.6.0` |
 | M7 对比/长期/组合 | ✅ Done | 2026-11-15 T08 归档 `docs/acceptance/M7.md` + tag `m7-comparison-portfolio-v0.7.0` |
 | M8 筛选器与主题自选 | ✅ Done | 2026-11-15 T08 归档 `docs/acceptance/M8.md` + tag `v0.8.0` |
-| M9–M10 | ☐ Todo | 各模块验收记录 `docs/acceptance/<module>.md` |
+| M9 Web 前端 | ⏳ In Progress | `docs/tasks/M9/` 推进中 |
+| M10 调度/提醒/复盘/运维 | ☐ Todo | 各模块验收记录 `docs/acceptance/<module>.md` |
 
 **原则**：M0–M5 是地基，质量不达标不进入 M6+。M6–M8 本质是"新增一个提示词/策略 + 一个接口"，扩展成本低。
 
