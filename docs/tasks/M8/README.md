@@ -17,7 +17,7 @@
 | [T04](T04-screener-service-and-watchlist-repo.md) | #152 | ScreenerService 核心门面与 Watchlist 仓储服务实现 | `feat/m8-t04-service-watchlist-repo` | T01, T02, T03 | 中–大 | Antigravity | ✅ 已完成 (PR #160) |
 | [T05](T05-ai-theme-cards-prompts-and-schemas.md) | #153 | AI 主题股票卡片提示词模板注册与输出 Schema 约束（ThemeCards 提示词与防编造） | `feat/m8-t05-theme-cards-ai-prompts` | T01, T02 | 中 | Antigravity | ✅ 已完成 (PR #161) |
 | [T06](T06-rest-api-endpoints.md) | #154 | REST API 路由与端点交付（/screener, /themes, /watchlists, /universes） | `feat/m8-t06-rest-api-endpoints` | T04, T05 | 中 | Antigravity | ✅ 已完成 (PR #162) |
-| [T07](T07-golden-dataset-500-stocks-validation.md) | #155 | 黄金数据集大样本（500 标的池）策略筛选与多主题场景集成验证 | `feat/m8-t07-golden-dataset-500-stocks` | T04, T05, T06 | 中 | Antigravity | ⏳ 待开始 |
+| [T07](T07-golden-dataset-500-stocks-validation.md) | #155 | 黄金数据集大样本（500 标的池）策略筛选与多主题场景集成验证 | `feat/m8-t07-golden-dataset-500-stocks` | T04, T05, T06 | 中 | Antigravity | ✅ 已完成 (PR #163) |
 | [T08](T08-integration-acceptance-and-closeout.md) | #156 | 全链路端到端验收（E2E）、文档与 M8 结项报告 | `feat/m8-t08-e2e-acceptance-closeout` | T01–T07 | 中 | Antigravity | ⏳ 待开始 |
 
 ---
