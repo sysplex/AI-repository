@@ -15,7 +15,7 @@ import SettingsPage from './pages/settings/SettingsPage';
 import UsagePage from './pages/settings/UsagePage';
 import AdminUsersPage from './pages/settings/AdminUsersPage';
 import ScreenerPage from './pages/screener/ScreenerPage';
-import { ComplianceDisclaimer } from './components/compliance/ComplianceDisclaimer';
+import SimBrokerPage from './pages/simbroker/SimBrokerPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -98,16 +98,23 @@ export const App: React.FC = () => {
                 path="/simbroker"
                 element={
                   <ProtectedRoute>
-                    <div className="space-y-6">
-                      <div className="pb-2 border-b border-slate-800">
-                        <h1 className="text-2xl font-bold text-white">SimBroker 模拟盘控制台</h1>
-                        <p className="text-xs text-slate-400 mt-1">模拟买卖下单、持仓浮盈与 AI 交易复盘日志</p>
-                      </div>
-                      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-8 text-center text-slate-400">
-                        <p className="text-sm">该模块核心视图由 M9-T07 交付，已准备就绪。</p>
-                      </div>
-                      <ComplianceDisclaimer variant="card" />
-                    </div>
+                    <SimBrokerPage initialTab="overview" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/simbroker/orders"
+                element={
+                  <ProtectedRoute>
+                    <SimBrokerPage initialTab="positions-orders" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/simbroker/journal"
+                element={
+                  <ProtectedRoute>
+                    <SimBrokerPage initialTab="journal" />
                   </ProtectedRoute>
                 }
               />

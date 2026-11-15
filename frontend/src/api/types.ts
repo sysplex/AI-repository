@@ -41,9 +41,12 @@ export type BacktestResult = Schemas['BacktestResult'];
 // 4. 模拟盘
 export type AccountResponse = Schemas['AccountResponse'];
 export type AccountOverview = Schemas['AccountOverview'];
+export type AccountCreate = Schemas['AccountCreate'];
+export type DepositRequest = Schemas['DepositRequest'];
 export type OrderResponse = Schemas['OrderResponse'];
 export type OrderCreate = Schemas['OrderCreate'];
 export type PositionResponse = Schemas['PositionResponse'];
+export type TradeResponse = Schemas['TradeResponse'];
 export type EquitySnapshotResponse = Schemas['EquitySnapshotResponse'];
 export type TradeJournalResponse = Schemas['TradeJournalResponse'];
 export type TradeJournalUpdate = Schemas['TradeJournalUpdate'];
