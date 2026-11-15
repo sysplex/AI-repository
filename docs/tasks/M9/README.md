@@ -17,7 +17,7 @@
 | [T04](T04-charting-lightweight-charts-and-signals.md) | #168 | 核心图表组件与行情交互（Lightweight Charts K 线与技术信号叠加） | `feat/m9-t04-lightweight-charts-signals` | T01, T03 | 中–大 | Antigravity | ✅ 已完成 (PR #176) |
 | [T05](T05-ai-research-and-decision-views.md) | #169 | 投研分析与 AI 决策全景页面（Research, Buy Decision, Compare, Long-Term, Portfolio） | `feat/m9-t05-ai-research-decision-views` | T02, T03, T04 | 大 | Antigravity | ✅ 已完成 (PR #177) |
 | [T06](T06-screener-themes-and-watchlists-views.md) | #170 | 策略筛选器与主题自选模块（Screener, Themes & Watchlists） | `feat/m9-t06-screener-themes-watchlists` | T02, T03 | 中 | Antigravity | ✅ 已完成 (PR #178) |
-| [T07](T07-simbroker-console-and-journal-views.md) | #171 | 模拟盘全功能工作台与交易日志（SimBroker Console & Trading Journal） | `feat/m9-t07-simbroker-console-journal` | T02, T03, T04 | 中–大 | Antigravity | 待开始 |
+| [T07](T07-simbroker-console-and-journal-views.md) | #171 | 模拟盘全功能工作台与交易日志（SimBroker Console & Trading Journal） | `feat/m9-t07-simbroker-console-journal` | T02, T03, T04 | 中–大 | Antigravity | ✅ 已完成 (PR #179) |
 | [T08](T08-frontend-e2e-acceptance-and-closeout.md) | #172 | 前端端到端验收（E2E）、Docker 容器化构建与 M9 结项报告 | `feat/m9-t08-frontend-e2e-closeout` | T01–T07 | 中 | Antigravity | 待开始 |
 
 ---
