@@ -49,12 +49,24 @@ from app.modules.screener.schemas import (
     WatchlistRead,
     WatchlistUpdate,
 )
+from app.modules.screener.universe import (
+    DOW30_SYMBOLS,
+    NASDAQ100_SYMBOLS,
+    PRESET_THEMES,
+    SP500_SYMBOLS,
+    UniverseManager,
+    default_universe_manager,
+)
 
 __all__ = [
     "AIServiceProtocol",
+    "DOW30_SYMBOLS",
     "DuplicateWatchlistItemError",
     "ExportToResearchRequest",
     "MarketDataServiceProtocol",
+    "NASDAQ100_SYMBOLS",
+    "PRESET_THEMES",
+    "SP500_SYMBOLS",
     "ScreenerError",
     "ScreenerExecutionError",
     "ScreenerExecutorProtocol",
@@ -75,6 +87,7 @@ __all__ = [
     "ThemeNotFoundError",
     "ThemeStockItem",
     "UniverseInfo",
+    "UniverseManager",
     "UniverseManagerProtocol",
     "UniverseNotFoundError",
     "Watchlist",
@@ -88,4 +101,5 @@ __all__ = [
     "WatchlistRead",
     "WatchlistRepositoryProtocol",
     "WatchlistUpdate",
+    "default_universe_manager",
 ]
