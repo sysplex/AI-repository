@@ -80,6 +80,14 @@
 - M8 筛选器与主题自选 T06（#154）：REST API 路由与端点交付（17 个端点覆盖 /screener, /themes, /watchlists, /universes 及 HARD-01 统一鉴权）
 - M8 筛选器与主题自选 T07（#155）：黄金数据集 S&P 500 大样本池（500 标的池）高并发策略筛选与多主题场景集成验证，Top-K 排序无缝落库回读
 - M8 筛选器与主题自选 T08（#156）：全链路端到端集成验收测试 `test_screener_e2e.py`、归档 `docs/acceptance/M8.md` 并标记 M8 里程碑结项
+- M9 Web 前端 T01（#165）：前端工程脚手架（React 18 + Vite + TypeScript strict + Tailwind CSS）、OpenAPI CodeGen 工具链与类型零漂移自动生成体系
+- M9 Web 前端 T02（#166）：全局状态管理、用户认证体系与多租户上下文（Auth & Identity），无感 JWT 令牌轮转与路由保护
+- M9 Web 前端 T03（#167）：基础 UI 库与金融通用组件库（Theme, Layout, Nav, Cards, Compliance），自适应中美涨跌配色体系与强制合规防线
+- M9 Web 前端 T04（#168）：核心图表组件与行情交互（Lightweight Charts K 线与技术信号叠加、SMA 20/50/200 均线与关键支撑/阻力位）
+- M9 Web 前端 T05（#169）：AI 投研分析与决策全景工作台（Research, Buy Decision, Compare, Long-Term, Portfolio 五大核心子模块）
+- M9 Web 前端 T06（#170）：策略筛选器与热门主题自选工作台（Screener, Themes & Watchlists，含 6 大高景气宏观主题与 AI 单股投研卡片）
+- M9 Web 前端 T07（#171）：模拟盘全功能控制台与交易复盘日志（SimBroker Console & Trading Journal，含 PDT 规则监控、下单防重幂等与心理纪律档案）
+- M9 Web 前端 T08（#172）：前端三大场景端到端验收（E2E-01 主链路、E2E-02 筛选到决策、E2E-03 异常降级）、生产多阶段 Dockerfile 容器化（非 root UID 10001 + Nginx SPA 反代）、归档 `docs/acceptance/M9.md` 并标记 M9 里程碑结项（tag `v0.9.0`）
 
 ### Changed
 - CI：Dependabot 三个 ecosystem 忽略 `semver-major` 升级，避免跨大版本 PR 反复破坏 `uv --frozen` 与固定 SHA 基线（#28/#29 留待 M1 结项后评估）
