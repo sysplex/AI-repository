@@ -15,7 +15,12 @@ from app.modules.ai.exceptions import PromptNotFoundError
 from app.modules.ai.schemas import AIPromptInfo
 
 __all__ = [
+    "DEFAULT_COMPARE_TEMPLATE",
+    "DEFAULT_FACTS_SUMMARY_TEMPLATE",
     "DEFAULT_HEALTH_CHECK_TEMPLATE",
+    "DEFAULT_LONG_TERM_TEMPLATE",
+    "DEFAULT_PORTFOLIO_TEMPLATE",
+    "DEFAULT_STOCK_ANALYSIS_TEMPLATE",
     "PromptRegistry",
     "PromptTemplate",
     "default_prompt_registry",
@@ -248,6 +253,265 @@ DEFAULT_STOCK_ANALYSIS_TEMPLATE = PromptTemplate(
     is_active=True,
 )
 
+DEFAULT_COMPARE_TEMPLATE = PromptTemplate(
+    use_case="compare",
+    version="v1",
+    description="Multi-stock cross-sectional peer comparison and ranking",
+    system_template=(
+        "You are an expert equity research analyst. Compare the provided stocks across "
+        "key fundamental and technical dimensions using the computed rankings and metrics.\n"
+        "Do not alter the computed scores or ranking orders in the facts."
+    ),
+    user_template=(
+        "Compare symbols: {{symbols}}\n\n"
+        "Factual market snapshot:\n"
+        "{{facts}}\n\n"
+        "Parameters:\n"
+        "{{params}}"
+    ),
+    output_schema={
+        "type": "object",
+        "properties": {
+            "symbols": {
+                "type": "array",
+                "items": {"type": "string"},
+                "minItems": 2,
+                "maxItems": 8,
+            },
+            "ranking": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "symbol": {"type": "string"},
+                        "rank": {"type": "integer", "minimum": 1},
+                        "total_score": {"type": ["string", "number"]},
+                        "one_line_reason": {"type": "string"},
+                    },
+                    "required": ["symbol", "rank", "total_score", "one_line_reason"],
+                },
+            },
+            "dimension_notes": {
+                "type": "object",
+                "properties": {
+                    "growth": {"type": "string"},
+                    "margin": {"type": "string"},
+                    "debt": {"type": "string"},
+                    "valuation": {"type": "string"},
+                    "moat": {"type": "string"},
+                    "risk": {"type": "string"},
+                    "dividend": {"type": "string"},
+                    "long_term": {"type": "string"},
+                },
+                "required": [
+                    "growth",
+                    "margin",
+                    "debt",
+                    "valuation",
+                    "moat",
+                    "risk",
+                    "dividend",
+                    "long_term",
+                ],
+            },
+            "fit_by_investor": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "symbol": {"type": "string"},
+                        "suitable_for": {"type": "array", "items": {"type": "string"}},
+                        "not_suitable_for": {"type": "array", "items": {"type": "string"}},
+                    },
+                    "required": ["symbol"],
+                },
+            },
+            "summary": {"type": "string"},
+        },
+        "required": ["symbols", "ranking", "dimension_notes", "fit_by_investor", "summary"],
+    },
+    is_active=True,
+)
+
+DEFAULT_LONG_TERM_TEMPLATE = PromptTemplate(
+    use_case="long_term",
+    version="v1",
+    description="Multi-year long-term investment horizon valuation and thesis breakers",
+    system_template=(
+        "You are a long-term value investor. Evaluate the stock across the 7 core pillars "
+        "and formulate monitorable thesis-breaking triggers.\n"
+        "Provide at least 3 monitorable conditions with concrete metrics and thresholds."
+    ),
+    user_template=(
+        "Evaluate symbol: {{symbol}} for {{years}}-year horizon\n\n"
+        "Factual market snapshot:\n"
+        "{{facts}}\n\n"
+        "Parameters:\n"
+        "{{params}}"
+    ),
+    output_schema={
+        "type": "object",
+        "properties": {
+            "symbol": {"type": "string"},
+            "horizon_years": {"type": "integer", "enum": [5, 10, 15]},
+            "verdict": {
+                "type": "string",
+                "enum": ["holdable", "holdable_with_conditions", "not_recommended"],
+            },
+            "pillars": {
+                "type": "object",
+                "properties": {
+                    "moat": {
+                        "type": "object",
+                        "properties": {
+                            "rating": {"type": "string"},
+                            "reason": {"type": "string"},
+                        },
+                        "required": ["rating", "reason"],
+                    },
+                    "leadership": {
+                        "type": "object",
+                        "properties": {
+                            "rating": {"type": "string"},
+                            "reason": {"type": "string"},
+                        },
+                        "required": ["rating", "reason"],
+                    },
+                    "demand_stability": {
+                        "type": "object",
+                        "properties": {
+                            "rating": {"type": "string"},
+                            "reason": {"type": "string"},
+                        },
+                        "required": ["rating", "reason"],
+                    },
+                    "pricing_power": {
+                        "type": "object",
+                        "properties": {
+                            "rating": {"type": "string"},
+                            "reason": {"type": "string"},
+                        },
+                        "required": ["rating", "reason"],
+                    },
+                    "innovation": {
+                        "type": "object",
+                        "properties": {
+                            "rating": {"type": "string"},
+                            "reason": {"type": "string"},
+                        },
+                        "required": ["rating", "reason"],
+                    },
+                    "financial_strength": {
+                        "type": "object",
+                        "properties": {
+                            "rating": {"type": "string"},
+                            "reason": {"type": "string"},
+                        },
+                        "required": ["rating", "reason"],
+                    },
+                    "market_size": {
+                        "type": "object",
+                        "properties": {
+                            "rating": {"type": "string"},
+                            "reason": {"type": "string"},
+                        },
+                        "required": ["rating", "reason"],
+                    },
+                },
+                "required": [
+                    "moat",
+                    "leadership",
+                    "demand_stability",
+                    "pricing_power",
+                    "innovation",
+                    "financial_strength",
+                    "market_size",
+                ],
+            },
+            "thesis": {"type": "string"},
+            "thesis_breakers": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 10,
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "condition": {"type": "string"},
+                        "metric": {"type": "string"},
+                        "threshold": {"type": "string"},
+                        "data_field": {"type": "string"},
+                    },
+                    "required": ["condition", "metric", "threshold", "data_field"],
+                },
+            },
+            "summary": {"type": "string"},
+        },
+        "required": [
+            "symbol",
+            "horizon_years",
+            "verdict",
+            "pillars",
+            "thesis",
+            "thesis_breakers",
+            "summary",
+        ],
+    },
+    is_active=True,
+)
+
+DEFAULT_PORTFOLIO_TEMPLATE = PromptTemplate(
+    use_case="portfolio",
+    version="v1",
+    description="Deterministic constrained asset allocation and risk explanation",
+    system_template=(
+        "You are a professional quantitative portfolio manager. Explain the portfolio allocation "
+        "and risk management rationale.\n"
+        "Do not modify the computed weights, amounts, or cash allocations from the facts."
+    ),
+    user_template=(
+        "Portfolio allocation request for symbols: {{symbols}}, amount: {{amount}}\n\n"
+        "Factual market snapshot and computed allocations:\n"
+        "{{facts}}\n\n"
+        "Parameters:\n"
+        "{{params}}"
+    ),
+    output_schema={
+        "type": "object",
+        "properties": {
+            "amount": {"type": ["string", "number"]},
+            "allocations": {
+                "type": "array",
+                "minItems": 2,
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "symbol": {"type": "string"},
+                        "weight_pct": {"type": ["string", "number"]},
+                        "allocated_amount": {"type": ["string", "number"]},
+                        "reason": {"type": "string"},
+                    },
+                    "required": ["symbol", "weight_pct", "allocated_amount", "reason"],
+                },
+            },
+            "cash_pct": {"type": ["string", "number"]},
+            "cash_amount": {"type": ["string", "number"]},
+            "rationale": {"type": "string"},
+            "risk_notes": {"type": "string"},
+            "rebalance_suggestion": {"type": "string"},
+        },
+        "required": [
+            "amount",
+            "allocations",
+            "cash_pct",
+            "cash_amount",
+            "rationale",
+            "risk_notes",
+            "rebalance_suggestion",
+        ],
+    },
+    is_active=True,
+)
+
 
 # =============================================================================
 # 提示词仓库注册表实现
@@ -271,6 +535,9 @@ class PromptRegistry:
         self.register(DEFAULT_HEALTH_CHECK_TEMPLATE)
         self.register(DEFAULT_FACTS_SUMMARY_TEMPLATE)
         self.register(DEFAULT_STOCK_ANALYSIS_TEMPLATE)
+        self.register(DEFAULT_COMPARE_TEMPLATE)
+        self.register(DEFAULT_LONG_TERM_TEMPLATE)
+        self.register(DEFAULT_PORTFOLIO_TEMPLATE)
 
     def register(
         self,
