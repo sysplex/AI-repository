@@ -132,6 +132,16 @@ httpClient.interceptors.response.use(
       }
     }
 
+    if (error.response?.status === 429) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('api:quota_exceeded', { detail: error.response.data }));
+      }
+    } else if (error.response?.status === 503) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('api:circuit_breaker', { detail: error.response.data }));
+      }
+    }
+
     return Promise.reject(parseApiError(error));
   }
 );
