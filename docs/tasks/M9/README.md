@@ -12,7 +12,7 @@
 | ID | Issue | 任务名称 | 建议分支 | 依赖 | 规模 | 负责 Agent | 状态 |
 |---|---|---|---|---|---|---|---|
 | [T01](T01-frontend-scaffolding-toolchain-openapi.md) | #165 | 前端工程脚手架、构建工具链与 OpenAPI TypeScript 客户端契约生成 | `feat/m9-t01-frontend-scaffolding-openapi` | M8 已结项 | 中 | Antigravity | ✅ 已完成 (PR #173) |
-| [T02](T02-auth-identity-and-state-management.md) | #166 | 全局状态管理、用户认证体系与多租户上下文（Auth & Identity） | `feat/m9-t02-auth-identity-state` | T01 | 中 | Antigravity | 待开始 |
+| [T02](T02-auth-identity-and-state-management.md) | #166 | 全局状态管理、用户认证体系与多租户上下文（Auth & Identity） | `feat/m9-t02-auth-identity-state` | T01 | 中 | Antigravity | ✅ 已完成 (PR #174) |
 | [T03](T03-ui-components-layout-and-compliance.md) | #167 | 基础 UI 库与金融通用组件库（Theme, Layout, Nav, Cards, Compliance） | `feat/m9-t03-ui-layout-compliance` | T01 | 中 | Antigravity | 待开始 |
 | [T04](T04-charting-lightweight-charts-and-signals.md) | #168 | 核心图表组件与行情交互（Lightweight Charts K 线与技术信号叠加） | `feat/m9-t04-lightweight-charts-signals` | T01, T03 | 中–大 | Antigravity | 待开始 |
 | [T05](T05-ai-research-and-decision-views.md) | #169 | 投研分析与 AI 决策全景页面（Research, Buy Decision, Compare, Long-Term, Portfolio） | `feat/m9-t05-ai-research-decision-views` | T02, T03, T04 | 大 | Antigravity | 待开始 |
