@@ -11,6 +11,7 @@ from typing import Any
 from app.core.errors import AppError, ErrorCode
 
 __all__ = [
+    "ComplianceViolationError",
     "InsufficientDataError",
     "InvalidParameterError",
     "QuantitativeCalculationError",
@@ -64,3 +65,11 @@ class QuantitativeCalculationError(ResearchError):
     code: ErrorCode = ErrorCode.INTERNAL_ERROR
     http_status: int = 500
     default_message: str = "量化指标派生或交易计划计算异常"
+
+
+class ComplianceViolationError(ResearchError):
+    """AI 输出未通过合规校验、缺少核心破裂监控条件或篡改确定性量化结果 (422)。"""
+
+    code: ErrorCode = ErrorCode.LLM_OUTPUT_INVALID
+    http_status: int = 422
+    default_message: str = "AI 分析输出未通过合规校验或包含被篡改的数据"
