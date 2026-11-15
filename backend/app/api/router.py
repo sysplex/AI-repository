@@ -28,6 +28,13 @@ from app.modules.research.api import (
 )
 from app.modules.research.schemas import ResearchEnvelope
 from app.modules.research.service import ResearchService
+from app.modules.screener.api import (
+    router as screener_router,
+)
+from app.modules.screener.api import (
+    set_screener_service_provider,
+)
+from app.modules.screener.service import ScreenerService, create_screener_service
 from app.modules.simbroker.api import (
     router as sim_router,
 )
@@ -63,9 +70,26 @@ def _create_research_service(session: AsyncSession) -> ResearchService:
 
 set_research_service_provider(_create_research_service)
 
+
+def _create_screener_service(session: AsyncSession) -> ScreenerService:
+    """Wire concrete dependencies into screener service facade."""
+    return create_screener_service(
+        session,
+        strategy_service=get_strategy_service(),
+        data_service=get_data_service(),
+        ai_service=AIService(session=session),
+    )
+
+
+set_screener_service_provider(_create_screener_service)
+
 api_router = APIRouter()
 api_router.include_router(market_router, prefix="/market", tags=["marketdata"])
 api_router.include_router(identity_router)
+api_router.include_router(
+    screener_router,
+    dependencies=[Depends(current_user)],
+)
 api_router.include_router(
     strategy_router,
     prefix="/strategy",
