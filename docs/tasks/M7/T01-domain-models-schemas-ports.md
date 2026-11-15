@@ -41,7 +41,7 @@
 ---
 
 ## 4. 验收标准
-- [ ] 所有请求与 Payload 结构体定义完备，严格遵循 `docs/tasks/M7/CONTRACTS.md`
-- [ ] 边界校验有效：股票数量（2–8）、投资期限（5/10/15）、投资金额（>0）等非法输入时被 Pydantic 拦截
-- [ ] `ports.py` 扩展完整
-- [ ] 单元测试 100% 通过，`mypy --strict` 0 错误
+- [x] 所有请求与 Payload 结构体定义完备，严格遵循 `docs/tasks/M7/CONTRACTS.md`
+- [x] 边界校验有效：股票数量（2–8）、投资期限（5/10/15）、投资金额（>0）等非法输入时被 Pydantic 拦截
+- [x] `ports.py` 扩展完整
+- [x] 单元测试 100% 通过，`mypy --strict` 0 错误

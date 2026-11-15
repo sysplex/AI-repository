@@ -18,7 +18,10 @@ from uuid import UUID
 
 from app.modules.research.schemas import (
     BuyDecisionRequest,
+    CompareRequest,
     EarningsAnalysisRequest,
+    LongTermRequest,
+    PortfolioRequest,
     ResearchEnvelope,
     ResearchRequest,
     TechnicalAnalysisRequest,
@@ -115,6 +118,30 @@ class ResearchServiceProtocol(Protocol):
         user_id: UUID,
     ) -> ResearchEnvelope:
         """执行 F7 财报深度解读与指引评估。"""
+        ...
+
+    async def compare_stocks(
+        self,
+        request: CompareRequest,
+        user_id: UUID,
+    ) -> ResearchEnvelope:
+        """执行 F4 多股票横向对比分析。"""
+        ...
+
+    async def get_long_term_analysis(
+        self,
+        request: LongTermRequest,
+        user_id: UUID,
+    ) -> ResearchEnvelope:
+        """执行 F5 长期持有价值与破裂条件分析。"""
+        ...
+
+    async def generate_portfolio_allocation(
+        self,
+        request: PortfolioRequest,
+        user_id: UUID,
+    ) -> ResearchEnvelope:
+        """执行 F8 投资组合配置建议。"""
         ...
 
 
