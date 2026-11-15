@@ -41,7 +41,7 @@
 ---
 
 ## 4. 验收标准
-- [ ] 三大方法完全符合 `ResearchServiceProtocol` 协议签名
-- [ ] 事实与计算结果完整注入 `facts["computed"]`
-- [ ] 完整异常处理分支，无未捕获异常泄露
-- [ ] 单元测试覆盖率 $\ge 90\%$
+- [x] 三大方法完全符合 `ResearchServiceProtocol` 协议签名
+- [x] 事实与计算结果完整注入 `facts["computed"]`
+- [x] 完整异常处理分支，无未捕获异常泄露
+- [x] 单元测试覆盖率 $\ge 90\%$
