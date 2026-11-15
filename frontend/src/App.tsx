@@ -14,6 +14,7 @@ import ResearchPage from './pages/research/ResearchPage';
 import SettingsPage from './pages/settings/SettingsPage';
 import UsagePage from './pages/settings/UsagePage';
 import AdminUsersPage from './pages/settings/AdminUsersPage';
+import ScreenerPage from './pages/screener/ScreenerPage';
 import { ComplianceDisclaimer } from './components/compliance/ComplianceDisclaimer';
 
 const queryClient = new QueryClient({
@@ -70,16 +71,7 @@ export const App: React.FC = () => {
                 path="/screener"
                 element={
                   <ProtectedRoute>
-                    <div className="space-y-6">
-                      <div className="pb-2 border-b border-slate-800">
-                        <h1 className="text-2xl font-bold text-white">策略筛选器</h1>
-                        <p className="text-xs text-slate-400 mt-1">多因子指标筛选与估值分位数过滤</p>
-                      </div>
-                      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-8 text-center text-slate-400">
-                        <p className="text-sm">该模块核心视图由 M9-T06 交付，已准备就绪。</p>
-                      </div>
-                      <ComplianceDisclaimer variant="card" />
-                    </div>
+                    <ScreenerPage initialTab="screener" />
                   </ProtectedRoute>
                 }
               />
@@ -88,21 +80,19 @@ export const App: React.FC = () => {
                 path="/themes"
                 element={
                   <ProtectedRoute>
-                    <div className="space-y-6">
-                      <div className="pb-2 border-b border-slate-800">
-                        <h1 className="text-2xl font-bold text-white">主题投研与自选清单</h1>
-                        <p className="text-xs text-slate-400 mt-1">热门宏观主题（AI 算力、半导体、减肥药）与定制自选组</p>
-                      </div>
-                      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-8 text-center text-slate-400">
-                        <p className="text-sm">该模块核心视图由 M9-T06 交付，已准备就绪。</p>
-                      </div>
-                      <ComplianceDisclaimer variant="card" />
-                    </div>
+                    <ScreenerPage initialTab="themes" />
                   </ProtectedRoute>
                 }
               />
 
-              <Route path="/watchlists" element={<Navigate to="/themes" replace />} />
+              <Route
+                path="/watchlists"
+                element={
+                  <ProtectedRoute>
+                    <ScreenerPage initialTab="watchlists" />
+                  </ProtectedRoute>
+                }
+              />
 
               <Route
                 path="/simbroker"
