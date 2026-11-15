@@ -64,20 +64,23 @@ def test_get_research_prompt_template() -> None:
 
 
 def test_register_research_prompts_to_none_registry() -> None:
-    # When registry is None, returns the 4 templates without error
+    # When registry is None, returns all research templates without error
     templates = register_research_prompts(None)
-    assert len(templates) == 4
+    assert len(templates) == 7
 
 
 def test_register_research_prompts_to_custom_registry() -> None:
     registry = PromptRegistry()
     registered = register_research_prompts(registry)
-    assert len(registered) == 4
+    assert len(registered) == 7
 
     assert registry.has_template("research", "v1.0")
     assert registry.has_template("buy_decision", "v1.0")
     assert registry.has_template("technical", "v1.0")
     assert registry.has_template("earnings", "v1.0")
+    assert registry.has_template("compare", "v1.0")
+    assert registry.has_template("long_term", "v1.0")
+    assert registry.has_template("portfolio", "v1.0")
 
     retrieved = registry.get("research", "v1.0")
     assert retrieved.use_case == "research"
@@ -110,6 +113,9 @@ def test_register_research_prompts_to_default_registry() -> None:
     assert default_prompt_registry.has_template("buy_decision", "v1.0")
     assert default_prompt_registry.has_template("technical", "v1.0")
     assert default_prompt_registry.has_template("earnings", "v1.0")
+    assert default_prompt_registry.has_template("compare", "v1.0")
+    assert default_prompt_registry.has_template("long_term", "v1.0")
+    assert default_prompt_registry.has_template("portfolio", "v1.0")
 
     t_tech = default_prompt_registry.get("technical", "v1.0")
     assert t_tech.use_case == "technical"
