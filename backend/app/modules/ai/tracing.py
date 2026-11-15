@@ -138,6 +138,9 @@ def extract_numeric_facts(
         dec = to_decimal(data)
         if dec is not None:
             results.append((dec, prefix))
+        elif isinstance(data, str):
+            for num, _ in extract_numbers_from_text(data):
+                results.append((num, prefix))
     return results
 
 
