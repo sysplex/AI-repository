@@ -21,6 +21,7 @@ dist/
 
 # node
 node_modules/
+*.tsbuildinfo
 
 # os/editor
 .DS_Store
