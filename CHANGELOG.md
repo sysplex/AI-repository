@@ -72,6 +72,14 @@
 - M7 股票对比与组合配置 T06（#138）：REST API 路由与端点交付（`/api/v1/ai/compare`, `/api/v1/ai/long-term`, `/api/v1/ai/portfolio` 及 `/api/v1/research/*` 双路径平同兼容与 HARD-01 鉴权）
 - M7 股票对比与组合配置 T07（#139）：黄金数据集多标的场景集成验证（AAPL, CAT, KO, PLTR, SOFI 跨对比矩阵、多期限长投破裂矩阵、全风险偏好组合矩阵，FactTracingEngine 100% 溯源通过）
 - M7 股票对比与组合配置 T08（#140）：全链路端到端集成验收测试 `test_comparison_portfolio_e2e.py`、归档 `docs/acceptance/M7.md` 并标记 M7 里程碑结项
+- M8 筛选器与主题自选 T01（#149）：领域数据模型（ScreenerRun, ScreenerResult, Watchlist, WatchlistItem）、SQLAlchemy 2.0 ORM 实体、DTO Schemas 与 Alembic 0006_screener 数据库迁移
+- M8 筛选器与主题自选 T02（#150）：股票池管理服务（UniverseManager）与 6 大预设热门主题股票池库（ai_chips, glp1_weightloss, high_dividend, cyber_security, cloud_saas, clean_energy）
+- M8 筛选器与主题自选 T03（#151）：策略筛选并发执行引擎（ScreenerExecutor：批量策略扫描、确定性多级排序及 10% 异常隔离容错机制）
+- M8 筛选器与主题自选 T04（#152）：ScreenerService 统一业务门面与 Watchlist 异步数据库仓储服务（增删改查、默认清单互斥、重复标的 409 拦截）
+- M8 筛选器与主题自选 T05（#153）：AI 主题股票卡片提示词模板注册（ThemeCards v1.0.0）、输出 Schema 约束、零违规禁用词合规拦截与 FactTracingEngine 事实溯源防编造
+- M8 筛选器与主题自选 T06（#154）：REST API 路由与端点交付（17 个端点覆盖 /screener, /themes, /watchlists, /universes 及 HARD-01 统一鉴权）
+- M8 筛选器与主题自选 T07（#155）：黄金数据集 S&P 500 大样本池（500 标的池）高并发策略筛选与多主题场景集成验证，Top-K 排序无缝落库回读
+- M8 筛选器与主题自选 T08（#156）：全链路端到端集成验收测试 `test_screener_e2e.py`、归档 `docs/acceptance/M8.md` 并标记 M8 里程碑结项
 
 ### Changed
 - CI：Dependabot 三个 ecosystem 忽略 `semver-major` 升级，避免跨大版本 PR 反复破坏 `uv --frozen` 与固定 SHA 基线（#28/#29 留待 M1 结项后评估）
