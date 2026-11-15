@@ -64,6 +64,14 @@ class StrategyServiceProtocol(Protocol):
 
     def list_strategies(self) -> list[Any]: ...
 
+    async def evaluate(
+        self,
+        strategy_id: str,
+        symbol: str,
+        as_of: Any,
+        params: dict[str, Any] | None = None,
+    ) -> Any: ...
+
     async def run_strategy(
         self,
         strategy_id: str,

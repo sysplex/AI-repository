@@ -15,6 +15,7 @@ from app.modules.screener.exceptions import (
     WatchlistItemNotFoundError,
     WatchlistNotFoundError,
 )
+from app.modules.screener.executor import ScreenerExecutor
 from app.modules.screener.models import (
     ScreenerResult,
     ScreenerRun,
@@ -69,6 +70,7 @@ __all__ = [
     "SP500_SYMBOLS",
     "ScreenerError",
     "ScreenerExecutionError",
+    "ScreenerExecutor",
     "ScreenerExecutorProtocol",
     "ScreenerRepositoryProtocol",
     "ScreenerResult",
