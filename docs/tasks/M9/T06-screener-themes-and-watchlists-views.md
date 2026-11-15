@@ -9,6 +9,7 @@
 | Issue | #170 |
 | 建议规模 | 中（1 天） |
 | 负责 Agent | Antigravity |
+| 状态 | ✅ 已完成（PR #178） |
 
 ---
 
@@ -30,3 +31,13 @@
    - 股票池选择（道指 30、标普 500 等）、策略模型选择（趋势跟踪、反转、RSI、基本面选股）；
    - 异步提交任务与运行进度轮询（Loading / Succeeded / Failed）；
    - 筛选结果排名列表（得分、信号、指标快照），一键批量勾选加入自选清单或导出。
+
+---
+
+## 3. 验收总结
+- **API 客户端与领域模型**：在 `frontend/src/api/screener.ts` 完整封装 Universes、Screener Runs、Themes、Watchlists 全套 CRUD、Items 与 Export API。
+- **自选清单工作台**：`WatchlistsView.tsx` 交付清单多 Tab 切换、新建/编辑/设为默认/删除清单、快捷加标的（含 409 冲突友好提示拦截）、编辑备注与监控目标价、以及一键批量导出多股横向对比与组合优化。
+- **热门主题库**：`ThemesView.tsx` 交付 6 大宏观高景气主题卡片、分类筛选、成分股明细表及带 Facts 溯源的单股 AI 投研卡片（商业模式、关注理由、财务亮点、风险要素、适合人群、情境吸引力）。
+- **策略筛选器控制台**：`ScreenerConsoleView.tsx` 交付三大预设股票池与自定义池选择、四大策略模型与动态参数微调、异步运行轮询、综合排名得分榜单、多选批量加入自选与一键导出。
+- **统一导航集成**：`ScreenerPage.tsx` 整合三合一视图，并在 `App.tsx` 完成 `/screener`、`/themes`、`/watchlists` 路由挂载。
+- **质量门禁**：TypeScript strict 严格模式 0 警告 0 报错；全套 91/91 前端单元与组件渲染测试全绿通过；Vite 生产构建成功。
