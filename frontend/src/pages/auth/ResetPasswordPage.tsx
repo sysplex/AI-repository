@@ -25,8 +25,13 @@ export const ResetPasswordPage: React.FC = () => {
       return;
     }
 
-    if (newPassword.length < 8) {
-      setError('新密码长度至少需要 8 个字符');
+    if (newPassword.length < 12) {
+      setError('新密码需至少 12 位');
+      return;
+    }
+
+    if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      setError('新密码需同时包含大写字母、小写字母与数字');
       return;
     }
 
@@ -110,17 +115,17 @@ export const ResetPasswordPage: React.FC = () => {
 
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1.5">
-              新密码 (至少 8 位)
+              新密码 (至少 12 位，含大小写字母与数字)
             </label>
             <div className="relative">
               <Lock className="absolute left-3.5 top-3 h-4 w-4 text-gray-400" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
-                minLength={8}
+                minLength={12}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="例如：StockPilot123"
                 className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-10 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-600 focus:outline-none focus:ring-1 focus:ring-brand-600"
               />
               <button
@@ -131,6 +136,9 @@ export const ResetPasswordPage: React.FC = () => {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+            <p className="mt-1 text-xs text-gray-500">
+              需至少 12 位字符，且同时包含大写字母（A-Z）、小写字母（a-z）和数字（0-9）
+            </p>
           </div>
 
           <div>
@@ -142,7 +150,7 @@ export const ResetPasswordPage: React.FC = () => {
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
-                minLength={8}
+                minLength={12}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"

@@ -40,7 +40,17 @@ export function parseApiError(err: unknown): AppError {
     const body = axiosErr.response?.data;
 
     if (body?.error) {
-      return new AppError(body.error.message || '操作失败', body.error.code || 'UNKNOWN_ERROR', status, body.error.details);
+      let message = body.error.message || '操作失败';
+      const details = body.error.details as Record<string, unknown> | undefined;
+      if (details && Array.isArray(details.errors) && details.errors.length > 0) {
+        const fieldMsgs = details.errors
+          .map((e: { message?: string }) => e.message?.replace(/^Value error,\s*/i, ''))
+          .filter(Boolean);
+        if (fieldMsgs.length > 0) {
+          message = fieldMsgs.join('；');
+        }
+      }
+      return new AppError(message, body.error.code || 'UNKNOWN_ERROR', status, body.error.details);
     }
 
     if (status === 401) {
