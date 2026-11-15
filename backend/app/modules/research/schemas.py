@@ -20,6 +20,10 @@ __all__ = [
     "BuyDecisionPayload",
     "BuyDecisionRequest",
     "BuyVerdict",
+    "ComparePayload",
+    "CompareRankingItem",
+    "CompareRequest",
+    "DimensionNotes",
     "EarningsAnalysisRequest",
     "EarningsAssessment",
     "EarningsMetric",
@@ -28,9 +32,21 @@ __all__ = [
     "FactorAssessment",
     "FactorItem",
     "FactorRating",
+    "FitByInvestorItem",
     "InvestmentHorizon",
+    "LongTermHorizonYears",
+    "LongTermPayload",
+    "LongTermPillarItem",
+    "LongTermPillars",
+    "LongTermRequest",
+    "LongTermVerdict",
     "MoatItem",
     "MoatStrength",
+    "PillarRating",
+    "PortfolioAllocationItem",
+    "PortfolioGoal",
+    "PortfolioPayload",
+    "PortfolioRequest",
     "PricePosition",
     "ResearchEnvelope",
     "ResearchPayload",
@@ -43,6 +59,7 @@ __all__ = [
     "TechnicalAnalysisRequest",
     "TechnicalMetricExplanation",
     "TechnicalPayload",
+    "ThesisBreakerItem",
     "TradePlan",
 ]
 
@@ -57,6 +74,10 @@ FactorRating = Literal["favorable", "neutral", "unfavorable"]
 EarningsAssessment = Literal["strong", "mixed", "weak"]
 MoatStrength = Literal["strong", "moderate", "weak"]
 RiskSeverity = Literal["high", "medium", "low"]
+LongTermHorizonYears = Literal[5, 10, 15]
+LongTermVerdict = Literal["holdable", "holdable_with_conditions", "not_recommended"]
+PillarRating = Literal["strong", "moderate", "weak", "favorable", "neutral", "unfavorable"]
+PortfolioGoal = Literal["growth", "income", "safety", "retirement"]
 
 
 # =============================================================================
@@ -349,3 +370,183 @@ class EarningsAnalysisRequest(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     symbol: str = Field(min_length=1, max_length=16, description="美股代码")
+
+
+# =============================================================================
+# F4: 股票横向对比 (compare)
+# =============================================================================
+
+
+class CompareRankingItem(BaseModel):
+    """对比排名单项（得分与排名由代码确定性派生）。"""
+
+    model_config = ConfigDict(frozen=True)
+
+    symbol: str = Field(description="股票代码")
+    rank: int = Field(ge=1, description="横向对比综合排名")
+    total_score: Decimal = Field(description="代码分位计算的综合得分")
+    one_line_reason: str = Field(description="核心一句话定性原因")
+
+
+class DimensionNotes(BaseModel):
+    """8 大维度对比定性说明。"""
+
+    model_config = ConfigDict(frozen=True)
+
+    growth: str = Field(description="营收与利润增长对比说明")
+    margin: str = Field(description="毛利率与盈利能力对比说明")
+    debt: str = Field(description="资产负债与偿债风险对比说明")
+    valuation: str = Field(description="估值倍数与安全边际对比说明")
+    moat: str = Field(description="护城河与竞争壁垒对比说明")
+    risk: str = Field(description="下行风险与业务脆弱性对比说明")
+    dividend: str = Field(description="股息分红与股东回报对比说明")
+    long_term: str = Field(description="长期成长确定性对比说明")
+
+
+class FitByInvestorItem(BaseModel):
+    """适合与不适合投资人群画像。"""
+
+    model_config = ConfigDict(frozen=True)
+
+    symbol: str = Field(description="股票代码")
+    suitable_for: list[str] = Field(default_factory=list, description="适合的投资者类型/风险偏好")
+    not_suitable_for: list[str] = Field(
+        default_factory=list, description="不适合的投资者类型/风险偏好"
+    )
+
+
+class ComparePayload(BaseModel):
+    """F4 股票对比专属 Payload（docs/06-ai-prompt-spec.md §4.5）。"""
+
+    model_config = ConfigDict(frozen=True)
+
+    symbols: list[str] = Field(min_length=2, max_length=8, description="对比标的列表")
+    ranking: list[CompareRankingItem] = Field(
+        min_length=2, max_length=8, description="综合排名列表"
+    )
+    dimension_notes: DimensionNotes = Field(description="8 大维度对比定性分析")
+    fit_by_investor: list[FitByInvestorItem] = Field(
+        min_length=2, max_length=8, description="投资者画像匹配"
+    )
+    summary: str = Field(description="横向对比综合总结与核心结论")
+
+
+class CompareRequest(BaseModel):
+    """F4 股票对比请求入参（支持 2–8 只股票）。"""
+
+    model_config = ConfigDict(frozen=True)
+
+    symbols: list[str] = Field(min_length=2, max_length=8, description="待对比的美股代码列表")
+
+
+# =============================================================================
+# F5: 长期持有价值与论文破裂条件 (long_term)
+# =============================================================================
+
+
+class LongTermPillarItem(BaseModel):
+    """长期投资价值单项支柱评估。"""
+
+    model_config = ConfigDict(frozen=True)
+
+    rating: PillarRating = Field(
+        description="支柱评级：strong / moderate / weak 或 favorable / neutral / unfavorable"
+    )
+    reason: str = Field(description="支柱定性与定量依据分析")
+
+
+class LongTermPillars(BaseModel):
+    """7 大核心支柱评估（docs/06-ai-prompt-spec.md §4.6）。"""
+
+    model_config = ConfigDict(frozen=True)
+
+    moat: LongTermPillarItem = Field(description="护城河与结构性竞争优势")
+    leadership: LongTermPillarItem = Field(description="管理层战略与资本配置能力")
+    demand_stability: LongTermPillarItem = Field(description="产品与服务需求的长期稳定性")
+    pricing_power: LongTermPillarItem = Field(description="通胀与竞争环境下的自主提价权")
+    innovation: LongTermPillarItem = Field(description="技术研发与持续产品创新能力")
+    financial_strength: LongTermPillarItem = Field(description="自由现金流与资产负债表韧性")
+    market_size: LongTermPillarItem = Field(description="行业 TAM 增长空间与渗透潜力")
+
+
+class ThesisBreakerItem(BaseModel):
+    """投资论点破裂条件（供 M10 自动化持续监控）。"""
+
+    model_config = ConfigDict(frozen=True)
+
+    condition: str = Field(description="破裂触发情景白话描述")
+    metric: str = Field(description="监控的核心指标名称，如 net_margin, pe_trailing")
+    threshold: str = Field(description="触发阈值表达式，如 '< 0.15', '> 45.0'")
+    data_field: str = Field(description="对应数据快照点分路径，如 fundamentals.net_margin")
+
+
+class LongTermPayload(BaseModel):
+    """F5 长期持有价值专属 Payload（docs/06-ai-prompt-spec.md §4.6）。"""
+
+    model_config = ConfigDict(frozen=True)
+
+    symbol: str = Field(description="股票代码")
+    horizon_years: LongTermHorizonYears = Field(description="持有期限（年）：5 / 10 / 15")
+    verdict: LongTermVerdict = Field(
+        description="长期持有评级：holdable / holdable_with_conditions / not_recommended"
+    )
+    pillars: LongTermPillars = Field(description="7 大核心支柱评估结果")
+    thesis: str = Field(description="长期持有论据核心阐述")
+    thesis_breakers: list[ThesisBreakerItem] = Field(
+        min_length=3, max_length=10, description="供 M10 持续监控的论文破裂条件列表"
+    )
+    summary: str = Field(description="通俗总结与长期持有展望")
+
+
+class LongTermRequest(BaseModel):
+    """F5 长期持有分析请求入参。"""
+
+    model_config = ConfigDict(frozen=True)
+
+    symbol: str = Field(min_length=1, max_length=16, description="美股代码")
+    years: LongTermHorizonYears = Field(default=5, description="持有期限（年）：5 / 10 / 15")
+
+
+# =============================================================================
+# F8: 投资组合配置建议 (portfolio)
+# =============================================================================
+
+
+class PortfolioAllocationItem(BaseModel):
+    """单个标的资产配置项（权重由代码确定性给出）。"""
+
+    model_config = ConfigDict(frozen=True)
+
+    symbol: str = Field(description="股票代码")
+    weight_pct: Decimal = Field(description="资产配置百分比（如 25.00 代表 25%）")
+    allocated_amount: Decimal = Field(description="按总金额折算的建议资金配额")
+    reason: str = Field(description="配置该标的在组合中的战略定位与理由")
+
+
+class PortfolioPayload(BaseModel):
+    """F8 投资组合配置专属 Payload（docs/06-ai-prompt-spec.md §4.7）。"""
+
+    model_config = ConfigDict(frozen=True)
+
+    amount: Decimal = Field(description="可投资总金额")
+    allocations: list[PortfolioAllocationItem] = Field(min_length=2, description="各标的分配明细")
+    cash_pct: Decimal = Field(description="建议预留现金比例（如 10.00 代表 10%）")
+    cash_amount: Decimal = Field(description="建议预留现金绝对金额")
+    rationale: str = Field(description="组合整体资产配置逻辑与风格偏向")
+    risk_notes: str = Field(description="组合集中度、相关性及下行对冲风险提示")
+    rebalance_suggestion: str = Field(description="定期与触发式动态再平衡建议")
+
+
+class PortfolioRequest(BaseModel):
+    """F8 投资组合配置请求入参。"""
+
+    model_config = ConfigDict(frozen=True)
+
+    amount: Decimal = Field(gt=Decimal("0"), description="投资金额")
+    symbols: list[str] = Field(min_length=2, max_length=12, description="候选标的池")
+    risk_level: RiskLevel = Field(
+        default="moderate", description="风险等级：conservative / moderate / aggressive"
+    )
+    goal: PortfolioGoal = Field(
+        default="growth", description="投资目标：growth / income / safety / retirement"
+    )
