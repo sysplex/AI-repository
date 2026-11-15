@@ -56,6 +56,14 @@
 - M5 AI 核心框架 T06（#106）：配额管理服务（QuotaService，支持每日限额与原子扣减账本）、预算熔断器（BudgetCircuitBreaker，日/月预算超限自动熔断与手动干预）
 - M5 AI 核心框架 T07（#107）：AIService 核心编排门面、输入快照 SHA-256 去重与多维智能缓存、`/api/v1/ai/*` 6 个 REST API 端点（/analyze, /reports, /facts, /quota, /prompts）与 HARD-01 鉴权
 - M5 AI 核心框架 T08（#108）：全链路端到端集成验收测试 `test_ai_e2e.py`（7 大验收项、Mock LLM 全流程、§4.3 拦截矩阵、提示注入沙箱防御、缓存命中零成本、配额熔断拒绝、REST API 端到端闭环）、归档 `docs/acceptance/M5.md` 并标记 M5 里程碑结项
+- M6 投研分析与买入决策 T01（#117）：领域模型（ResearchEnvelope、ResearchPayload、BuyDecisionPayload、TechnicalPayload、EarningsPayload）与端口协议
+- M6 投研分析与买入决策 T02（#118）：提示词模板注册与输出 Schema 约束（4 大核心用例：research, buy_decision, technical, earnings）
+- M6 投研分析与买入决策 T03（#119）：事实聚合器（FactAggregator）与确定性代码量化派生引擎（QuantitativeMetricsEngine：52周相对位置、溢价比率、动态交易计划）
+- M6 投研分析与买入决策 T04（#120）：核心编排服务 ResearchService 门面与用例管道实现
+- M6 投研分析与买入决策 T05（#121）：新手可读性校验与强制合规包装器（Novice Readability & Compliance Guardrail，0保证性禁用词，法定免责声明，数据缺失优雅降级）
+- M6 投研分析与买入决策 T06（#122）：REST API 路由与端点交付（`/api/v1/ai/*` & `/api/v1/research/*` 双路径兼容与 HARD-01 鉴权）
+- M6 投研分析与买入决策 T07（#123）：黄金集 5 类代表性股票多场景集成验证（AAPL, CAT, KO, PLTR, SOFI 20 组业务场景 + 5 组 REST API 端点全矩阵调用，零幻觉数字溯源通过）
+- M6 投研分析与买入决策 T08（#124）：全链路端到端集成验收测试 `test_research_e2e.py`、归档 `docs/acceptance/M6.md` 并标记 M6 里程碑结项
 
 ### Changed
 - CI：Dependabot 三个 ecosystem 忽略 `semver-major` 升级，避免跨大版本 PR 反复破坏 `uv --frozen` 与固定 SHA 基线（#28/#29 留待 M1 结项后评估）

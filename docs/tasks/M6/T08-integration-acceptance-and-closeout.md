@@ -48,7 +48,7 @@
 ---
 
 ## 4. 验收标准
-- [ ] E2E 测试全部通过，验证真实调用链路完整闭环
-- [ ] 架构契约保持 5 kept, 0 broken；`mypy` 0 错误；`ruff` 0 警告；`pip-audit` 0 漏洞
-- [ ] `docs/acceptance/M6.md` 齐备
-- [ ] 代码合并入 `main`，打标 `v0.6.0` 与发布 Release
+- [x] E2E 测试全部通过，验证真实调用链路完整闭环（9 passed in 1.84s）
+- [x] 架构契约保持 5 kept, 0 broken；`mypy` 0 错误；`ruff` 0 警告；`pip-audit` 0 漏洞
+- [x] `docs/acceptance/M6.md` 齐备
+- [x] 代码合并入 `main`，打标 `v0.6.0` 与发布 Release
