@@ -11,7 +11,7 @@
 
 | ID | Issue | 任务名称 | 建议分支 | 依赖 | 规模 | 负责 Agent | 状态 |
 |---|---|---|---|---|---|---|---|
-| [T01](T01-domain-models-schemas-ports.md) | #133 | 领域数据模型、DTO Schemas 与端口协议（compare, long_term, portfolio） | `feat/m7-t01-models-schemas-ports` | M6 已结项 | 中 | Antigravity | 待开始 |
+| [T01](T01-domain-models-schemas-ports.md) | #133 | 领域数据模型、DTO Schemas 与端口协议（compare, long_term, portfolio） | `feat/m7-t01-models-schemas-ports` | M6 已结项 | 中 | Antigravity | ✅ 已完成 (PR #141) |
 | [T02](T02-prompts-and-output-schemas.md) | #134 | 提示词模板注册与输出 Schema 约束（3 大核心用例） | `feat/m7-t02-prompts-output-schemas` | T01 | 中 | Antigravity | 待开始 |
 | [T03](T03-fact-aggregator-and-quantitative-optimization.md) | #135 | 跨标的事实聚合与代码量化优化引擎（指标分位打分与组合约束优化） | `feat/m7-t03-fact-aggregator-quantitative` | T01 | 中–大 | Antigravity | 待开始 |
 | [T04](T04-service-facade-and-pipeline.md) | #136 | ResearchService 门面扩充与 M7 用例编排管道实现 | `feat/m7-t04-service-facade-pipeline` | T01, T02, T03 | 中–大 | Antigravity | 待开始 |
