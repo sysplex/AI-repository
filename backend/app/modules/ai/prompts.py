@@ -21,6 +21,7 @@ __all__ = [
     "DEFAULT_LONG_TERM_TEMPLATE",
     "DEFAULT_PORTFOLIO_TEMPLATE",
     "DEFAULT_STOCK_ANALYSIS_TEMPLATE",
+    "DEFAULT_THEME_CARD_TEMPLATE",
     "PromptRegistry",
     "PromptTemplate",
     "default_prompt_registry",
@@ -513,6 +514,71 @@ DEFAULT_PORTFOLIO_TEMPLATE = PromptTemplate(
 )
 
 
+DEFAULT_THEME_CARD_TEMPLATE = PromptTemplate(
+    use_case="theme_card",
+    version="v1",
+    description="F9 Thematic stock cards with novice-friendly explanations and fact constraints",
+    system_template=(
+        "You are an expert equity research and thematic investment advisor. "
+        "Generate informative, novice-friendly theme stock cards based strictly "
+        "on the provided factual market data.\n"
+        "Explain financial terms simply upon first mention. "
+        "Never fabricate financial figures or guarantee returns."
+    ),
+    user_template=(
+        "Theme: {{facts.theme.name}} ({{facts.theme.id}})\n"
+        "Category: {{facts.theme.category}}\n"
+        "Tagline: {{facts.theme.tagline}}\n\n"
+        "Constituent Stocks Facts:\n"
+        "{{facts}}\n\n"
+        "Parameters:\n"
+        "{{params}}"
+    ),
+    output_schema={
+        "type": "object",
+        "properties": {
+            "cards": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "symbol": {"type": "string"},
+                        "name": {"type": "string"},
+                        "one_line_intro": {"type": "string"},
+                        "why_watch": {"type": "string"},
+                        "financial_strengths": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                        "main_risks": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                        "suitable_for": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                        "more_attractive_when": {"type": "string"},
+                    },
+                    "required": [
+                        "symbol",
+                        "name",
+                        "one_line_intro",
+                        "why_watch",
+                        "financial_strengths",
+                        "main_risks",
+                        "suitable_for",
+                        "more_attractive_when",
+                    ],
+                },
+            }
+        },
+        "required": ["cards"],
+    },
+    is_active=True,
+)
+
+
 # =============================================================================
 # 提示词仓库注册表实现
 # =============================================================================
@@ -538,6 +604,7 @@ class PromptRegistry:
         self.register(DEFAULT_COMPARE_TEMPLATE)
         self.register(DEFAULT_LONG_TERM_TEMPLATE)
         self.register(DEFAULT_PORTFOLIO_TEMPLATE)
+        self.register(DEFAULT_THEME_CARD_TEMPLATE)
 
     def register(
         self,
