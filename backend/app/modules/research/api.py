@@ -1,10 +1,13 @@
-"""M6 AI 研究用例 REST API 路由与端点实现，`CONTRACTS.md §6`。
+"""M6 & M7 AI 研究用例 REST API 路由与端点实现，`CONTRACTS.md §6`。
 
 对外暴露 `/api/v1/ai/*` 核心研究用例端点：
 - `POST /api/v1/ai/research`：执行股票深度综合研究报告 (F2)
 - `POST /api/v1/ai/buy-decision`：执行买入决策评估与代码量化点位 (F3)
+- `POST /api/v1/ai/compare`：执行多股票横向对比分析 (F4)
+- `POST /api/v1/ai/long-term`：执行长期持有价值与破裂条件评估 (F5)
 - `POST /api/v1/ai/technical`：执行技术面通俗分析与确定性交易计划 (F6)
 - `POST /api/v1/ai/earnings`：执行财报深度解读与业绩指引分析 (F7)
+- `POST /api/v1/ai/portfolio`：执行投资组合配置优化建议 (F8)
 
 设计原则与质量契约：
 - 严格遵循 HARD-01 认证与租户数据隔离；
@@ -27,15 +30,24 @@ from app.core.logging import get_logger
 from app.modules.research.ports import ResearchServiceProtocol
 from app.modules.research.schemas import (
     BuyDecisionRequest,
+    CompareRequest,
     EarningsAnalysisRequest,
+    LongTermRequest,
+    PortfolioRequest,
     ResearchEnvelope,
     ResearchRequest,
     TechnicalAnalysisRequest,
 )
 
 __all__ = [
+    "compare_stocks",
+    "generate_portfolio_allocation",
     "get_current_user",
+    "get_earnings_analysis",
+    "get_long_term_analysis",
     "get_research_service",
+    "get_stock_research",
+    "get_technical_analysis",
     "router",
     "set_research_service",
     "set_research_service_provider",
@@ -180,3 +192,66 @@ async def get_earnings_analysis(
     """解读营收/利润/指引预期差，评估管理层评论与市场反应。"""
     user_id = _extract_user_id(user)
     return await service.get_earnings_analysis(request=req, user_id=user_id)
+
+
+# -----------------------------------------------------------------------------
+# 5. F4: 股票横向对比 (compare)
+# -----------------------------------------------------------------------------
+
+
+@router.post(
+    "/compare",
+    response_model=ResearchEnvelope,
+    status_code=status.HTTP_200_OK,
+    summary="执行多股票横向对比分析",
+)
+async def compare_stocks(
+    req: CompareRequest,
+    service: Annotated[ResearchServiceProtocol, Depends(get_research_service)],
+    user: Annotated[Any, Depends(get_current_user)],
+) -> ResearchEnvelope:
+    """横向对比 2-8 只美股标的，输出 8 大维度定性分析、确定性排名与画像匹配。"""
+    user_id = _extract_user_id(user)
+    return await service.compare_stocks(request=req, user_id=user_id)
+
+
+# -----------------------------------------------------------------------------
+# 6. F5: 长期持有价值与破裂条件 (long-term)
+# -----------------------------------------------------------------------------
+
+
+@router.post(
+    "/long-term",
+    response_model=ResearchEnvelope,
+    status_code=status.HTTP_200_OK,
+    summary="执行长期持有价值与破裂条件评估",
+)
+async def get_long_term_analysis(
+    req: LongTermRequest,
+    service: Annotated[ResearchServiceProtocol, Depends(get_research_service)],
+    user: Annotated[Any, Depends(get_current_user)],
+) -> ResearchEnvelope:
+    """评估 5/10/15 年长期投资价值、7 大核心支柱与结构化论文破裂监控条件。"""
+    user_id = _extract_user_id(user)
+    return await service.get_long_term_analysis(request=req, user_id=user_id)
+
+
+# -----------------------------------------------------------------------------
+# 7. F8: 投资组合配置优化 (portfolio)
+# -----------------------------------------------------------------------------
+
+
+@router.post(
+    "/portfolio",
+    response_model=ResearchEnvelope,
+    status_code=status.HTTP_200_OK,
+    summary="执行投资组合配置优化建议",
+)
+async def generate_portfolio_allocation(
+    req: PortfolioRequest,
+    service: Annotated[ResearchServiceProtocol, Depends(get_research_service)],
+    user: Annotated[Any, Depends(get_current_user)],
+) -> ResearchEnvelope:
+    """基于约束优化算法与风险目标，输出满足绝对权重守恒的资产配置与现金建议。"""
+    user_id = _extract_user_id(user)
+    return await service.generate_portfolio_allocation(request=req, user_id=user_id)
