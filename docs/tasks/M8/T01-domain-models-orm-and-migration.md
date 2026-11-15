@@ -57,7 +57,7 @@
 ---
 
 ## 4. 验收标准
-- [ ] 所有 Pydantic 模型、ORM 实体与 DTO 定义完备，严格遵循 `CONTRACTS.md`
-- [ ] Alembic 迁移脚本 `0006_screener.py` 可执行双向无损迁移，`alembic check` 0 差异
-- [ ] 唯一单 head 保证为 `0006_screener`
-- [ ] 单元与集成测试 100% 通过，`mypy --strict` 0 错误，`ruff check` 0 警告
+- [x] 所有 Pydantic 模型、ORM 实体与 DTO 定义完备，严格遵循 `CONTRACTS.md`
+- [x] Alembic 迁移脚本 `0006_screener.py` 可执行双向无损迁移，`alembic check` 0 差异
+- [x] 唯一单 head 保证为 `0006_screener`
+- [x] 单元与集成测试 100% 通过，`mypy --strict` 0 错误，`ruff check` 0 警告
