@@ -10,11 +10,11 @@ import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
+import ResearchPage from './pages/research/ResearchPage';
 import SettingsPage from './pages/settings/SettingsPage';
 import UsagePage from './pages/settings/UsagePage';
 import AdminUsersPage from './pages/settings/AdminUsersPage';
 import { ComplianceDisclaimer } from './components/compliance/ComplianceDisclaimer';
-import { AIPromptVersionBadge } from './components/compliance/AIPromptVersionBadge';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,26 +49,22 @@ export const App: React.FC = () => {
                 path="/research"
                 element={
                   <ProtectedRoute>
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                        <div>
-                          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                            AI 投研与多维买入决策全景
-                          </h1>
-                          <p className="text-xs text-slate-400 mt-1">
-                            包含技术面判定、基本面财务雷达、多标的对比与长线持有价值推演
-                          </p>
-                        </div>
-                        <AIPromptVersionBadge model="deepseek-chat" promptVersion="v1.2.0" />
-                      </div>
-                      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-8 text-center text-slate-400 space-y-3">
-                        <p className="text-sm">该模块核心视图由 M9-T05 交付，已准备就绪。</p>
-                      </div>
-                      <ComplianceDisclaimer variant="card" />
-                    </div>
+                    <ResearchPage />
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/stock/:symbol"
+                element={
+                  <ProtectedRoute>
+                    <ResearchPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/buy-decision" element={<Navigate to="/research?tab=buy-decision" replace />} />
+              <Route path="/compare" element={<Navigate to="/research?tab=compare" replace />} />
+              <Route path="/long-term" element={<Navigate to="/research?tab=long-term" replace />} />
+              <Route path="/portfolio" element={<Navigate to="/research?tab=portfolio" replace />} />
 
               <Route
                 path="/screener"
