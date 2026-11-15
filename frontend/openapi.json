@@ -1,0 +1,6761 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "stockpilot",
+    "version": "0.0.0"
+  },
+  "paths": {
+    "/api/v1/market/quotes": {
+      "get": {
+        "tags": [
+          "marketdata"
+        ],
+        "summary": "Get Quotes",
+        "description": "Retrieve realtime quotes for one or more stock symbols.",
+        "operationId": "get_quotes_api_v1_market_quotes_get",
+        "parameters": [
+          {
+            "name": "symbols",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated stock symbols, e.g. AAPL,MSFT",
+              "title": "Symbols"
+            },
+            "description": "Comma-separated stock symbols, e.g. AAPL,MSFT"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/Quote"
+                  },
+                  "title": "Response Get Quotes Api V1 Market Quotes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/market/bars/{symbol}": {
+      "get": {
+        "tags": [
+          "marketdata"
+        ],
+        "summary": "Get Bars",
+        "description": "Retrieve historical candlestick bars.",
+        "operationId": "get_bars_api_v1_market_bars__symbol__get",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Symbol"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "Start date (YYYY-MM-DD)",
+              "title": "Start"
+            },
+            "description": "Start date (YYYY-MM-DD)"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "End date (YYYY-MM-DD)",
+              "title": "End"
+            },
+            "description": "End date (YYYY-MM-DD)"
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Candlestick bar interval",
+              "default": "1d",
+              "title": "Interval"
+            },
+            "description": "Candlestick bar interval"
+          },
+          {
+            "name": "adjusted",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether prices are adjusted",
+              "default": true,
+              "title": "Adjusted"
+            },
+            "description": "Whether prices are adjusted"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Bar"
+                  },
+                  "title": "Response Get Bars Api V1 Market Bars  Symbol  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/market/profile/{symbol}": {
+      "get": {
+        "tags": [
+          "marketdata"
+        ],
+        "summary": "Get Profile",
+        "description": "Retrieve company background, sector, and industry classification.",
+        "operationId": "get_profile_api_v1_market_profile__symbol__get",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Symbol"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyProfile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/market/fundamentals/{symbol}": {
+      "get": {
+        "tags": [
+          "marketdata"
+        ],
+        "summary": "Get Fundamentals",
+        "description": "Retrieve company valuation and financial profitability metrics.",
+        "operationId": "get_fundamentals_api_v1_market_fundamentals__symbol__get",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Symbol"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Fundamentals"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/market/news/{symbol}": {
+      "get": {
+        "tags": [
+          "marketdata"
+        ],
+        "summary": "Get News",
+        "description": "Retrieve latest financial news articles for a symbol.",
+        "operationId": "get_news_api_v1_market_news__symbol__get",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Symbol"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Max news items",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Max news items"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NewsItem"
+                  },
+                  "title": "Response Get News Api V1 Market News  Symbol  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/market/universe/{name}": {
+      "get": {
+        "tags": [
+          "marketdata"
+        ],
+        "summary": "Get Universe",
+        "description": "Retrieve constituents of an equity universe (e.g. sp500, nasdaq100).",
+        "operationId": "get_universe_api_v1_market_universe__name__get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Response Get Universe Api V1 Market Universe  Name  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/market/facts/{symbol}": {
+      "post": {
+        "tags": [
+          "marketdata"
+        ],
+        "summary": "Build Facts",
+        "description": "Build and persist deterministic AI market fact snapshot with SHA-256 hash.",
+        "operationId": "build_facts_api_v1_market_facts__symbol__post",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Symbol"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/BuildFactsRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactsSnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "注册账号",
+        "description": "创建账号；成功后不自动登录（`CONTRACTS §9` 行为 1）。",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "登录并签发双令牌",
+        "description": "凭据正确返回 access + refresh；失败统一 401，超阈值 429。",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPair"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "轮换刷新令牌",
+        "description": "旧 refresh 立即吊销，返回全新一对令牌。",
+        "operationId": "refresh_api_v1_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPair"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "登出并吊销刷新令牌",
+        "description": "需要有效 access；提交的 refresh 令牌随即失效（幂等）。",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/reset-request": {
+      "post": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "请求重置密码",
+        "description": "无论账号是否存在都返回 202，避免账号枚举（`CONTRACTS §9` 行为 6）。\n\n响应用固定文案且不含令牌：明文令牌只经 `MailSender` 投递。",
+        "operationId": "request_password_reset_api_v1_auth_password_reset_request_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Request Password Reset Api V1 Auth Password Reset Request Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/reset-confirm": {
+      "post": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "确认重置密码",
+        "description": "一次性令牌换新密码；成功后该用户全部 refresh 令牌立即失效。",
+        "operationId": "confirm_password_reset_api_v1_auth_password_reset_confirm_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetConfirm"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "我的资料",
+        "description": "返回当前令牌对应用户的公开视图（不含任何凭据字段）。",
+        "operationId": "get_me_api_v1_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPublic"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "更新我的设置",
+        "description": "整体替换设置项（风险偏好/语言/默认账户），写 `auth.settings_updated` 审计。",
+        "operationId": "update_me_api_v1_me_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/usage": {
+      "get": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "我的 AI 用量与配额",
+        "description": "当日用量；无记录返回全 0，`quota` 取 `AI_DAILY_QUOTA`（M1 只读，裁定 C6）。",
+        "operationId": "get_my_usage_api_v1_me_usage_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users": {
+      "get": {
+        "tags": [
+          "identity"
+        ],
+        "summary": "用户列表（admin）",
+        "description": "仅 admin 可访问；非 admin 403（`CONTRACTS §12`）。",
+        "operationId": "list_users_api_v1_admin_users_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedUsers"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/universes": {
+      "get": {
+        "tags": [
+          "screener"
+        ],
+        "summary": "获取可选股票池列表",
+        "description": "返回系统支持的股票池（标普500、纳指100、道指30、自定义）。",
+        "operationId": "list_universes_api_v1_universes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UniverseInfo"
+                  },
+                  "type": "array",
+                  "title": "Response List Universes Api V1 Universes Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/screener/runs": {
+      "post": {
+        "tags": [
+          "screener"
+        ],
+        "summary": "创建并启动策略筛选任务",
+        "description": "提交并执行全股票池策略量化筛选任务。",
+        "operationId": "create_screener_run_api_v1_screener_runs_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScreenerRunCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenerRunRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "screener"
+        ],
+        "summary": "获取当前用户的历史筛选任务",
+        "description": "分页查询当前租户的历史策略筛选记录。",
+        "operationId": "list_screener_runs_api_v1_screener_runs_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScreenerRunRead"
+                  },
+                  "title": "Response List Screener Runs Api V1 Screener Runs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/screener/runs/{id}": {
+      "get": {
+        "tags": [
+          "screener"
+        ],
+        "summary": "获取指定筛选任务记录与排名结果",
+        "description": "查询筛选任务详情、执行进度、得分排名及指标快照。",
+        "operationId": "get_screener_run_api_v1_screener_runs__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenerRunRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/screener/export": {
+      "post": {
+        "tags": [
+          "screener"
+        ],
+        "summary": "一键导出标的到研究/对比模块",
+        "description": "将选定标的一键构造为跳转至研报或横向对比的数据载荷。",
+        "operationId": "export_screener_results_api_v1_screener_export_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportToResearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Export Screener Results Api V1 Screener Export Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/themes": {
+      "get": {
+        "tags": [
+          "themes"
+        ],
+        "summary": "获取系统预设热门主题清单",
+        "description": "获取系统预设的热门主题投资库（F9）。",
+        "operationId": "list_themes_api_v1_themes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ThemeInfo"
+                  },
+                  "type": "array",
+                  "title": "Response List Themes Api V1 Themes Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/themes/{id}": {
+      "get": {
+        "tags": [
+          "themes"
+        ],
+        "summary": "获取指定主题详情与成分标的",
+        "description": "获取指定主题的成分标的明细与逻辑导语。",
+        "operationId": "get_theme_api_v1_themes__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThemeInfo"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/themes/{id}/cards": {
+      "post": {
+        "tags": [
+          "themes"
+        ],
+        "summary": "生成指定主题成分股投研卡片（带事实溯源）",
+        "description": "AI 生成指定主题的新手说明卡片（严格执行代码 facts 事实溯源）。",
+        "operationId": "generate_theme_cards_api_v1_themes__id__cards_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThemeCardsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/watchlists": {
+      "get": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "获取当前用户所有自选清单",
+        "description": "获取当前用户的所有自选清单（含所包含标的）。",
+        "operationId": "list_watchlists_api_v1_watchlists_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WatchlistRead"
+                  },
+                  "type": "array",
+                  "title": "Response List Watchlists Api V1 Watchlists Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "创建新的自选清单",
+        "description": "创建自选清单。",
+        "operationId": "create_watchlist_api_v1_watchlists_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchlistCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/watchlists/{id}": {
+      "get": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "获取指定自选清单详情及全部标的",
+        "description": "获取指定自选清单详情。",
+        "operationId": "get_watchlist_api_v1_watchlists__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "更新自选清单名称、说明或默认状态",
+        "description": "更新自选清单元数据。",
+        "operationId": "update_watchlist_api_v1_watchlists__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchlistUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "删除指定的自选清单",
+        "description": "删除自选清单（级联删除清单内所有关注标的）。",
+        "operationId": "delete_watchlist_api_v1_watchlists__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/watchlists/{id}/items": {
+      "post": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "向自选清单添加关注标的",
+        "description": "向自选清单添加关注标的，重复添加抛出 409 STATE_CONFLICT。",
+        "operationId": "add_watchlist_item_api_v1_watchlists__id__items_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchlistItemCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistItemRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/watchlists/{id}/items/{item_id}": {
+      "put": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "更新自选标的备注、目标价或主题标签",
+        "description": "更新自选标的个性化备注与标签。",
+        "operationId": "update_watchlist_item_api_v1_watchlists__id__items__item_id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchlistItemUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchlistItemRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "从自选清单中移除关注标的",
+        "description": "从自选清单中移除标的。",
+        "operationId": "remove_watchlist_item_api_v1_watchlists__id__items__item_id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/watchlists/{id}/export": {
+      "post": {
+        "tags": [
+          "watchlists"
+        ],
+        "summary": "一键导出自选清单标的到研究/对比模块",
+        "description": "将指定自选清单中的前 10 只标的一键导出至横向对比或组合分析。",
+        "operationId": "export_watchlist_to_research_api_v1_watchlists__id__export_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "target_action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "compare",
+                "portfolio",
+                "deep_research"
+              ],
+              "type": "string",
+              "default": "compare",
+              "title": "Target Action"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Export Watchlist To Research Api V1 Watchlists  Id  Export Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/strategy/list": {
+      "get": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "List Strategies Endpoint",
+        "description": "Retrieve metadata of all registered technical and quantitative strategies.",
+        "operationId": "list_strategies_endpoint_api_v1_strategy_list_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StrategyMetadata"
+                  },
+                  "type": "array",
+                  "title": "Response List Strategies Endpoint Api V1 Strategy List Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/strategy/evaluate": {
+      "post": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "Evaluate Signal Endpoint",
+        "description": "Evaluate trading signal for a specific stock symbol on a target date.",
+        "operationId": "evaluate_signal_endpoint_api_v1_strategy_evaluate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Signal"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/strategy/scan": {
+      "post": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "Scan Universe Endpoint",
+        "description": "Scan a stock universe with a strategy and filter generated signals.",
+        "operationId": "scan_universe_endpoint_api_v1_strategy_scan_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Signal"
+                  },
+                  "type": "array",
+                  "title": "Response Scan Universe Endpoint Api V1 Strategy Scan Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/strategy/technical/{symbol}": {
+      "get": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "Get Technical Snapshot Endpoint",
+        "description": "Retrieve comprehensive technical indicator snapshot for a symbol.",
+        "operationId": "get_technical_snapshot_endpoint_api_v1_strategy_technical__symbol__get",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Symbol"
+            }
+          },
+          {
+            "name": "as_of",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Target date (YYYY-MM-DD)",
+              "title": "As Of"
+            },
+            "description": "Target date (YYYY-MM-DD)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnicalSnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/strategy/backtest": {
+      "post": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "Run Backtest Endpoint",
+        "description": "Execute historical event-driven backtesting simulation for a strategy.",
+        "operationId": "run_backtest_endpoint_api_v1_strategy_backtest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BacktestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BacktestResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sim/accounts": {
+      "get": {
+        "tags": [
+          "simbroker"
+        ],
+        "summary": "列出我的模拟账户",
+        "description": "查询当前登录用户名下的所有模拟账户。",
+        "operationId": "list_accounts_api_v1_sim_accounts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AccountResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Accounts Api V1 Sim Accounts Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "simbroker"
+        ],
+        "summary": "创建模拟盘账户",
+        "description": "为当前登录用户创建一个新的模拟盘账户。",
+        "operationId": "create_account_api_v1_sim_accounts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sim/accounts/{account_id}": {
+      "get": {
+        "tags": [
+          "simbroker"
+        ],
+        "summary": "获取账户实时概览",
+        "description": "获取模拟账户的实时净值、持仓市值、当日盈亏、总盈亏及 PDT 监控状态。",
+        "operationId": "get_account_overview_api_v1_sim_accounts__account_id__get",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOverview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sim/accounts/{account_id}/deposit": {
+      "post": {
+        "tags": [
+          "simbroker"
+        ],
+        "summary": "充值入金",
+        "description": "向指定账户存入资金。",
+        "operationId": "deposit_api_v1_sim_accounts__account_id__deposit_post",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DepositRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Deposit Api V1 Sim Accounts  Account Id  Deposit Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sim/accounts/{account_id}/withdraw": {
+      "post": {
+        "tags": [
+          "simbroker"
+        ],
+        "summary": "提现出金",
+        "description": "从指定账户提取资金（受当前可用现金限制）。",
+        "operationId": "withdraw_api_v1_sim_accounts__account_id__withdraw_post",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DepositRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Withdraw Api V1 Sim Accounts  Account Id  Withdraw Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sim/accounts/{account_id}/orders": {
+      "post": {
+        "tags": [
+          "simbroker"
+        ],
+        "summary": "提交订单",
+        "description": "提交委托订单，强制要求传递 Idempotency-Key 请求头保障幂等性。",
+        "operationId": "submit_order_api_v1_sim_accounts__account_id__orders_post",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "simbroker"
+        ],
+        "summary": "查询订单列表",
+        "description": "查询指定账户的委托订单列表，支持按订单状态过滤。",
+        "operationId": "list_orders_api_v1_sim_accounts__account_id__orders_get",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrderResponse"
+                  },
+                  "title": "Response List Orders Api V1 Sim Accounts  Account Id  Orders Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sim/accounts/{account_id}/orders/{order_id}": {
+      "delete": {
+        "tags": [
+          "simbroker"
+        ],
+        "summary": "撤销挂单",
+        "description": "撤销尚未完全成交的委托订单。",
+        "operationId": "cancel_order_api_v1_sim_accounts__account_id__orders__order_id__delete",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          },
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sim/accounts/{account_id}/positions": {
+      "get": {
+        "tags": [
+          "simbroker"
+        ],
+        "summary": "查询持仓列表",
+        "description": "查询指定账户的所有有效持仓明细（含加权成本、现价、浮动盈亏与持仓权重）。",
+        "operationId": "get_positions_api_v1_sim_accounts__account_id__positions_get",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PositionResponse"
+                  },
+                  "title": "Response Get Positions Api V1 Sim Accounts  Account Id  Positions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sim/accounts/{account_id}/trades": {
+      "get": {
+        "tags": [
+          "simbroker"
+        ],
+        "summary": "查询成交记录",
+        "description": "查询指定账户的所有历史成交明细。",
+        "operationId": "get_trades_api_v1_sim_accounts__account_id__trades_get",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TradeResponse"
+                  },
+                  "title": "Response Get Trades Api V1 Sim Accounts  Account Id  Trades Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sim/accounts/{account_id}/performance": {
+      "get": {
+        "tags": [
+          "simbroker"
+        ],
+        "summary": "查询账户业绩指标",
+        "description": "获取账户全周期绩效指标（净值曲线、全局最大回撤、胜率、盈亏比与基准 SPY 对比）。",
+        "operationId": "get_performance_api_v1_sim_accounts__account_id__performance_get",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerformanceMetrics"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sim/accounts/{account_id}/risk": {
+      "get": {
+        "tags": [
+          "simbroker"
+        ],
+        "summary": "持仓风险体检诊断",
+        "description": "获取当前投资组合健康度风险体检（现金水位、重仓股集中度、行业分布、PDT 监管状态）。",
+        "operationId": "get_risk_api_v1_sim_accounts__account_id__risk_get",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskOverview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sim/trades/{trade_id}/journal": {
+      "put": {
+        "tags": [
+          "simbroker"
+        ],
+        "summary": "录入/更新交易日志",
+        "description": "对单笔成交录入复盘笔记、标签与交易情绪。",
+        "operationId": "update_trade_journal_api_v1_sim_trades__trade_id__journal_put",
+        "parameters": [
+          {
+            "name": "trade_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Trade Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TradeJournalUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TradeJournalResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/analyze": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "执行 AI 分析",
+        "description": "执行指定用例的 AI 分析。\n\n支持输入事实快照 SHA-256 去重持久化、全流程智能缓存、Schema 格式校验与数字溯源。",
+        "operationId": "analyze_api_v1_ai_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIAnalyzeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/reports/{report_id}": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "获取单份 AI 分析报告详情",
+        "description": "获取指定 ID 的 AI 报告详情（强制租户数据隔离）。",
+        "operationId": "get_report_api_v1_ai_reports__report_id__get",
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Report Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIReportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/reports": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "列出当前用户的 AI 报告历史",
+        "description": "分页列出当前登录用户的历史分析报告列表。",
+        "operationId": "list_reports_api_v1_ai_reports_get",
+        "parameters": [
+          {
+            "name": "use_case",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "按用例名称筛选",
+              "title": "Use Case"
+            },
+            "description": "按用例名称筛选"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "返回数量",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "返回数量"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "偏移量",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "偏移量"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AIReportResponse"
+                  },
+                  "title": "Response List Reports Api V1 Ai Reports Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/reports/{report_id}/facts": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "获取报告所引用的输入事实快照",
+        "description": "获取指定报告所关联的数据事实快照（用于可信度验证与复盘审计）。",
+        "operationId": "get_report_facts_api_v1_ai_reports__report_id__facts_get",
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Report Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataSnapshotResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/quota": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "查询当前用户当日 AI 调用配额状态",
+        "description": "查询当前用户当日配额及已使用次数。",
+        "operationId": "get_quota_api_v1_ai_quota_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotaStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/prompts": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "列出当前系统所有可用提示词模板",
+        "description": "获取当前系统活跃的提示词模板列表及输出 Schema。",
+        "operationId": "list_prompts_api_v1_ai_prompts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AIPromptInfo"
+                  },
+                  "type": "array",
+                  "title": "Response List Prompts Api V1 Ai Prompts Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/research": {
+      "post": {
+        "tags": [
+          "research"
+        ],
+        "summary": "执行股票综合研究报告",
+        "description": "执行个股商业模式、护城河、核心风险与情景分析。",
+        "operationId": "get_stock_research_api_v1_ai_research_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/buy-decision": {
+      "post": {
+        "tags": [
+          "research"
+        ],
+        "summary": "执行买入决策评估",
+        "description": "结合用户想买价与时间周期，执行买入/观望/避开综合决策评估。",
+        "operationId": "get_buy_decision_api_v1_ai_buy_decision_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BuyDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/technical": {
+      "post": {
+        "tags": [
+          "research"
+        ],
+        "summary": "执行技术面通俗分析与计划",
+        "description": "执行均线/趋势/动量分析，并由代码确定性计算入场/止损/目标交易计划。",
+        "operationId": "get_technical_analysis_api_v1_ai_technical_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TechnicalAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/earnings": {
+      "post": {
+        "tags": [
+          "research"
+        ],
+        "summary": "执行财报深度解读",
+        "description": "解读营收/利润/指引预期差，评估管理层评论与市场反应。",
+        "operationId": "get_earnings_analysis_api_v1_ai_earnings_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EarningsAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/compare": {
+      "post": {
+        "tags": [
+          "research"
+        ],
+        "summary": "执行多股票横向对比分析",
+        "description": "横向对比 2-8 只美股标的，输出 8 大维度定性分析、确定性排名与画像匹配。",
+        "operationId": "compare_stocks_api_v1_ai_compare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/long-term": {
+      "post": {
+        "tags": [
+          "research"
+        ],
+        "summary": "执行长期持有价值与破裂条件评估",
+        "description": "评估 5/10/15 年长期投资价值、7 大核心支柱与结构化论文破裂监控条件。",
+        "operationId": "get_long_term_analysis_api_v1_ai_long_term_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LongTermRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/portfolio": {
+      "post": {
+        "tags": [
+          "research"
+        ],
+        "summary": "执行投资组合配置优化建议",
+        "description": "基于约束优化算法与风险目标，输出满足绝对权重守恒的资产配置与现金建议。",
+        "operationId": "generate_portfolio_allocation_api_v1_ai_portfolio_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortfolioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AIAnalyzeRequest": {
+        "properties": {
+          "use_case": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Use Case"
+          },
+          "facts": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Facts"
+          },
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params"
+          },
+          "prompt_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "use_case",
+          "facts"
+        ],
+        "title": "AIAnalyzeRequest",
+        "description": "执行 AI 分析请求"
+      },
+      "AIPromptInfo": {
+        "properties": {
+          "use_case": {
+            "type": "string",
+            "title": "Use Case"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          },
+          "output_schema": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Output Schema"
+          }
+        },
+        "type": "object",
+        "required": [
+          "use_case",
+          "version",
+          "description"
+        ],
+        "title": "AIPromptInfo",
+        "description": "可用提示词信息"
+      },
+      "AIReportResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "use_case": {
+            "type": "string",
+            "title": "Use Case"
+          },
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params"
+          },
+          "cache_key": {
+            "type": "string",
+            "title": "Cache Key"
+          },
+          "data_snapshot_id": {
+            "type": "string",
+            "title": "Data Snapshot Id"
+          },
+          "prompt_version": {
+            "type": "string",
+            "title": "Prompt Version"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "cost_usd": {
+            "type": "string",
+            "title": "Cost Usd"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processing",
+              "success",
+              "failed"
+            ],
+            "title": "Status"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "use_case",
+          "params",
+          "cache_key",
+          "data_snapshot_id",
+          "prompt_version",
+          "model",
+          "payload",
+          "cost_usd",
+          "status",
+          "created_at"
+        ],
+        "title": "AIReportResponse",
+        "description": "AI 报告基本响应"
+      },
+      "AccountCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "initial_cash": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Initial Cash",
+            "default": "100000.00"
+          },
+          "fee_model": {
+            "$ref": "#/components/schemas/FeeModelConfig-Input"
+          },
+          "slippage_bps": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Slippage Bps",
+            "default": "5.0"
+          },
+          "pdt_enabled": {
+            "type": "boolean",
+            "title": "Pdt Enabled",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "AccountCreate",
+        "description": "创建模拟盘账户请求"
+      },
+      "AccountOverview": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "closed"
+            ],
+            "title": "Status"
+          },
+          "initial_cash": {
+            "type": "string",
+            "title": "Initial Cash"
+          },
+          "cash": {
+            "type": "string",
+            "title": "Cash"
+          },
+          "market_value": {
+            "type": "string",
+            "title": "Market Value"
+          },
+          "equity": {
+            "type": "string",
+            "title": "Equity"
+          },
+          "daily_pnl": {
+            "type": "string",
+            "title": "Daily Pnl"
+          },
+          "daily_pnl_pct": {
+            "type": "string",
+            "title": "Daily Pnl Pct"
+          },
+          "total_pnl": {
+            "type": "string",
+            "title": "Total Pnl"
+          },
+          "total_pnl_pct": {
+            "type": "string",
+            "title": "Total Pnl Pct"
+          },
+          "pdt_day_trades_count": {
+            "type": "integer",
+            "title": "Pdt Day Trades Count",
+            "default": 0
+          },
+          "pdt_warning": {
+            "type": "boolean",
+            "title": "Pdt Warning",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "status",
+          "initial_cash",
+          "cash",
+          "market_value",
+          "equity",
+          "daily_pnl",
+          "daily_pnl_pct",
+          "total_pnl",
+          "total_pnl_pct"
+        ],
+        "title": "AccountOverview",
+        "description": "账户概览（实时计算市值与净值）"
+      },
+      "AccountResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "initial_cash": {
+            "type": "string",
+            "title": "Initial Cash"
+          },
+          "cash": {
+            "type": "string",
+            "title": "Cash"
+          },
+          "fee_model": {
+            "$ref": "#/components/schemas/FeeModelConfig-Output"
+          },
+          "slippage_bps": {
+            "type": "string",
+            "title": "Slippage Bps"
+          },
+          "pdt_enabled": {
+            "type": "boolean",
+            "title": "Pdt Enabled"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "closed"
+            ],
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "name",
+          "initial_cash",
+          "cash",
+          "fee_model",
+          "slippage_bps",
+          "pdt_enabled",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "AccountResponse",
+        "description": "模拟盘账户基本信息"
+      },
+      "AnalysisReport": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "use_case": {
+            "type": "string",
+            "title": "Use Case"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached"
+          },
+          "data_snapshot_id": {
+            "type": "string",
+            "title": "Data Snapshot Id"
+          },
+          "prompt_version": {
+            "type": "string",
+            "title": "Prompt Version"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "cost_usd": {
+            "type": "string",
+            "title": "Cost Usd"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "use_case",
+          "payload",
+          "cached",
+          "data_snapshot_id",
+          "prompt_version",
+          "model",
+          "cost_usd",
+          "created_at"
+        ],
+        "title": "AnalysisReport",
+        "description": "对外统一分析报告封装（含缓存标记）"
+      },
+      "BacktestRequest": {
+        "properties": {
+          "strategy_id": {
+            "type": "string",
+            "title": "Strategy Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "title": "End"
+          },
+          "initial_capital": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Initial Capital",
+            "default": "100000.00"
+          },
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params"
+          }
+        },
+        "type": "object",
+        "required": [
+          "strategy_id",
+          "symbol",
+          "start",
+          "end"
+        ],
+        "title": "BacktestRequest",
+        "description": "Request payload to initiate historical strategy backtest."
+      },
+      "BacktestResult": {
+        "properties": {
+          "strategy_id": {
+            "type": "string",
+            "title": "Strategy Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "title": "End"
+          },
+          "initial_capital": {
+            "type": "string",
+            "title": "Initial Capital"
+          },
+          "final_equity": {
+            "type": "string",
+            "title": "Final Equity"
+          },
+          "total_return_pct": {
+            "type": "string",
+            "title": "Total Return Pct"
+          },
+          "annualized_return_pct": {
+            "type": "string",
+            "title": "Annualized Return Pct"
+          },
+          "max_drawdown_pct": {
+            "type": "string",
+            "title": "Max Drawdown Pct"
+          },
+          "win_rate": {
+            "type": "string",
+            "title": "Win Rate"
+          },
+          "profit_factor": {
+            "type": "string",
+            "title": "Profit Factor"
+          },
+          "total_trades": {
+            "type": "integer",
+            "title": "Total Trades"
+          },
+          "trades": {
+            "items": {
+              "$ref": "#/components/schemas/TradeRecord"
+            },
+            "type": "array",
+            "title": "Trades"
+          },
+          "equity_curve": {
+            "items": {
+              "$ref": "#/components/schemas/EquityPoint"
+            },
+            "type": "array",
+            "title": "Equity Curve"
+          }
+        },
+        "type": "object",
+        "required": [
+          "strategy_id",
+          "symbol",
+          "start",
+          "end",
+          "initial_capital",
+          "final_equity",
+          "total_return_pct",
+          "annualized_return_pct",
+          "max_drawdown_pct",
+          "win_rate",
+          "profit_factor",
+          "total_trades"
+        ],
+        "title": "BacktestResult",
+        "description": "Aggregated backtest performance metrics, trade logs, and equity curve."
+      },
+      "Bar": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "open": {
+            "type": "string",
+            "title": "Open"
+          },
+          "high": {
+            "type": "string",
+            "title": "High"
+          },
+          "low": {
+            "type": "string",
+            "title": "Low"
+          },
+          "close": {
+            "type": "string",
+            "title": "Close"
+          },
+          "volume": {
+            "type": "integer",
+            "title": "Volume"
+          },
+          "adj_close": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adj Close"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "trade_date",
+          "open",
+          "high",
+          "low",
+          "close",
+          "volume"
+        ],
+        "title": "Bar",
+        "description": "OHLCV candlestick bar."
+      },
+      "BuildFactsRequest": {
+        "properties": {
+          "scope": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope"
+          }
+        },
+        "type": "object",
+        "title": "BuildFactsRequest",
+        "description": "Optional request body payload specifying scopes for facts snapshot."
+      },
+      "BuyDecisionRequest": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Symbol",
+            "description": "美股代码"
+          },
+          "target_price": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Target Price",
+            "description": "用户计划买入的目标价"
+          },
+          "horizon": {
+            "type": "string",
+            "enum": [
+              "short",
+              "medium",
+              "long"
+            ],
+            "title": "Horizon",
+            "description": "投资持有周期预期",
+            "default": "medium"
+          },
+          "risk_level": {
+            "type": "string",
+            "enum": [
+              "conservative",
+              "moderate",
+              "aggressive"
+            ],
+            "title": "Risk Level",
+            "description": "用户风险承受能力",
+            "default": "moderate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "target_price"
+        ],
+        "title": "BuyDecisionRequest",
+        "description": "F3 买入决策请求入参。"
+      },
+      "CompanyProfile": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "exchange": {
+            "type": "string",
+            "title": "Exchange"
+          },
+          "sector": {
+            "type": "string",
+            "title": "Sector"
+          },
+          "industry": {
+            "type": "string",
+            "title": "Industry"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "website": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website"
+          },
+          "employees": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employees"
+          },
+          "country": {
+            "type": "string",
+            "title": "Country",
+            "default": "US"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "name",
+          "exchange",
+          "sector",
+          "industry"
+        ],
+        "title": "CompanyProfile",
+        "description": "Company background and sector classification."
+      },
+      "CompareRequest": {
+        "properties": {
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "minItems": 2,
+            "title": "Symbols",
+            "description": "待对比的美股代码列表"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbols"
+        ],
+        "title": "CompareRequest",
+        "description": "F4 股票对比请求入参（支持 2–8 只股票）。"
+      },
+      "DataSnapshotResponse": {
+        "properties": {
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol",
+            "default": "MARKET"
+          },
+          "scope": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scope"
+          },
+          "facts": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Facts"
+          },
+          "missing_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing Fields"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content_hash",
+          "facts",
+          "as_of",
+          "created_at"
+        ],
+        "title": "DataSnapshotResponse",
+        "description": "数据快照返回"
+      },
+      "DepositRequest": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "amount"
+        ],
+        "title": "DepositRequest",
+        "description": "出入金请求"
+      },
+      "EarningsAnalysisRequest": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Symbol",
+            "description": "美股代码"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol"
+        ],
+        "title": "EarningsAnalysisRequest",
+        "description": "F7 财报解读请求入参。"
+      },
+      "EquityPoint": {
+        "properties": {
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "equity": {
+            "type": "string",
+            "title": "Equity"
+          },
+          "cash": {
+            "type": "string",
+            "title": "Cash"
+          },
+          "drawdown_pct": {
+            "type": "string",
+            "title": "Drawdown Pct"
+          }
+        },
+        "type": "object",
+        "required": [
+          "trade_date",
+          "equity",
+          "cash",
+          "drawdown_pct"
+        ],
+        "title": "EquityPoint",
+        "description": "Daily equity curve snapshot point."
+      },
+      "EquitySnapshotResponse": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "cash": {
+            "type": "string",
+            "title": "Cash"
+          },
+          "market_value": {
+            "type": "string",
+            "title": "Market Value"
+          },
+          "equity": {
+            "type": "string",
+            "title": "Equity"
+          },
+          "drawdown": {
+            "type": "string",
+            "title": "Drawdown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id",
+          "trade_date",
+          "cash",
+          "market_value",
+          "equity",
+          "drawdown"
+        ],
+        "title": "EquitySnapshotResponse",
+        "description": "每日净值快照响应"
+      },
+      "EvaluateRequest": {
+        "properties": {
+          "strategy_id": {
+            "type": "string",
+            "title": "Strategy Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params"
+          }
+        },
+        "type": "object",
+        "required": [
+          "strategy_id",
+          "symbol",
+          "as_of"
+        ],
+        "title": "EvaluateRequest",
+        "description": "Request payload to evaluate strategy signal for a symbol."
+      },
+      "EvidenceItem": {
+        "properties": {
+          "claim": {
+            "type": "string",
+            "title": "Claim",
+            "description": "论断陈述"
+          },
+          "source_field": {
+            "type": "string",
+            "title": "Source Field",
+            "description": "对应 facts 中的字段路径，如 facts.valuation.pe_ttm"
+          }
+        },
+        "type": "object",
+        "required": [
+          "claim",
+          "source_field"
+        ],
+        "title": "EvidenceItem",
+        "description": "事实引用佐证项，用于向 `<untrusted_facts>` 回溯校验。"
+      },
+      "ExportToResearchRequest": {
+        "properties": {
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Symbols",
+            "description": "导出的股票代码列表"
+          },
+          "target_action": {
+            "type": "string",
+            "enum": [
+              "compare",
+              "portfolio",
+              "deep_research"
+            ],
+            "title": "Target Action",
+            "description": "目标研报动作：对比/投资组合/深度研报"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbols",
+          "target_action"
+        ],
+        "title": "ExportToResearchRequest",
+        "description": "一键将筛选或自选标的送入研报或对比。"
+      },
+      "FactsSnapshot": {
+        "properties": {
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "scope": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scope"
+          },
+          "facts": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Facts"
+          },
+          "missing_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing Fields"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content_hash",
+          "symbol",
+          "as_of",
+          "scope",
+          "facts"
+        ],
+        "title": "FactsSnapshot",
+        "description": "Immutable structured fact sheet used for AI input with SHA-256 integrity hash."
+      },
+      "FeeModelConfig-Input": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "zero",
+              "per_share",
+              "bps",
+              "tiered"
+            ],
+            "title": "Type",
+            "default": "zero"
+          },
+          "per_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Per Share",
+            "default": "0"
+          },
+          "bps": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Bps",
+            "default": "0"
+          },
+          "min_fee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Min Fee",
+            "default": "0"
+          },
+          "max_fee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Fee"
+          }
+        },
+        "type": "object",
+        "title": "FeeModelConfig",
+        "description": "手续费模型配置"
+      },
+      "FeeModelConfig-Output": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "zero",
+              "per_share",
+              "bps",
+              "tiered"
+            ],
+            "title": "Type",
+            "default": "zero"
+          },
+          "per_share": {
+            "type": "string",
+            "title": "Per Share",
+            "default": "0"
+          },
+          "bps": {
+            "type": "string",
+            "title": "Bps",
+            "default": "0"
+          },
+          "min_fee": {
+            "type": "string",
+            "title": "Min Fee",
+            "default": "0"
+          },
+          "max_fee": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Fee"
+          }
+        },
+        "type": "object",
+        "title": "FeeModelConfig",
+        "description": "手续费模型配置"
+      },
+      "Fundamentals": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "pe_trailing": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pe Trailing"
+          },
+          "pe_forward": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pe Forward"
+          },
+          "pb": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pb"
+          },
+          "ps": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ps"
+          },
+          "roe": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roe"
+          },
+          "net_margin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Margin"
+          },
+          "debt_to_equity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Debt To Equity"
+          },
+          "market_cap": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Cap"
+          },
+          "dividend_yield": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dividend Yield"
+          },
+          "beta": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Beta"
+          },
+          "missing_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing Fields"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "as_of"
+        ],
+        "title": "Fundamentals",
+        "description": "Valuation, profitability, and balance sheet snapshot metrics."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "title": "Password",
+            "writeOnly": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "LogoutRequest": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "format": "password",
+            "title": "Refresh Token",
+            "writeOnly": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "title": "LogoutRequest"
+      },
+      "LongTermRequest": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Symbol",
+            "description": "美股代码"
+          },
+          "years": {
+            "type": "integer",
+            "enum": [
+              5,
+              10,
+              15
+            ],
+            "title": "Years",
+            "description": "持有期限（年）：5 / 10 / 15",
+            "default": 5
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol"
+        ],
+        "title": "LongTermRequest",
+        "description": "F5 长期持有分析请求入参。"
+      },
+      "NewsItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "published_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Published At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "symbol",
+          "title",
+          "summary",
+          "source",
+          "url",
+          "published_at"
+        ],
+        "title": "NewsItem",
+        "description": "Market news item with attribution."
+      },
+      "OrderCreate": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Symbol"
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "buy",
+              "sell"
+            ],
+            "title": "Side"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "market",
+              "limit",
+              "stop"
+            ],
+            "title": "Type"
+          },
+          "qty": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Qty"
+          },
+          "limit_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit Price"
+          },
+          "stop_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Price"
+          },
+          "tif": {
+            "type": "string",
+            "enum": [
+              "day",
+              "gtc"
+            ],
+            "title": "Tif",
+            "default": "day"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "ai_report_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Report Id"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "manual"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "side",
+          "type",
+          "qty"
+        ],
+        "title": "OrderCreate",
+        "description": "创建订单请求"
+      },
+      "OrderResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "buy",
+              "sell"
+            ],
+            "title": "Side"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "market",
+              "limit",
+              "stop"
+            ],
+            "title": "Type"
+          },
+          "qty": {
+            "type": "string",
+            "title": "Qty"
+          },
+          "limit_price": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit Price"
+          },
+          "stop_price": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Price"
+          },
+          "tif": {
+            "type": "string",
+            "enum": [
+              "day",
+              "gtc"
+            ],
+            "title": "Tif"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "filled",
+              "cancelled",
+              "rejected",
+              "expired"
+            ],
+            "title": "Status"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "title": "Idempotency Key"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "ai_report_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Report Id"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "reject_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reject Reason"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "account_id",
+          "symbol",
+          "side",
+          "type",
+          "qty",
+          "tif",
+          "status",
+          "idempotency_key",
+          "source",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "OrderResponse",
+        "description": "订单详情响应"
+      },
+      "PaginatedUsers": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UserPublic"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "PaginatedUsers"
+      },
+      "PasswordResetConfirm": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "format": "password",
+            "title": "Token",
+            "writeOnly": true
+          },
+          "new_password": {
+            "type": "string",
+            "format": "password",
+            "title": "New Password",
+            "writeOnly": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "new_password"
+        ],
+        "title": "PasswordResetConfirm"
+      },
+      "PasswordResetRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "PasswordResetRequest"
+      },
+      "PerformanceMetrics": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "initial_cash": {
+            "type": "string",
+            "title": "Initial Cash"
+          },
+          "current_equity": {
+            "type": "string",
+            "title": "Current Equity"
+          },
+          "total_return": {
+            "type": "string",
+            "title": "Total Return"
+          },
+          "total_return_pct": {
+            "type": "string",
+            "title": "Total Return Pct"
+          },
+          "max_drawdown": {
+            "type": "string",
+            "title": "Max Drawdown"
+          },
+          "win_rate": {
+            "type": "string",
+            "title": "Win Rate"
+          },
+          "profit_loss_ratio": {
+            "type": "string",
+            "title": "Profit Loss Ratio"
+          },
+          "total_trades": {
+            "type": "integer",
+            "title": "Total Trades"
+          },
+          "winning_trades": {
+            "type": "integer",
+            "title": "Winning Trades"
+          },
+          "losing_trades": {
+            "type": "integer",
+            "title": "Losing Trades"
+          },
+          "benchmark_return_pct": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Benchmark Return Pct"
+          },
+          "alpha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alpha"
+          },
+          "beta": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Beta"
+          },
+          "equity_curve": {
+            "items": {
+              "$ref": "#/components/schemas/EquitySnapshotResponse"
+            },
+            "type": "array",
+            "title": "Equity Curve"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id",
+          "initial_cash",
+          "current_equity",
+          "total_return",
+          "total_return_pct",
+          "max_drawdown",
+          "win_rate",
+          "profit_loss_ratio",
+          "total_trades",
+          "winning_trades",
+          "losing_trades"
+        ],
+        "title": "PerformanceMetrics",
+        "description": "业绩表现汇总指标"
+      },
+      "PortfolioRequest": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Amount",
+            "description": "投资金额"
+          },
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 12,
+            "minItems": 2,
+            "title": "Symbols",
+            "description": "候选标的池"
+          },
+          "risk_level": {
+            "type": "string",
+            "enum": [
+              "conservative",
+              "moderate",
+              "aggressive"
+            ],
+            "title": "Risk Level",
+            "description": "风险等级：conservative / moderate / aggressive",
+            "default": "moderate"
+          },
+          "goal": {
+            "type": "string",
+            "enum": [
+              "growth",
+              "income",
+              "safety",
+              "retirement"
+            ],
+            "title": "Goal",
+            "description": "投资目标：growth / income / safety / retirement",
+            "default": "growth"
+          }
+        },
+        "type": "object",
+        "required": [
+          "amount",
+          "symbols"
+        ],
+        "title": "PortfolioRequest",
+        "description": "F8 投资组合配置请求入参。"
+      },
+      "PositionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "qty": {
+            "type": "string",
+            "title": "Qty"
+          },
+          "avg_cost": {
+            "type": "string",
+            "title": "Avg Cost"
+          },
+          "current_price": {
+            "type": "string",
+            "title": "Current Price"
+          },
+          "market_value": {
+            "type": "string",
+            "title": "Market Value"
+          },
+          "unrealized_pnl": {
+            "type": "string",
+            "title": "Unrealized Pnl"
+          },
+          "unrealized_pnl_pct": {
+            "type": "string",
+            "title": "Unrealized Pnl Pct"
+          },
+          "realized_pnl": {
+            "type": "string",
+            "title": "Realized Pnl"
+          },
+          "weight_pct": {
+            "type": "string",
+            "title": "Weight Pct"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "account_id",
+          "symbol",
+          "qty",
+          "avg_cost",
+          "current_price",
+          "market_value",
+          "unrealized_pnl",
+          "unrealized_pnl_pct",
+          "realized_pnl",
+          "weight_pct"
+        ],
+        "title": "PositionResponse",
+        "description": "持仓响应"
+      },
+      "QuotaStatus": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "usage_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Usage Date"
+          },
+          "calls_today": {
+            "type": "integer",
+            "title": "Calls Today"
+          },
+          "daily_quota": {
+            "type": "integer",
+            "title": "Daily Quota"
+          },
+          "remaining_calls": {
+            "type": "integer",
+            "title": "Remaining Calls"
+          },
+          "is_exceeded": {
+            "type": "boolean",
+            "title": "Is Exceeded"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "usage_date",
+          "calls_today",
+          "daily_quota",
+          "remaining_calls",
+          "is_exceeded"
+        ],
+        "title": "QuotaStatus",
+        "description": "用户当日配额状态"
+      },
+      "Quote": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "price": {
+            "type": "string",
+            "title": "Price"
+          },
+          "change": {
+            "type": "string",
+            "title": "Change"
+          },
+          "change_pct": {
+            "type": "string",
+            "title": "Change Pct"
+          },
+          "volume": {
+            "type": "integer",
+            "title": "Volume"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "delayed_seconds": {
+            "type": "integer",
+            "title": "Delayed Seconds",
+            "default": 0
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "price",
+          "change",
+          "change_pct",
+          "volume",
+          "as_of"
+        ],
+        "title": "Quote",
+        "description": "Realtime or delayed market quote."
+      },
+      "RefreshRequest": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "format": "password",
+            "title": "Refresh Token",
+            "writeOnly": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshRequest"
+      },
+      "RegisterRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "title": "Password",
+            "writeOnly": true
+          },
+          "settings": {
+            "$ref": "#/components/schemas/UserSettings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "RegisterRequest",
+        "description": "注册请求；`settings` 缺省为默认偏好。"
+      },
+      "ResearchEnvelope": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "title": "Schema Version",
+            "description": "输出结构版本号",
+            "default": "1.0"
+          },
+          "use_case": {
+            "type": "string",
+            "title": "Use Case",
+            "description": "用例代号，如 research, buy_decision, technical, earnings"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol",
+            "description": "美股代码，统一大写"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of",
+            "description": "数据截至日期（美东交易日）"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "一句话通俗结论（新手可读）"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload",
+            "description": "用例专属字段内容"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceItem"
+            },
+            "type": "array",
+            "title": "Evidence",
+            "description": "事实佐证列表"
+          },
+          "data_gaps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Data Gaps",
+            "description": "缺失字段或数据缺口说明"
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer",
+            "description": "法定投资与模拟合规免责声明",
+            "default": "本内容仅供研究与学习，不构成投资建议"
+          }
+        },
+        "type": "object",
+        "required": [
+          "use_case",
+          "symbol",
+          "as_of",
+          "summary",
+          "payload"
+        ],
+        "title": "ResearchEnvelope",
+        "description": "所有 AI 研究用例通用输出外壳，严格符合 docs/06-ai-prompt-spec.md §2.2。"
+      },
+      "ResearchRequest": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Symbol",
+            "description": "美股代码（如 AAPL, TSLA）"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol"
+        ],
+        "title": "ResearchRequest",
+        "description": "F2 股票研究请求入参。"
+      },
+      "RiskOverview": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "cash_ratio": {
+            "type": "string",
+            "title": "Cash Ratio"
+          },
+          "single_stock_weights": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Single Stock Weights"
+          },
+          "top_positions": {
+            "items": {
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array",
+              "maxItems": 2,
+              "minItems": 2
+            },
+            "type": "array",
+            "title": "Top Positions"
+          },
+          "sector_weights": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Sector Weights"
+          },
+          "pdt_day_trades_count": {
+            "type": "integer",
+            "title": "Pdt Day Trades Count",
+            "default": 0
+          },
+          "pdt_warning": {
+            "type": "boolean",
+            "title": "Pdt Warning",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id",
+          "cash_ratio"
+        ],
+        "title": "RiskOverview",
+        "description": "持仓风险体检"
+      },
+      "ScanRequest": {
+        "properties": {
+          "strategy_id": {
+            "type": "string",
+            "title": "Strategy Id"
+          },
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Symbols"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params"
+          }
+        },
+        "type": "object",
+        "required": [
+          "strategy_id",
+          "symbols",
+          "as_of"
+        ],
+        "title": "ScanRequest",
+        "description": "Request payload to scan an equity universe for signals."
+      },
+      "ScreenerResultItem": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol",
+            "description": "标的代码"
+          },
+          "rank": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Rank",
+            "description": "综合排名"
+          },
+          "score": {
+            "type": "string",
+            "title": "Score",
+            "description": "量化得分"
+          },
+          "signal": {
+            "type": "string",
+            "title": "Signal",
+            "description": "策略信号，如 BUY, STRONG_BUY, NEUTRAL"
+          },
+          "metrics_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metrics Snapshot",
+            "description": "筛选时刻的核心指标"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "rank",
+          "score",
+          "signal"
+        ],
+        "title": "ScreenerResultItem",
+        "description": "单个标的筛选结果与指标快照。"
+      },
+      "ScreenerRunCreate": {
+        "properties": {
+          "strategy_id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Strategy Id",
+            "description": "预设策略标识符"
+          },
+          "universe": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Universe",
+            "description": "目标股票池或自定义池标识"
+          },
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params",
+            "description": "策略微调参数"
+          },
+          "custom_symbols": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Symbols",
+            "description": "自定义股票池时的标的列表"
+          }
+        },
+        "type": "object",
+        "required": [
+          "strategy_id",
+          "universe"
+        ],
+        "title": "ScreenerRunCreate",
+        "description": "创建策略筛选任务请求。"
+      },
+      "ScreenerRunRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "strategy_id": {
+            "type": "string",
+            "title": "Strategy Id"
+          },
+          "universe": {
+            "type": "string",
+            "title": "Universe"
+          },
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "running",
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status"
+          },
+          "total_symbols": {
+            "type": "integer",
+            "title": "Total Symbols"
+          },
+          "matched_count": {
+            "type": "integer",
+            "title": "Matched Count"
+          },
+          "failed_count": {
+            "type": "integer",
+            "title": "Failed Count",
+            "default": 0
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/ScreenerResultItem"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "strategy_id",
+          "universe",
+          "params",
+          "status",
+          "total_symbols",
+          "matched_count",
+          "created_at"
+        ],
+        "title": "ScreenerRunRead",
+        "description": "筛选任务详情与结果返回。"
+      },
+      "SettingsUpdate": {
+        "properties": {
+          "settings": {
+            "$ref": "#/components/schemas/UserSettings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "settings"
+        ],
+        "title": "SettingsUpdate"
+      },
+      "Signal": {
+        "properties": {
+          "strategy_id": {
+            "type": "string",
+            "title": "Strategy Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "long",
+              "flat",
+              "short"
+            ],
+            "title": "Direction"
+          },
+          "strength": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Strength",
+            "default": 0
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "levels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Levels"
+          },
+          "metrics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metrics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "strategy_id",
+          "symbol",
+          "as_of",
+          "direction"
+        ],
+        "title": "Signal",
+        "description": "Trading signal produced by a strategy evaluation."
+      },
+      "StrategyMetadata": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "trend",
+              "pullback",
+              "reversal",
+              "value",
+              "growth",
+              "dividend"
+            ],
+            "title": "Category"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "requires": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Requires"
+          },
+          "default_params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Default Params"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "display_name",
+          "category",
+          "description"
+        ],
+        "title": "StrategyMetadata",
+        "description": "Strategy metadata for catalog listing and dynamic form rendering."
+      },
+      "TechnicalAnalysisRequest": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Symbol",
+            "description": "美股代码"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol"
+        ],
+        "title": "TechnicalAnalysisRequest",
+        "description": "F6 技术面分析请求入参。"
+      },
+      "TechnicalSnapshot": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "sma_20": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sma 20"
+          },
+          "sma_50": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sma 50"
+          },
+          "sma_200": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sma 200"
+          },
+          "ema_12": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ema 12"
+          },
+          "ema_26": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ema 26"
+          },
+          "rsi_14": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rsi 14"
+          },
+          "macd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Macd"
+          },
+          "macd_signal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Macd Signal"
+          },
+          "macd_hist": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Macd Hist"
+          },
+          "atr_14": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Atr 14"
+          },
+          "bb_upper": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bb Upper"
+          },
+          "bb_middle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bb Middle"
+          },
+          "bb_lower": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bb Lower"
+          },
+          "obv": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Obv"
+          },
+          "support": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Support"
+          },
+          "resistance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resistance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "as_of"
+        ],
+        "title": "TechnicalSnapshot",
+        "description": "Comprehensive technical indicators snapshot for a symbol at a given date."
+      },
+      "ThemeCardItem": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol",
+            "description": "标的代码"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "公司名称"
+          },
+          "one_line_intro": {
+            "type": "string",
+            "title": "One Line Intro",
+            "description": "一句话商业模式/行业地位"
+          },
+          "why_watch": {
+            "type": "string",
+            "title": "Why Watch",
+            "description": "为什么值得关注/核心看点"
+          },
+          "financial_strengths": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Financial Strengths",
+            "description": "财务亮点（引用真实数据）"
+          },
+          "main_risks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Main Risks",
+            "description": "主要潜在风险"
+          },
+          "suitable_for": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Suitable For",
+            "description": "适合的投资者类型画像"
+          },
+          "more_attractive_when": {
+            "type": "string",
+            "title": "More Attractive When",
+            "description": "何时或何种估值/市场情境下更具吸引力"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "name",
+          "one_line_intro",
+          "why_watch",
+          "financial_strengths",
+          "main_risks",
+          "suitable_for",
+          "more_attractive_when"
+        ],
+        "title": "ThemeCardItem",
+        "description": "AI 生成的单股主题卡片（严格受 facts 约束）。"
+      },
+      "ThemeCardsResponse": {
+        "properties": {
+          "theme_id": {
+            "type": "string",
+            "title": "Theme Id"
+          },
+          "theme_name": {
+            "type": "string",
+            "title": "Theme Name"
+          },
+          "cards": {
+            "items": {
+              "$ref": "#/components/schemas/ThemeCardItem"
+            },
+            "type": "array",
+            "title": "Cards"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "prompt_version": {
+            "type": "string",
+            "title": "Prompt Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "theme_id",
+          "theme_name",
+          "cards",
+          "as_of",
+          "prompt_version"
+        ],
+        "title": "ThemeCardsResponse",
+        "description": "主题卡片完整返回包。"
+      },
+      "ThemeInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id",
+            "description": "主题标识，如 ai_chips, glp1_weightloss"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "description": "主题展示名称"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "主题分类：tech, healthcare, dividend, energy, macro"
+          },
+          "tagline": {
+            "type": "string",
+            "title": "Tagline",
+            "description": "一句话导语"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "新手向背景与逻辑说明"
+          },
+          "stocks": {
+            "items": {
+              "$ref": "#/components/schemas/ThemeStockItem"
+            },
+            "type": "array",
+            "title": "Stocks",
+            "description": "预设成分股列表"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "category",
+          "tagline",
+          "description"
+        ],
+        "title": "ThemeInfo",
+        "description": "主题基本信息（F9 主题清单）。"
+      },
+      "ThemeStockItem": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Symbol",
+            "description": "股票代码"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Name",
+            "description": "公司简称"
+          },
+          "sector": {
+            "type": "string",
+            "title": "Sector",
+            "description": "所属板块"
+          },
+          "sub_industry": {
+            "type": "string",
+            "title": "Sub Industry",
+            "description": "细分赛道/产业"
+          },
+          "market_cap_tier": {
+            "type": "string",
+            "title": "Market Cap Tier",
+            "description": "市值梯队：mega, large, mid, small"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "name",
+          "sector",
+          "sub_industry",
+          "market_cap_tier"
+        ],
+        "title": "ThemeStockItem",
+        "description": "主题预设成分股。"
+      },
+      "TokenPair": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          },
+          "token_type": {
+            "type": "string",
+            "const": "bearer",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token",
+          "expires_in"
+        ],
+        "title": "TokenPair"
+      },
+      "TradeJournalResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "trade_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Trade Id"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "emotion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emotion"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "trade_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TradeJournalResponse",
+        "description": "交易日志响应"
+      },
+      "TradeJournalUpdate": {
+        "properties": {
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "emotion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emotion"
+          }
+        },
+        "type": "object",
+        "title": "TradeJournalUpdate",
+        "description": "交易日志录入与复盘"
+      },
+      "TradeRecord": {
+        "properties": {
+          "trade_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Trade Date"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "buy",
+              "sell"
+            ],
+            "title": "Action"
+          },
+          "price": {
+            "type": "string",
+            "title": "Price"
+          },
+          "shares": {
+            "type": "integer",
+            "title": "Shares"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount"
+          },
+          "pnl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl"
+          },
+          "pnl_pct": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl Pct"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "trade_date",
+          "action",
+          "price",
+          "shares",
+          "amount"
+        ],
+        "title": "TradeRecord",
+        "description": "Individual trade execution record in a backtest simulation."
+      },
+      "TradeResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Order Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "buy",
+              "sell"
+            ],
+            "title": "Side"
+          },
+          "qty": {
+            "type": "string",
+            "title": "Qty"
+          },
+          "price": {
+            "type": "string",
+            "title": "Price"
+          },
+          "fee": {
+            "type": "string",
+            "title": "Fee"
+          },
+          "realized_pnl": {
+            "type": "string",
+            "title": "Realized Pnl"
+          },
+          "executed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Executed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "account_id",
+          "order_id",
+          "symbol",
+          "side",
+          "qty",
+          "price",
+          "fee",
+          "realized_pnl",
+          "executed_at"
+        ],
+        "title": "TradeResponse",
+        "description": "成交记录响应"
+      },
+      "UniverseInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id",
+            "description": "股票池标识符，如 sp500, nasdaq100, dow30, custom"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "description": "股票池展示名称"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "股票池说明"
+          },
+          "symbol_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Symbol Count",
+            "description": "包含标的数量"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "symbol_count"
+        ],
+        "title": "UniverseInfo",
+        "description": "股票池基本信息。"
+      },
+      "UsageResponse": {
+        "properties": {
+          "usage_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Usage Date"
+          },
+          "calls": {
+            "type": "integer",
+            "title": "Calls"
+          },
+          "tokens_in": {
+            "type": "integer",
+            "title": "Tokens In"
+          },
+          "tokens_out": {
+            "type": "integer",
+            "title": "Tokens Out"
+          },
+          "cost_usd": {
+            "type": "string",
+            "title": "Cost Usd"
+          },
+          "quota": {
+            "type": "integer",
+            "title": "Quota"
+          },
+          "quota_used": {
+            "type": "integer",
+            "title": "Quota Used"
+          }
+        },
+        "type": "object",
+        "required": [
+          "usage_date",
+          "calls",
+          "tokens_in",
+          "tokens_out",
+          "cost_usd",
+          "quota",
+          "quota_used"
+        ],
+        "title": "UsageResponse"
+      },
+      "UserPublic": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "status": {
+            "$ref": "#/components/schemas/UserStatus"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/UserSettings"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "role",
+          "status",
+          "settings",
+          "created_at"
+        ],
+        "title": "UserPublic",
+        "description": "对外用户视图；不含任何凭据字段。"
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "user",
+          "admin"
+        ],
+        "title": "UserRole",
+        "description": "用户角色；M1 仅 user / admin（`docs/02-architecture.md §8`）。"
+      },
+      "UserSettings": {
+        "properties": {
+          "risk_profile": {
+            "type": "string",
+            "enum": [
+              "conservative",
+              "balanced",
+              "aggressive"
+            ],
+            "title": "Risk Profile",
+            "default": "balanced"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language",
+            "default": "zh-CN"
+          },
+          "default_account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Account Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "UserSettings",
+        "description": "用户可改的偏好；`users.settings` 为 JSONB，缺字段时由本模型补默认值。"
+      },
+      "UserStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "disabled"
+        ],
+        "title": "UserStatus",
+        "description": "账号状态；disabled 一律视为未认证。"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WatchlistCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "description": "清单名称"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Description",
+            "description": "清单说明",
+            "default": ""
+          },
+          "is_default": {
+            "type": "boolean",
+            "title": "Is Default",
+            "description": "是否设为默认自选",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "WatchlistCreate",
+        "description": "创建自选清单请求。"
+      },
+      "WatchlistItemCreate": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Symbol",
+            "description": "标的代码"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Notes",
+            "description": "自选备注说明",
+            "default": ""
+          },
+          "target_price": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Price",
+            "description": "目标监控价格"
+          },
+          "theme_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Theme Tags",
+            "description": "用户关联的主题标签"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol"
+        ],
+        "title": "WatchlistItemCreate",
+        "description": "向自选清单添加标的请求。"
+      },
+      "WatchlistItemRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "watchlist_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Watchlist Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes"
+          },
+          "target_price": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Price"
+          },
+          "theme_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Theme Tags"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "watchlist_id",
+          "symbol",
+          "notes",
+          "target_price",
+          "theme_tags",
+          "created_at"
+        ],
+        "title": "WatchlistItemRead",
+        "description": "自选标的明细返回。"
+      },
+      "WatchlistItemUpdate": {
+        "properties": {
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "自选备注说明"
+          },
+          "target_price": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Price",
+            "description": "目标监控价格"
+          },
+          "theme_tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Theme Tags",
+            "description": "用户关联的主题标签"
+          }
+        },
+        "type": "object",
+        "title": "WatchlistItemUpdate",
+        "description": "更新自选清单标的请求。"
+      },
+      "WatchlistRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "is_default": {
+            "type": "boolean",
+            "title": "Is Default"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/WatchlistItemRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "name",
+          "description",
+          "is_default",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "WatchlistRead",
+        "description": "自选清单读取返回模型。"
+      },
+      "WatchlistUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "清单名称"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "清单说明"
+          },
+          "is_default": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Default",
+            "description": "是否设为默认自选"
+          }
+        },
+        "type": "object",
+        "title": "WatchlistUpdate",
+        "description": "更新自选清单请求。"
+      }
+    }
+  }
+}
