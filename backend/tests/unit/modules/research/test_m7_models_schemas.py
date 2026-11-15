@@ -148,11 +148,11 @@ def test_long_term_request_valid() -> None:
 def test_long_term_request_invalid_years() -> None:
     """验证非法年限被拒绝。"""
     with pytest.raises(ValidationError) as exc:
-        LongTermRequest(symbol="AAPL", years=3)  # type: ignore[arg-type]
+        LongTermRequest.model_validate({"symbol": "AAPL", "years": 3})
     assert "years" in str(exc.value)
 
     with pytest.raises(ValidationError):
-        LongTermRequest(symbol="AAPL", years=20)  # type: ignore[arg-type]
+        LongTermRequest.model_validate({"symbol": "AAPL", "years": 20})
 
 
 def test_long_term_payload_valid() -> None:
