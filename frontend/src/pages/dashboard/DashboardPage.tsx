@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, BarChart3, Brain, Compass, Sparkles, TrendingUp } from 'lucide-react';
+import { Activity, BarChart3, Brain, Compass, LineChart, Sparkles, TrendingUp } from 'lucide-react';
 import { MetricCard } from '../../components/financial/MetricCard';
 import { FinancialTable, Column } from '../../components/financial/FinancialTable';
 import { PriceDisplay } from '../../components/financial/PriceDisplay';
@@ -9,7 +9,9 @@ import { DataFreshnessTag } from '../../components/compliance/DataFreshnessTag';
 import { AIPromptVersionBadge } from '../../components/compliance/AIPromptVersionBadge';
 import { ComplianceDisclaimer } from '../../components/compliance/ComplianceDisclaimer';
 import { Button } from '../../components/common/Button';
+import { StockDetailModal } from '../../components/chart/StockDetailModal';
 import { formatLargeNumber } from '../../utils/format';
+import type { Signal } from '../../api/types';
 
 interface MarketIndexItem {
   name: string;
@@ -34,6 +36,40 @@ interface StockOverviewItem {
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const [selectedStock, setSelectedStock] = useState<StockOverviewItem | null>(null);
+
+  const sampleSignals: Record<string, Signal[]> = {
+    NVDA: [
+      {
+        strategy_id: 'trend_momentum',
+        symbol: 'NVDA',
+        as_of: '2026-11-14',
+        direction: 'long',
+        strength: 88,
+        reasons: ['突破50日均线', 'AI算力主题资金持续流入', '多头排列形态成立'],
+        levels: {
+          entry: '143.50',
+          stop_loss: '138.20',
+          target: '158.00',
+        },
+      },
+    ],
+    PLTR: [
+      {
+        strategy_id: 'breakout_growth',
+        symbol: 'PLTR',
+        as_of: '2026-11-13',
+        direction: 'long',
+        strength: 91,
+        reasons: ['商业版AIP签约量放量', '创历史新高突破放量'],
+        levels: {
+          entry: '58.50',
+          stop_loss: '54.00',
+          target: '68.00',
+        },
+      },
+    ],
+  };
 
   const marketIndices: MarketIndexItem[] = [
     {
@@ -224,17 +260,24 @@ export const DashboardPage: React.FC = () => {
       title: '快捷操作',
       align: 'right',
       render: (_, record) => (
-        <Button
-          variant="ghost"
-          size="xs"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/research?symbol=${record.symbol}`);
-          }}
-          leftIcon={<Sparkles className="h-3 w-3 text-purple-400" />}
-        >
-          AI 投研
-        </Button>
+        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={() => setSelectedStock(record)}
+            leftIcon={<LineChart className="h-3 w-3 text-sky-400" />}
+          >
+            K线
+          </Button>
+          <Button
+            variant="ghost"
+            size="xs"
+            onClick={() => navigate(`/research?symbol=${record.symbol}`)}
+            leftIcon={<Sparkles className="h-3 w-3 text-purple-400" />}
+          >
+            研报
+          </Button>
+        </div>
       ),
     },
   ];
@@ -307,12 +350,22 @@ export const DashboardPage: React.FC = () => {
           columns={columns}
           data={hotStocks}
           rowKey={(r) => r.symbol}
-          onRowClick={(r) => navigate(`/research?symbol=${r.symbol}`)}
+          onRowClick={(r) => setSelectedStock(r)}
         />
       </div>
 
       {/* Compliance Disclaimer */}
       <ComplianceDisclaimer variant="card" />
+
+      {/* Stock Candlestick Chart & Signal Modal */}
+      <StockDetailModal
+        isOpen={!!selectedStock}
+        onClose={() => setSelectedStock(null)}
+        symbol={selectedStock?.symbol || ''}
+        name={selectedStock?.name}
+        signals={selectedStock ? sampleSignals[selectedStock.symbol] || [] : []}
+        onOpenResearch={(sym) => navigate(`/research?symbol=${sym}`)}
+      />
     </div>
   );
 };
