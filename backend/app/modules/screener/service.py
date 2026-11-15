@@ -9,6 +9,8 @@ import uuid
 from typing import Any, Literal, cast
 from uuid import UUID
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.clock import get_clock
 from app.core.logging import get_logger
 from app.modules.screener.exceptions import (
@@ -45,7 +47,7 @@ from app.modules.screener.schemas import (
 )
 from app.modules.screener.universe import UniverseManager
 
-__all__ = ["ScreenerService"]
+__all__ = ["ScreenerService", "create_screener_service"]
 
 logger = get_logger("screener.service")
 
@@ -347,3 +349,42 @@ class ScreenerService(ScreenerServiceProtocol):
             created_at=run.created_at,
             completed_at=run.completed_at,
         )
+
+
+def create_screener_service(
+    session: AsyncSession,
+    *,
+    strategy_service: Any = None,
+    data_service: Any = None,
+    ai_service: Any = None,
+    universe_manager: UniverseManagerProtocol | None = None,
+    clock: Any | None = None,
+) -> ScreenerService:
+    """按会话和依赖实例创建 ScreenerService 组合根。"""
+    from app.modules.screener.executor import ScreenerExecutor
+    from app.modules.screener.prompts import ThemeCardsGenerator
+    from app.modules.screener.repo import ScreenerRepository, WatchlistRepository
+    from app.modules.screener.universe import default_universe_manager
+
+    universe_mgr = universe_manager if universe_manager is not None else default_universe_manager
+    screener_repo = ScreenerRepository(session)
+    watchlist_repo = WatchlistRepository(session)
+    executor = (
+        ScreenerExecutor(strategy_service=strategy_service)
+        if strategy_service is not None
+        else None
+    )
+    generator = ThemeCardsGenerator(
+        universe_manager=universe_mgr,
+        ai_service=ai_service,
+        marketdata_service=data_service,
+        clock=clock,
+    )
+    return ScreenerService(
+        screener_repo=screener_repo,
+        watchlist_repo=watchlist_repo,
+        universe_manager=universe_mgr,
+        executor=executor,
+        theme_cards_generator=generator,
+        clock=clock,
+    )

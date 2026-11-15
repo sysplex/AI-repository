@@ -4,6 +4,32 @@
 AI 主题卡片（F9）、自选清单 CRUD 与投研导出。
 """
 
+from app.modules.screener.api import (
+    add_watchlist_item,
+    create_screener_run,
+    create_watchlist,
+    delete_watchlist,
+    export_screener_results,
+    export_watchlist_to_research,
+    generate_theme_cards,
+    get_current_user,
+    get_screener_run,
+    get_screener_service,
+    get_theme,
+    get_watchlist,
+    list_screener_runs,
+    list_themes,
+    list_universes,
+    list_watchlists,
+    remove_watchlist_item,
+    set_screener_service,
+    set_screener_service_provider,
+    update_watchlist,
+    update_watchlist_item,
+)
+from app.modules.screener.api import (
+    router as screener_router,
+)
 from app.modules.screener.exceptions import (
     DuplicateWatchlistItemError,
     ScreenerError,
@@ -67,7 +93,7 @@ from app.modules.screener.schemas import (
     WatchlistRead,
     WatchlistUpdate,
 )
-from app.modules.screener.service import ScreenerService
+from app.modules.screener.service import ScreenerService, create_screener_service
 from app.modules.screener.universe import (
     DOW30_SYMBOLS,
     NASDAQ100_SYMBOLS,
@@ -135,8 +161,31 @@ __all__ = [
     "WatchlistRepository",
     "WatchlistRepositoryProtocol",
     "WatchlistUpdate",
+    "add_watchlist_item",
+    "create_screener_run",
+    "create_screener_service",
+    "create_watchlist",
     "default_universe_manager",
+    "delete_watchlist",
+    "export_screener_results",
+    "export_watchlist_to_research",
     "extract_numbers_from_text",
     "format_untrusted_facts",
+    "generate_theme_cards",
+    "get_current_user",
+    "get_screener_run",
+    "get_screener_service",
+    "get_theme",
+    "get_watchlist",
+    "list_screener_runs",
+    "list_themes",
+    "list_universes",
+    "list_watchlists",
+    "remove_watchlist_item",
     "sanitize_untrusted_text",
+    "screener_router",
+    "set_screener_service",
+    "set_screener_service_provider",
+    "update_watchlist",
+    "update_watchlist_item",
 ]
