@@ -14,6 +14,7 @@ export type Schemas = components['schemas'];
 export type UserPublic = Schemas['UserPublic'];
 export type TokenPair = Schemas['TokenPair'];
 export type LoginRequest = Schemas['LoginRequest'];
+export type LogoutRequest = Schemas['LogoutRequest'];
 export type RegisterRequest = Schemas['RegisterRequest'];
 export type PasswordResetRequest = Schemas['PasswordResetRequest'];
 export type PasswordResetConfirm = Schemas['PasswordResetConfirm'];
