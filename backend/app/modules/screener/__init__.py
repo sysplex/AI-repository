@@ -1,1 +1,91 @@
-"""`screener` 模块（M0 空包，由后续里程碑填充）。"""
+"""`screener` 模块（M8 筛选器与主题自选）。
+
+提供股票池管理、策略并发筛选、结果确定性排序、热门主题与
+AI 主题卡片（F9）、自选清单 CRUD 与投研导出。
+"""
+
+from app.modules.screener.exceptions import (
+    DuplicateWatchlistItemError,
+    ScreenerError,
+    ScreenerExecutionError,
+    ScreenerRunNotFoundError,
+    StrategyNotFoundError,
+    ThemeNotFoundError,
+    UniverseNotFoundError,
+    WatchlistItemNotFoundError,
+    WatchlistNotFoundError,
+)
+from app.modules.screener.models import (
+    ScreenerResult,
+    ScreenerRun,
+    Watchlist,
+    WatchlistItem,
+)
+from app.modules.screener.ports import (
+    AIServiceProtocol,
+    MarketDataServiceProtocol,
+    ScreenerExecutorProtocol,
+    ScreenerRepositoryProtocol,
+    ScreenerServiceProtocol,
+    StrategyServiceProtocol,
+    UniverseManagerProtocol,
+    WatchlistRepositoryProtocol,
+)
+from app.modules.screener.schemas import (
+    ExportToResearchRequest,
+    ScreenerResultItem,
+    ScreenerRunCreate,
+    ScreenerRunRead,
+    ScreenerRunStatus,
+    ThemeCardItem,
+    ThemeCardsResponse,
+    ThemeInfo,
+    ThemeStockItem,
+    UniverseInfo,
+    WatchlistCreate,
+    WatchlistItemCreate,
+    WatchlistItemRead,
+    WatchlistItemUpdate,
+    WatchlistRead,
+    WatchlistUpdate,
+)
+
+__all__ = [
+    "AIServiceProtocol",
+    "DuplicateWatchlistItemError",
+    "ExportToResearchRequest",
+    "MarketDataServiceProtocol",
+    "ScreenerError",
+    "ScreenerExecutionError",
+    "ScreenerExecutorProtocol",
+    "ScreenerRepositoryProtocol",
+    "ScreenerResult",
+    "ScreenerResultItem",
+    "ScreenerRun",
+    "ScreenerRunCreate",
+    "ScreenerRunNotFoundError",
+    "ScreenerRunRead",
+    "ScreenerRunStatus",
+    "ScreenerServiceProtocol",
+    "StrategyNotFoundError",
+    "StrategyServiceProtocol",
+    "ThemeCardItem",
+    "ThemeCardsResponse",
+    "ThemeInfo",
+    "ThemeNotFoundError",
+    "ThemeStockItem",
+    "UniverseInfo",
+    "UniverseManagerProtocol",
+    "UniverseNotFoundError",
+    "Watchlist",
+    "WatchlistCreate",
+    "WatchlistItem",
+    "WatchlistItemCreate",
+    "WatchlistItemNotFoundError",
+    "WatchlistItemRead",
+    "WatchlistItemUpdate",
+    "WatchlistNotFoundError",
+    "WatchlistRead",
+    "WatchlistRepositoryProtocol",
+    "WatchlistUpdate",
+]
