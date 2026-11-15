@@ -455,7 +455,7 @@ async def test_generate_theme_cards_with_generator(
 
 
 @pytest.mark.asyncio
-async def test_generate_theme_cards_unimplemented(
+async def test_generate_theme_cards_default_generator(
     mock_screener_repo: AsyncMock,
     mock_watchlist_repo: AsyncMock,
     mock_universe_mgr: MagicMock,
@@ -467,8 +467,9 @@ async def test_generate_theme_cards_unimplemented(
         theme_cards_generator=None,
     )
 
-    with pytest.raises(NotImplementedError, match="M8-T05"):
-        await service.generate_theme_cards("ai_chips", uuid.uuid4())
+    resp = await service.generate_theme_cards("ai_chips", uuid.uuid4())
+    assert resp.theme_id == "ai_chips"
+    assert resp.theme_name == "AI 芯片"
 
 
 # ---------------------------------------------------------------------------

@@ -27,6 +27,7 @@ from app.modules.screener.ports import (
     UniverseManagerProtocol,
     WatchlistRepositoryProtocol,
 )
+from app.modules.screener.prompts import ThemeCardsGenerator
 from app.modules.screener.schemas import (
     ExportToResearchRequest,
     ScreenerResultItem,
@@ -68,8 +69,15 @@ class ScreenerService(ScreenerServiceProtocol):
             universe_manager if universe_manager is not None else UniverseManager()
         )
         self._executor = executor
-        self._theme_cards_generator = theme_cards_generator
         self._clock = clock if clock is not None else get_clock()
+        self._theme_cards_generator = (
+            theme_cards_generator
+            if theme_cards_generator is not None
+            else ThemeCardsGenerator(
+                universe_manager=self._universe_manager,
+                clock=self._clock,
+            )
+        )
 
     # ---------------------------------------------------------
     # 策略筛选任务执行与状态查询
@@ -188,17 +196,14 @@ class ScreenerService(ScreenerServiceProtocol):
         """获取指定主题的成分标的与分类信息。"""
         return self._universe_manager.get_theme(theme_id)
 
-    async def generate_theme_cards(self, theme_id: str, user_id: UUID) -> ThemeCardsResponse:
-        """生成主题卡片（委托给主题卡片生成器或等待 T05 实现）。"""
-        if self._theme_cards_generator is not None:
-            result = await self._theme_cards_generator.generate_theme_cards(
-                theme_id=theme_id, user_id=user_id
-            )
-            return cast(ThemeCardsResponse, result)
-
-        # 校验主题存在性
-        _ = self.get_theme(theme_id)
-        raise NotImplementedError("主题卡片生成器将在 M8-T05 中完整交付")
+    async def generate_theme_cards(
+        self, theme_id: str, user_id: UUID | None = None
+    ) -> ThemeCardsResponse:
+        """生成主题卡片（委托给 ThemeCardsGenerator 并执行事实溯源）。"""
+        result = await self._theme_cards_generator.generate_theme_cards(
+            theme_id=theme_id, user_id=user_id
+        )
+        return cast(ThemeCardsResponse, result)
 
     # ---------------------------------------------------------
     # 自选清单 (Watchlists) 管理
