@@ -32,6 +32,7 @@ from app.modules.screener.ports import (
     UniverseManagerProtocol,
     WatchlistRepositoryProtocol,
 )
+from app.modules.screener.repo import ScreenerRepository, WatchlistRepository
 from app.modules.screener.schemas import (
     ExportToResearchRequest,
     ScreenerResultItem,
@@ -50,6 +51,7 @@ from app.modules.screener.schemas import (
     WatchlistRead,
     WatchlistUpdate,
 )
+from app.modules.screener.service import ScreenerService
 from app.modules.screener.universe import (
     DOW30_SYMBOLS,
     NASDAQ100_SYMBOLS,
@@ -72,6 +74,7 @@ __all__ = [
     "ScreenerExecutionError",
     "ScreenerExecutor",
     "ScreenerExecutorProtocol",
+    "ScreenerRepository",
     "ScreenerRepositoryProtocol",
     "ScreenerResult",
     "ScreenerResultItem",
@@ -80,6 +83,7 @@ __all__ = [
     "ScreenerRunNotFoundError",
     "ScreenerRunRead",
     "ScreenerRunStatus",
+    "ScreenerService",
     "ScreenerServiceProtocol",
     "StrategyNotFoundError",
     "StrategyServiceProtocol",
@@ -101,6 +105,7 @@ __all__ = [
     "WatchlistItemUpdate",
     "WatchlistNotFoundError",
     "WatchlistRead",
+    "WatchlistRepository",
     "WatchlistRepositoryProtocol",
     "WatchlistUpdate",
     "default_universe_manager",

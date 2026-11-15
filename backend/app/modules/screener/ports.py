@@ -17,6 +17,7 @@ from uuid import UUID
 
 from app.modules.screener.models import ScreenerRun, Watchlist, WatchlistItem
 from app.modules.screener.schemas import (
+    ExportToResearchRequest,
     ScreenerResultItem,
     ScreenerRunCreate,
     ScreenerRunRead,
@@ -25,7 +26,9 @@ from app.modules.screener.schemas import (
     UniverseInfo,
     WatchlistCreate,
     WatchlistItemCreate,
+    WatchlistItemRead,
     WatchlistItemUpdate,
+    WatchlistRead,
     WatchlistUpdate,
 )
 
@@ -184,6 +187,10 @@ class ScreenerServiceProtocol(Protocol):
 
     async def get_screener_run(self, run_id: UUID, user_id: UUID) -> ScreenerRunRead: ...
 
+    async def list_runs(
+        self, user_id: UUID, limit: int = 20, offset: int = 0
+    ) -> list[ScreenerRunRead]: ...
+
     def list_universes(self) -> list[UniverseInfo]: ...
 
     def list_themes(self) -> list[ThemeInfo]: ...
@@ -191,3 +198,33 @@ class ScreenerServiceProtocol(Protocol):
     def get_theme(self, theme_id: str) -> ThemeInfo: ...
 
     async def generate_theme_cards(self, theme_id: str, user_id: UUID) -> ThemeCardsResponse: ...
+
+    async def list_watchlists(self, user_id: UUID) -> list[WatchlistRead]: ...
+
+    async def get_watchlist(self, watchlist_id: UUID, user_id: UUID) -> WatchlistRead: ...
+
+    async def create_watchlist(self, user_id: UUID, data: WatchlistCreate) -> WatchlistRead: ...
+
+    async def update_watchlist(
+        self, watchlist_id: UUID, user_id: UUID, data: WatchlistUpdate
+    ) -> WatchlistRead: ...
+
+    async def delete_watchlist(self, watchlist_id: UUID, user_id: UUID) -> bool: ...
+
+    async def add_watchlist_item(
+        self, watchlist_id: UUID, user_id: UUID, data: WatchlistItemCreate
+    ) -> WatchlistItemRead: ...
+
+    async def update_watchlist_item(
+        self,
+        watchlist_id: UUID,
+        item_id: UUID,
+        user_id: UUID,
+        data: WatchlistItemUpdate,
+    ) -> WatchlistItemRead: ...
+
+    async def remove_watchlist_item(
+        self, watchlist_id: UUID, item_id: UUID, user_id: UUID
+    ) -> bool: ...
+
+    def export_to_research(self, request: ExportToResearchRequest) -> dict[str, Any]: ...
