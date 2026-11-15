@@ -64,6 +64,14 @@
 - M6 投研分析与买入决策 T06（#122）：REST API 路由与端点交付（`/api/v1/ai/*` & `/api/v1/research/*` 双路径兼容与 HARD-01 鉴权）
 - M6 投研分析与买入决策 T07（#123）：黄金集 5 类代表性股票多场景集成验证（AAPL, CAT, KO, PLTR, SOFI 20 组业务场景 + 5 组 REST API 端点全矩阵调用，零幻觉数字溯源通过）
 - M6 投研分析与买入决策 T08（#124）：全链路端到端集成验收测试 `test_research_e2e.py`、归档 `docs/acceptance/M6.md` 并标记 M6 里程碑结项
+- M7 股票对比与组合配置 T01（#133）：领域数据模型（ComparePayload, LongTermPayload, PortfolioPayload）、端口协议（ResearchServiceProtocol, FactAggregatorProtocol, QuantitativeEngineProtocol）与 DTO Schemas
+- M7 股票对比与组合配置 T02（#134）：提示词模板注册与输出 Schema 约束（3 大核心用例：compare, long_term, portfolio）
+- M7 股票对比与组合配置 T03（#135）：跨标的事实聚合（aggregate_multi_facts）与代码量化优化引擎（指标标准化百分位打分 compute_cross_sectional_ranking，约束投影权重优化 optimize_portfolio_weights）
+- M7 股票对比与组合配置 T04（#136）：ResearchService 门面扩充与 3 大用例编排管道实现（compare_stocks, get_long_term_analysis, generate_portfolio_allocation）
+- M7 股票对比与组合配置 T05（#137）：论文破裂条件（thesis_breakers）结构化监控元数据验证、投资组合绝对守恒校验器与合规防线
+- M7 股票对比与组合配置 T06（#138）：REST API 路由与端点交付（`/api/v1/ai/compare`, `/api/v1/ai/long-term`, `/api/v1/ai/portfolio` 及 `/api/v1/research/*` 双路径平同兼容与 HARD-01 鉴权）
+- M7 股票对比与组合配置 T07（#139）：黄金数据集多标的场景集成验证（AAPL, CAT, KO, PLTR, SOFI 跨对比矩阵、多期限长投破裂矩阵、全风险偏好组合矩阵，FactTracingEngine 100% 溯源通过）
+- M7 股票对比与组合配置 T08（#140）：全链路端到端集成验收测试 `test_comparison_portfolio_e2e.py`、归档 `docs/acceptance/M7.md` 并标记 M7 里程碑结项
 
 ### Changed
 - CI：Dependabot 三个 ecosystem 忽略 `semver-major` 升级，避免跨大版本 PR 反复破坏 `uv --frozen` 与固定 SHA 基线（#28/#29 留待 M1 结项后评估）
