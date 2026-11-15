@@ -13,7 +13,10 @@ from __future__ import annotations
 
 from app.modules.research.aggregator import (
     USE_CASE_BUY_DECISION,
+    USE_CASE_COMPARE,
     USE_CASE_EARNINGS,
+    USE_CASE_LONG_TERM,
+    USE_CASE_PORTFOLIO,
     USE_CASE_RESEARCH,
     USE_CASE_TECHNICAL,
     VALID_USE_CASES,
@@ -69,9 +72,11 @@ from app.modules.research.prompts import (
 )
 from app.modules.research.quantitative import (
     QuantitativeEngine,
+    compute_cross_sectional_ranking,
     compute_pos_in_52w_range,
     compute_target_vs_price_pct,
     compute_technical_trade_plan,
+    optimize_portfolio_weights,
 )
 from app.modules.research.schemas import (
     BuyDecisionPayload,
@@ -161,11 +166,15 @@ __all__ = [
     "TechnicalPayload",
     "TradePlan",
     "USE_CASE_BUY_DECISION",
+    "USE_CASE_COMPARE",
     "USE_CASE_EARNINGS",
+    "USE_CASE_LONG_TERM",
+    "USE_CASE_PORTFOLIO",
     "USE_CASE_RESEARCH",
     "USE_CASE_TECHNICAL",
     "VALID_USE_CASES",
     "check_novice_readability",
+    "compute_cross_sectional_ranking",
     "compute_pos_in_52w_range",
     "compute_target_vs_price_pct",
     "compute_technical_trade_plan",
@@ -174,6 +183,7 @@ __all__ = [
     "get_research_prompt_template",
     "get_research_service",
     "normalize_missing_earnings_fields",
+    "optimize_portfolio_weights",
     "register_research_prompts",
     "research_router",
     "sanitize_forbidden_terms",

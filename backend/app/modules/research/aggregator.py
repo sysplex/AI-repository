@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import inspect
 from decimal import Decimal
 from typing import Any
@@ -22,12 +23,15 @@ from app.modules.research.ports import (
     QuantitativeEngineProtocol,
     StrategyServiceProtocol,
 )
-from app.modules.research.quantitative import QuantitativeEngine
+from app.modules.research.quantitative import QuantitativeEngine, _to_decimal
 
 __all__ = [
     "FactAggregator",
     "USE_CASE_BUY_DECISION",
+    "USE_CASE_COMPARE",
     "USE_CASE_EARNINGS",
+    "USE_CASE_LONG_TERM",
+    "USE_CASE_PORTFOLIO",
     "USE_CASE_RESEARCH",
     "USE_CASE_TECHNICAL",
     "VALID_USE_CASES",
@@ -37,6 +41,9 @@ USE_CASE_RESEARCH = "research"
 USE_CASE_BUY_DECISION = "buy_decision"
 USE_CASE_TECHNICAL = "technical"
 USE_CASE_EARNINGS = "earnings"
+USE_CASE_COMPARE = "compare"
+USE_CASE_LONG_TERM = "long_term"
+USE_CASE_PORTFOLIO = "portfolio"
 
 VALID_USE_CASES: frozenset[str] = frozenset(
     {
@@ -44,6 +51,9 @@ VALID_USE_CASES: frozenset[str] = frozenset(
         USE_CASE_BUY_DECISION,
         USE_CASE_TECHNICAL,
         USE_CASE_EARNINGS,
+        USE_CASE_COMPARE,
+        USE_CASE_LONG_TERM,
+        USE_CASE_PORTFOLIO,
     }
 )
 
@@ -126,6 +136,8 @@ class FactAggregator:
             self._enrich_earnings(facts, missing_fields, kwargs)
         elif uc == USE_CASE_RESEARCH:
             self._enrich_research(facts, missing_fields)
+        elif uc == USE_CASE_LONG_TERM:
+            self._enrich_long_term(facts, missing_fields, kwargs)
 
         # 5. 统一去重并排序缺失字段
         deduped_missing = sorted(list(set(missing_fields)))
@@ -140,6 +152,10 @@ class FactAggregator:
             return ["quote", "bars"]
         if use_case == USE_CASE_EARNINGS:
             return ["quote", "fundamentals", "news"]
+        if use_case == USE_CASE_LONG_TERM:
+            return ["quote", "profile", "fundamentals", "news"]
+        if use_case in (USE_CASE_COMPARE, USE_CASE_PORTFOLIO):
+            return ["quote", "profile", "fundamentals"]
         return ["quote", "profile", "fundamentals"]
 
     async def _fetch_market_facts(
@@ -454,3 +470,117 @@ class FactAggregator:
             for field in ["sector", "industry", "description"]:
                 if not profile.get(field):
                     missing_fields.append(f"profile.{field}")
+
+    def _enrich_long_term(
+        self,
+        facts: dict[str, Any],
+        missing_fields: list[str],
+        kwargs: dict[str, Any],
+    ) -> None:
+        """补充长期持有价值所需的事实上下文（docs/tasks/M7/CONTRACTS.md §4）。"""
+        years = kwargs.get("years", 5)
+        facts["horizon_years"] = years
+
+        funds = facts.get("fundamentals")
+        if funds is None:
+            missing_fields.append("fundamentals")
+        elif isinstance(funds, dict):
+            # 必须监控的破裂指标字段路径
+            for field in ["net_margin", "pe_trailing", "revenue_growth", "debt_to_equity"]:
+                if funds.get(field) is None:
+                    missing_fields.append(f"fundamentals.{field}")
+
+    async def aggregate_multi_facts(
+        self,
+        symbols: list[str],
+        use_case: str,
+        **kwargs: Any,
+    ) -> tuple[dict[str, Any], list[str]]:
+        """为多标的用例（如 compare, portfolio）聚合各标的事实并返回 (multi_facts, missing_fields)。
+
+        Args:
+            symbols: 标的代码列表（如 ["AAPL", "MSFT"]）。
+            use_case: 目标用例（compare, portfolio）。
+            **kwargs: 额外上下文参数（amount, risk_level, goal 等）。
+
+        Returns:
+            tuple[dict[str, Any], list[str]]: 聚合的多标的事实字典及缺失字段列表。
+
+        Raises:
+            InvalidParameterError: 标的池数量越界或非法。
+            SymbolNotFoundError: 某个标的不存在或基础市场数据无法获取。
+        """
+        if not symbols:
+            raise InvalidParameterError(
+                "Symbols list must not be empty",
+                details={"symbols": symbols},
+            )
+
+        clean_symbols = list(dict.fromkeys(s.strip().upper() for s in symbols if s.strip()))
+        uc = use_case.strip().lower()
+
+        if uc == USE_CASE_COMPARE:
+            if len(clean_symbols) < 2 or len(clean_symbols) > 8:
+                raise InvalidParameterError(
+                    f"Compare use case requires 2 to 8 symbols, got {len(clean_symbols)}",
+                    details={"symbols": clean_symbols},
+                )
+        elif uc == USE_CASE_PORTFOLIO:
+            if len(clean_symbols) < 2 or len(clean_symbols) > 12:
+                raise InvalidParameterError(
+                    f"Portfolio use case requires 2 to 12 symbols, got {len(clean_symbols)}",
+                    details={"symbols": clean_symbols},
+                )
+        else:
+            if len(clean_symbols) < 2:
+                raise InvalidParameterError(
+                    f"Multi-stock aggregation requires at least 2 symbols, "
+                    f"got {len(clean_symbols)}",
+                    details={"symbols": clean_symbols},
+                )
+
+        # 并发拉取所有标的事实快照
+        tasks = [self.aggregate_facts(sym, uc, **kwargs) for sym in clean_symbols]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        stocks_facts: dict[str, dict[str, Any]] = {}
+        all_missing: list[str] = []
+
+        for sym, res in zip(clean_symbols, results, strict=True):
+            if isinstance(res, BaseException):
+                raise res
+            facts_i, missing_i = res
+            stocks_facts[sym] = facts_i
+            for m in missing_i:
+                all_missing.append(f"{sym}.{m}")
+
+        # 组装跨标的 multi_facts 顶层结构
+        multi_facts: dict[str, Any] = {
+            "symbols": clean_symbols,
+            "use_case": uc,
+            "stocks": stocks_facts,
+            "computed": {},
+        }
+
+        if uc == USE_CASE_COMPARE:
+            ranking = self._quantitative_engine.compute_cross_sectional_ranking(stocks_facts)
+            multi_facts["computed"]["ranking"] = ranking
+        elif uc == USE_CASE_PORTFOLIO:
+            amt_raw = kwargs.get("amount", Decimal("100000.00"))
+            amt = _to_decimal(amt_raw, "amount") if not isinstance(amt_raw, Decimal) else amt_raw
+            r_level = kwargs.get("risk_level", "moderate")
+            goal = kwargs.get("goal", "growth")
+            opt = self._quantitative_engine.optimize_portfolio_weights(
+                amount=amt,
+                symbols=clean_symbols,
+                risk_level=r_level,
+                goal=goal,
+                stocks_facts=stocks_facts,
+            )
+            multi_facts["computed"]["amount"] = opt["amount"]
+            multi_facts["computed"]["allocations"] = opt["allocations"]
+            multi_facts["computed"]["cash_pct"] = opt["cash_pct"]
+            multi_facts["computed"]["cash_amount"] = opt["cash_amount"]
+
+        deduped_missing = sorted(list(set(all_missing)))
+        return multi_facts, deduped_missing

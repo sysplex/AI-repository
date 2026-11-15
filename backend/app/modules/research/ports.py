@@ -158,6 +158,15 @@ class FactAggregatorProtocol(Protocol):
         """为特定用例从各基础模块收集 facts 数据字典及 missing_fields 列表。"""
         ...
 
+    async def aggregate_multi_facts(
+        self,
+        symbols: list[str],
+        use_case: str,
+        **kwargs: Any,
+    ) -> tuple[dict[str, Any], list[str]]:
+        """为多标的用例（如 compare, portfolio）聚合各标的事实并返回 (facts, missing_fields)。"""
+        ...
+
 
 @runtime_checkable
 class QuantitativeEngineProtocol(Protocol):
@@ -181,4 +190,22 @@ class QuantitativeEngineProtocol(Protocol):
         atr: Decimal,
     ) -> dict[str, Any]:
         """确定性计算技术面交易计划（入场、止损、目标、盈亏比）。"""
+        ...
+
+    def compute_cross_sectional_ranking(
+        self,
+        stocks_facts: dict[str, dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """计算横向多标的标准化分位得分与确定性综合排序。"""
+        ...
+
+    def optimize_portfolio_weights(
+        self,
+        amount: Decimal,
+        symbols: list[str],
+        risk_level: str = "moderate",
+        goal: str = "growth",
+        stocks_facts: dict[str, dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """计算满足约束条件与权重守恒的确定性投资组合配置。"""
         ...

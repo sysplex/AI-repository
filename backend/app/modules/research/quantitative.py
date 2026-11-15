@@ -19,9 +19,11 @@ from app.modules.research.exceptions import (
 
 __all__ = [
     "QuantitativeEngine",
+    "compute_cross_sectional_ranking",
     "compute_pos_in_52w_range",
     "compute_target_vs_price_pct",
     "compute_technical_trade_plan",
+    "optimize_portfolio_weights",
 ]
 
 _TWO_PLACES = Decimal("0.01")
@@ -233,6 +235,297 @@ def compute_technical_trade_plan(
     }
 
 
+_NEUTRAL_BENCHMARKS: dict[str, float] = {
+    "revenue_growth": 0.05,
+    "net_margin": 0.10,
+    "roe": 0.12,
+    "dividend_yield": 0.015,
+    "pe_trailing": 22.0,
+    "debt_to_equity": 1.0,
+    "beta": 1.0,
+}
+
+
+def _extract_metric_float(facts: dict[str, Any], field: str) -> float | None:
+    """从股票事实快照中提取浮点数值。"""
+    funds = facts.get("fundamentals")
+    quote = facts.get("quote")
+    profile = facts.get("profile")
+
+    val = None
+    if isinstance(funds, dict) and field in funds and funds[field] is not None:
+        val = funds[field]
+    elif isinstance(quote, dict) and field in quote and quote[field] is not None:
+        val = quote[field]
+    elif isinstance(profile, dict) and field in profile and profile[field] is not None:
+        val = profile[field]
+
+    if val is None:
+        return None
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return None
+
+
+def compute_cross_sectional_ranking(
+    stocks_facts: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """计算横向多标的标准化分位得分与确定性综合排序（docs/tasks/M7/CONTRACTS.md §3.1）。
+
+    正向指标（越大越优）：
+    - revenue_growth: 营收增速 (权重 20%)
+    - net_margin: 净利润率 (权重 20%)
+    - roe: 净资产收益率 (权重 15%)
+    - dividend_yield: 股息率 (权重 10%)
+
+    负向指标（越小越优）：
+    - pe_trailing: 市盈率 (权重 15%，非正值深度惩罚)
+    - debt_to_equity: 资产负债率 (权重 10%)
+    - beta: 波动率 (权重 10%)
+
+    统一计算百分位分值（0~100 分），按加权总分从高到低确定性排序（同分按 symbol 字母升序）。
+    """
+    if len(stocks_facts) < 2:
+        raise InvalidParameterError(
+            "Cross-sectional ranking requires at least 2 stocks",
+            details={"stock_count": len(stocks_facts)},
+        )
+
+    symbols = sorted(list(stocks_facts.keys()))
+    n = len(symbols)
+
+    # 1. 提取各标的 7 大核心指标配置
+    metrics_spec: list[dict[str, Any]] = [
+        {"name": "revenue_growth", "weight": Decimal("0.20"), "higher_is_better": True},
+        {"name": "net_margin", "weight": Decimal("0.20"), "higher_is_better": True},
+        {"name": "roe", "weight": Decimal("0.15"), "higher_is_better": True},
+        {"name": "dividend_yield", "weight": Decimal("0.10"), "higher_is_better": True},
+        {"name": "pe_trailing", "weight": Decimal("0.15"), "higher_is_better": False},
+        {"name": "debt_to_equity", "weight": Decimal("0.10"), "higher_is_better": False},
+        {"name": "beta", "weight": Decimal("0.10"), "higher_is_better": False},
+    ]
+
+    scores: dict[str, Decimal] = {s: Decimal("0.00") for s in symbols}
+
+    for spec in metrics_spec:
+        m_name = str(spec["name"])
+        m_weight: Decimal = spec["weight"]
+        higher_better: bool = bool(spec["higher_is_better"])
+
+        # 提取或补齐中性基准值
+        raw_values: dict[str, float] = {}
+        for s in symbols:
+            extracted = _extract_metric_float(stocks_facts[s], m_name)
+            raw_values[s] = (
+                extracted if extracted is not None else _NEUTRAL_BENCHMARKS.get(m_name, 0.0)
+            )
+
+        items = list(raw_values.items())
+
+        # 特殊处理市盈率：PE <= 0 代表亏损，评级排在所有正 PE 之后（最劣）
+        if m_name == "pe_trailing":
+
+            def _pe_key(item: tuple[str, float]) -> tuple[int, float]:
+                v = item[1]
+                if v > 0:
+                    return (0, v)
+                return (1, 0.0)
+
+            valid_sorted = sorted(items, key=_pe_key)
+            total_valid = len(valid_sorted)
+            val_ranks: dict[str, float] = {
+                sym: float(total_valid - idx) for idx, (sym, _) in enumerate(valid_sorted)
+            }
+        else:
+            valid_sorted = sorted(items, key=lambda x: x[1])
+            val_ranks = {}
+            for idx, (sym, _) in enumerate(valid_sorted):
+                if higher_better:
+                    val_ranks[sym] = float(idx + 1)
+                else:
+                    val_ranks[sym] = float(len(valid_sorted) - idx)
+
+        # 映射分位数 [0.0, 100.0]，使用统计学标准中点经验分位数公式 (rank - 0.5) / N * 100
+        unique_vals = set(v for _, v in items)
+        if len(unique_vals) <= 1:
+            for s in symbols:
+                scores[s] += Decimal("50.00") * m_weight
+        else:
+            for s, r in val_ranks.items():
+                pct = ((r - 0.5) / float(n)) * 100.0
+                scores[s] += Decimal(str(round(pct, 2))) * m_weight
+
+    # 2. 组装排序结果（按加权总分降序，同分按 symbol 升序）
+    ranked_symbols = sorted(
+        symbols,
+        key=lambda s: (-scores[s], s),
+    )
+
+    ranking_list: list[dict[str, Any]] = []
+    for rank_idx, sym in enumerate(ranked_symbols, start=1):
+        tot = scores[sym].quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        ranking_list.append(
+            {
+                "symbol": sym,
+                "rank": rank_idx,
+                "total_score": tot,
+                "one_line_reason": f"综合得分 {tot:.2f}，在 {n} 只对比标的中位列第 {rank_idx}",
+            }
+        )
+
+    return ranking_list
+
+
+def optimize_portfolio_weights(
+    amount: Decimal | float | int | str,
+    symbols: list[str],
+    risk_level: str = "moderate",
+    goal: str = "growth",
+    stocks_facts: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """计算满足约束条件与权重守恒的确定性投资组合配置（docs/tasks/M7/CONTRACTS.md §3.2）。
+
+    约束条件：
+    - conservative: min_cash_pct >= 20.00%, max_stock_weight <= 25.00%
+    - moderate: min_cash_pct >= 10.00%, max_stock_weight <= 30.00%
+    - aggressive: min_cash_pct >= 5.00%, max_stock_weight <= 40.00%
+
+    守恒公式：
+    - sum(weight_pct) + cash_pct == 100.00%
+    - sum(allocated_amount) + cash_amount == amount
+    """
+    total_amount = _to_decimal(amount, "amount")
+    if total_amount <= _ZERO:
+        raise InvalidParameterError(
+            "Portfolio amount must be positive",
+            details={"amount": str(total_amount)},
+        )
+
+    clean_symbols = list(dict.fromkeys(s.strip().upper() for s in symbols if s.strip()))
+    if len(clean_symbols) < 2 or len(clean_symbols) > 12:
+        raise InvalidParameterError(
+            "Portfolio symbols count must be between 2 and 12",
+            details={"symbols_count": len(clean_symbols)},
+        )
+
+    r_level = risk_level.strip().lower()
+    if r_level == "conservative":
+        min_cash_pct = Decimal("20.00")
+        max_stock_weight = Decimal("25.00")
+    elif r_level == "aggressive":
+        min_cash_pct = Decimal("5.00")
+        max_stock_weight = Decimal("40.00")
+    else:
+        min_cash_pct = Decimal("10.00")
+        max_stock_weight = Decimal("30.00")
+
+    g_goal = goal.strip().lower()
+    if g_goal == "retirement":
+        # 退休目标增加 5% 现金防守垫
+        min_cash_pct = min(min_cash_pct + Decimal("5.00"), Decimal("40.00"))
+
+    # 可分配股票预算上限
+    equity_budget = Decimal("100.00") - min_cash_pct
+    max_possible_equity = Decimal(str(len(clean_symbols))) * max_stock_weight
+    allocatable_equity = min(equity_budget, max_possible_equity)
+
+    # 计算各标的相对吸引力得分 a_i
+    raw_weights: dict[str, Decimal] = {}
+    for s in clean_symbols:
+        a_i = Decimal("1.00")
+        if stocks_facts and s in stocks_facts:
+            f = stocks_facts[s]
+            beta = _extract_metric_float(f, "beta") or 1.0
+            div_yield = _extract_metric_float(f, "dividend_yield") or 0.0
+            rev_growth = _extract_metric_float(f, "revenue_growth") or 0.05
+
+            inv_vol = 1.0 / max(beta, 0.2)
+            if g_goal in ("conservative", "safety", "retirement"):
+                factor = inv_vol * (1.0 + 3.0 * max(div_yield, 0.0))
+            elif g_goal == "income":
+                factor = 1.0 + 8.0 * max(div_yield, 0.0)
+            elif g_goal == "growth":
+                factor = (1.0 + max(rev_growth, -0.2)) * max(beta, 0.5)
+            else:
+                factor = inv_vol
+            a_i = max(Decimal(str(round(factor, 4))), Decimal("0.10"))
+        raw_weights[s] = a_i
+
+    # 循环约束投影：若有标的超出 max_stock_weight 则封顶并将多余权重二次分配
+    capped: set[str] = set()
+    assigned_weights: dict[str, Decimal] = {}
+    remaining_equity = allocatable_equity
+
+    while True:
+        uncapped = [s for s in clean_symbols if s not in capped]
+        if not uncapped:
+            break
+        sum_uncapped_raw = sum(raw_weights[s] for s in uncapped)
+        newly_capped = False
+        for s in uncapped:
+            w = remaining_equity * (raw_weights[s] / sum_uncapped_raw)
+            if w > max_stock_weight:
+                assigned_weights[s] = max_stock_weight
+                capped.add(s)
+                remaining_equity -= max_stock_weight
+                newly_capped = True
+                break
+        if not newly_capped:
+            for s in uncapped:
+                assigned_weights[s] = remaining_equity * (raw_weights[s] / sum_uncapped_raw)
+            break
+
+    # 四舍五入保留 2 位小数
+    rounded_weights: dict[str, Decimal] = {}
+    for s in clean_symbols:
+        rounded_weights[s] = assigned_weights[s].quantize(_TWO_PLACES, rounding=ROUND_HALF_UP)
+
+    # 确保单股不超过上限且大于 0
+    for s in clean_symbols:
+        if rounded_weights[s] > max_stock_weight:
+            rounded_weights[s] = max_stock_weight
+        elif rounded_weights[s] < _TWO_PLACES:
+            rounded_weights[s] = _TWO_PLACES
+
+    # 严格计算现金比例以保证恒等于 100.00%
+    sum_stock_weights = sum(rounded_weights.values())
+    cash_pct = Decimal("100.00") - sum_stock_weights
+
+    # 若由于进位导致 cash_pct < min_cash_pct，从最大持仓逐步扣减 0.01
+    while cash_pct < min_cash_pct:
+        max_sym = max(clean_symbols, key=lambda s: rounded_weights[s])
+        rounded_weights[max_sym] -= _TWO_PLACES
+        cash_pct += _TWO_PLACES
+
+    # 计算各标的分配资金与现金金额
+    allocations_list: list[dict[str, Any]] = []
+    total_allocated_stocks = _ZERO
+    for s in clean_symbols:
+        w_pct = rounded_weights[s]
+        amt_i = (total_amount * (w_pct / Decimal("100"))).quantize(
+            _TWO_PLACES, rounding=ROUND_HALF_UP
+        )
+        total_allocated_stocks += amt_i
+        allocations_list.append(
+            {
+                "symbol": s,
+                "weight_pct": w_pct,
+                "allocated_amount": amt_i,
+                "reason": f"{s} 建议配置权重 {w_pct}%，资金配额 ${amt_i}",
+            }
+        )
+
+    cash_amount = total_amount - total_allocated_stocks
+
+    return {
+        "amount": total_amount,
+        "allocations": allocations_list,
+        "cash_pct": cash_pct,
+        "cash_amount": cash_amount,
+    }
+
+
 class QuantitativeEngine:
     """确定性代码量化派生引擎实现。
 
@@ -263,3 +556,27 @@ class QuantitativeEngine:
     ) -> dict[str, Any]:
         """确定性计算技术面交易计划。"""
         return compute_technical_trade_plan(current_price, support, resistance, atr)
+
+    def compute_cross_sectional_ranking(
+        self,
+        stocks_facts: dict[str, dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """计算横向多标的标准化分位得分与确定性综合排序。"""
+        return compute_cross_sectional_ranking(stocks_facts)
+
+    def optimize_portfolio_weights(
+        self,
+        amount: Decimal,
+        symbols: list[str],
+        risk_level: str = "moderate",
+        goal: str = "growth",
+        stocks_facts: dict[str, dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """计算满足约束条件与权重守恒的确定性投资组合配置。"""
+        return optimize_portfolio_weights(
+            amount=amount,
+            symbols=symbols,
+            risk_level=risk_level,
+            goal=goal,
+            stocks_facts=stocks_facts,
+        )
