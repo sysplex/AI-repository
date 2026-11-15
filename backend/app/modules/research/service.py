@@ -1,10 +1,13 @@
-"""M6 AI 研究用例对外门面服务实现，`CONTRACTS.md §2`。
+"""M6 & M7 AI 研究用例对外门面服务实现，`CONTRACTS.md §2`。
 
-统一编排 4 大核心研究用例管道流程：
+统一编排 7 大核心研究用例管道流程：
 - F2: 个股深度研究 (research)
 - F3: 买入决策评估 (buy_decision)
+- F4: 多股票横向对比分析 (compare)
+- F5: 长期持有价值与破裂条件 (long_term)
 - F6: 技术面通俗分析与交易计划 (technical)
 - F7: 财报深度解读与业绩评估 (earnings)
+- F8: 投资组合配置建议 (portfolio)
 
 编排逻辑：
 1. 校验输入参数；
@@ -17,6 +20,7 @@
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
@@ -25,7 +29,10 @@ from app.core.errors import AppError
 from app.core.logging import get_logger
 from app.modules.research.aggregator import (
     USE_CASE_BUY_DECISION,
+    USE_CASE_COMPARE,
     USE_CASE_EARNINGS,
+    USE_CASE_LONG_TERM,
+    USE_CASE_PORTFOLIO,
     USE_CASE_RESEARCH,
     USE_CASE_TECHNICAL,
 )
@@ -102,7 +109,74 @@ def _build_default_evidence(facts: dict[str, Any]) -> list[EvidenceItem]:
                     source_field="facts.computed.pos_in_52w_range",
                 )
             )
+        if "ranking" in computed and isinstance(computed["ranking"], list):
+            for r in computed["ranking"]:
+                if isinstance(r, dict) and "symbol" in r and "rank" in r:
+                    evidence.append(
+                        EvidenceItem(
+                            claim=(
+                                f"标的 {r['symbol']} 横向综合排名第 {r['rank']}，"
+                                f"得分 {r.get('total_score', 'N/A')}"
+                            ),
+                            source_field="facts.computed.ranking",
+                        )
+                    )
+        if "allocations" in computed and isinstance(computed["allocations"], list):
+            for a in computed["allocations"]:
+                if isinstance(a, dict) and "symbol" in a and "weight_pct" in a:
+                    evidence.append(
+                        EvidenceItem(
+                            claim=(
+                                f"标的 {a['symbol']} 建议配置权重 {a['weight_pct']}%"
+                                f"（金额 {a.get('allocated_amount', 'N/A')}）"
+                            ),
+                            source_field="facts.computed.allocations",
+                        )
+                    )
+        if "cash_pct" in computed:
+            evidence.append(
+                EvidenceItem(
+                    claim=(
+                        f"建议预留现金比例 {computed['cash_pct']}%"
+                        f"（金额 {computed.get('cash_amount', 'N/A')}）"
+                    ),
+                    source_field="facts.computed.cash_pct",
+                )
+            )
 
+    stocks = facts.get("stocks")
+    if isinstance(stocks, dict):
+        for s_sym, s_data in stocks.items():
+            if isinstance(s_data, dict):
+                s_quote = s_data.get("quote")
+                if isinstance(s_quote, dict) and s_quote.get("price") is not None:
+                    evidence.append(
+                        EvidenceItem(
+                            claim=f"{s_sym} 最新行情价格为 {s_quote['price']}",
+                            source_field=f"facts.stocks.{s_sym}.quote.price",
+                        )
+                    )
+
+    return evidence
+
+
+def _assemble_evidence(payload: dict[str, Any], facts: dict[str, Any]) -> list[EvidenceItem]:
+    """提取 payload 中的证据列表或从 facts 中自动派生默认证据。"""
+    evidence: list[EvidenceItem] = []
+    raw_evidence = payload.get("evidence")
+    if isinstance(raw_evidence, list):
+        for item in raw_evidence:
+            if isinstance(item, EvidenceItem):
+                evidence.append(item)
+            elif isinstance(item, dict) and "claim" in item and "source_field" in item:
+                evidence.append(
+                    EvidenceItem(
+                        claim=str(item["claim"]),
+                        source_field=str(item["source_field"]),
+                    )
+                )
+    if not evidence:
+        evidence = _build_default_evidence(facts)
     return evidence
 
 
@@ -112,6 +186,10 @@ def _extract_summary(payload: dict[str, Any], symbol: str, use_case: str) -> str
         return str(payload["beginner_summary"]).strip()
     if payload.get("summary"):
         return str(payload["summary"]).strip()
+    if payload.get("rationale"):
+        return str(payload["rationale"]).strip()
+    if payload.get("thesis"):
+        return str(payload["thesis"]).strip()
     if payload.get("verdict_reason"):
         return str(payload["verdict_reason"]).strip()
     if payload.get("short_term_outlook"):
@@ -216,7 +294,15 @@ class ResearchService:
         user_id: UUID,
     ) -> ResearchEnvelope:
         """执行 F4 多股票横向对比分析。"""
-        raise NotImplementedError("compare_stocks will be implemented in M7-T04")
+        clean_symbols = list(dict.fromkeys(s.strip().upper() for s in request.symbols if s.strip()))
+        params = {"symbols": clean_symbols}
+        return await self._execute_multi_pipeline(
+            use_case=USE_CASE_COMPARE,
+            symbols=clean_symbols,
+            user_id=user_id,
+            params=params,
+            aggregator_kwargs={},
+        )
 
     async def get_long_term_analysis(
         self,
@@ -224,7 +310,18 @@ class ResearchService:
         user_id: UUID,
     ) -> ResearchEnvelope:
         """执行 F5 长期持有价值与破裂条件分析。"""
-        raise NotImplementedError("get_long_term_analysis will be implemented in M7-T04")
+        sym = request.symbol.strip().upper()
+        params = {
+            "symbol": sym,
+            "years": request.years,
+        }
+        return await self._execute_pipeline(
+            use_case=USE_CASE_LONG_TERM,
+            symbol=request.symbol,
+            user_id=user_id,
+            params=params,
+            aggregator_kwargs={"years": request.years},
+        )
 
     async def generate_portfolio_allocation(
         self,
@@ -232,7 +329,30 @@ class ResearchService:
         user_id: UUID,
     ) -> ResearchEnvelope:
         """执行 F8 投资组合配置建议。"""
-        raise NotImplementedError("generate_portfolio_allocation will be implemented in M7-T04")
+        if request.amount <= Decimal("0"):
+            raise InvalidParameterError(
+                "Portfolio amount must be greater than 0",
+                details={"amount": str(request.amount)},
+            )
+        clean_symbols = list(dict.fromkeys(s.strip().upper() for s in request.symbols if s.strip()))
+        params = {
+            "symbols": clean_symbols,
+            "amount": str(request.amount),
+            "risk_level": request.risk_level,
+            "goal": request.goal,
+        }
+        aggregator_kwargs = {
+            "amount": request.amount,
+            "risk_level": request.risk_level,
+            "goal": request.goal,
+        }
+        return await self._execute_multi_pipeline(
+            use_case=USE_CASE_PORTFOLIO,
+            symbols=clean_symbols,
+            user_id=user_id,
+            params=params,
+            aggregator_kwargs=aggregator_kwargs,
+        )
 
     async def _execute_pipeline(
         self,
@@ -297,21 +417,7 @@ class ResearchService:
         summary = _extract_summary(payload, sym, use_case)
 
         # 5. 组装佐证列表
-        evidence: list[EvidenceItem] = []
-        raw_evidence = payload.get("evidence")
-        if isinstance(raw_evidence, list):
-            for item in raw_evidence:
-                if isinstance(item, EvidenceItem):
-                    evidence.append(item)
-                elif isinstance(item, dict) and "claim" in item and "source_field" in item:
-                    evidence.append(
-                        EvidenceItem(
-                            claim=str(item["claim"]),
-                            source_field=str(item["source_field"]),
-                        )
-                    )
-        if not evidence:
-            evidence = _build_default_evidence(facts)
+        evidence = _assemble_evidence(payload, facts)
 
         # 6. 计算 as_of 日期
         as_of_date: date
@@ -337,6 +443,118 @@ class ResearchService:
         logger.info(
             "Research pipeline completed: symbol={sym}, use_case={uc}, gaps={gaps}",
             sym=sym,
+            uc=use_case,
+            gaps=len(missing_fields),
+        )
+        return envelope
+
+    async def _execute_multi_pipeline(
+        self,
+        *,
+        use_case: str,
+        symbols: list[str],
+        user_id: UUID,
+        params: dict[str, Any],
+        aggregator_kwargs: dict[str, Any],
+    ) -> ResearchEnvelope:
+        clean_symbols = list(dict.fromkeys(s.strip().upper() for s in symbols if s.strip()))
+        if use_case == USE_CASE_COMPARE:
+            if len(clean_symbols) < 2 or len(clean_symbols) > 8:
+                raise InvalidParameterError(
+                    f"Compare use case requires 2 to 8 unique valid symbols, "
+                    f"got {len(clean_symbols)}",
+                    details={"symbols": symbols},
+                )
+        elif use_case == USE_CASE_PORTFOLIO:
+            if len(clean_symbols) < 2 or len(clean_symbols) > 12:
+                raise InvalidParameterError(
+                    f"Portfolio use case requires 2 to 12 unique valid symbols, "
+                    f"got {len(clean_symbols)}",
+                    details={"symbols": symbols},
+                )
+        else:
+            if len(clean_symbols) < 2:
+                raise InvalidParameterError(
+                    f"Multi-stock pipeline requires at least 2 unique valid symbols, "
+                    f"got {len(clean_symbols)}",
+                    details={"symbols": symbols},
+                )
+
+        symbol_repr = ",".join(clean_symbols)
+
+        logger.info(
+            "Starting multi-stock research pipeline: symbols={syms}, use_case={uc}, user_id={uid}",
+            syms=clean_symbols,
+            uc=use_case,
+            uid=str(user_id),
+        )
+
+        # 1. 跨标的事实聚合与缺失追踪
+        facts, missing_fields = await self._fact_aggregator.aggregate_multi_facts(
+            symbols=clean_symbols,
+            use_case=use_case,
+            **aggregator_kwargs,
+        )
+
+        # 2. 调用下游 AI 核心框架服务
+        try:
+            report = await self._ai_service.run(
+                use_case=use_case,
+                facts=facts,
+                params=params,
+                user_id=user_id,
+            )
+        except AppError:
+            raise
+        except Exception as exc:
+            logger.error(
+                "AI analysis execution failed: symbols={syms}, use_case={uc}, err={err}",
+                syms=clean_symbols,
+                uc=use_case,
+                err=str(exc),
+            )
+            raise ResearchError(
+                f"AI analysis execution failed for '{symbol_repr}': {exc}",
+                details={"symbols": clean_symbols, "use_case": use_case, "error": str(exc)},
+            ) from exc
+
+        # 3. 提取 payload
+        payload = (
+            report.payload
+            if hasattr(report, "payload") and isinstance(report.payload, dict)
+            else (dict(report) if isinstance(report, dict) else {})
+        )
+
+        # 4. 提取或生成摘要
+        summary = _extract_summary(payload, symbol_repr, use_case)
+
+        # 5. 组装佐证列表
+        evidence = _assemble_evidence(payload, facts)
+
+        # 6. 计算 as_of 日期
+        as_of_date: date
+        if hasattr(report, "created_at") and report.created_at is not None:
+            as_of_date = report.created_at.date()
+        else:
+            as_of_date = self._clock.now().date()
+
+        # 7. 组装初始信封并经由合规防线处理
+        raw_envelope = ResearchEnvelope(
+            schema_version="1.0",
+            use_case=use_case,
+            symbol=symbol_repr,
+            as_of=as_of_date,
+            summary=summary,
+            payload=payload,
+            evidence=evidence,
+            data_gaps=missing_fields,
+            disclaimer="本内容仅供研究与学习，不构成投资建议",
+        )
+        envelope = self._compliance_guardrail.process_envelope(raw_envelope)
+
+        logger.info(
+            "Multi-stock research pipeline completed: symbols={syms}, use_case={uc}, gaps={gaps}",
+            syms=clean_symbols,
             uc=use_case,
             gaps=len(missing_fields),
         )
