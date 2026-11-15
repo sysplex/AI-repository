@@ -158,6 +158,7 @@ def check_novice_readability(
         or payload.get("summary")
         or payload.get("beginner_takeaway")
         or payload.get("short_term_outlook")
+        or payload.get("better_entry_note")
     )
     if not has_beginner_summary:
         suggestions.append("缺少新手专属总结 (beginner_summary / beginner_takeaway)")
@@ -169,8 +170,10 @@ def check_novice_readability(
             suggestions.append("股票研究报告缺少新手核心要点 (beginner_takeaway)")
 
     elif use_case == "buy_decision":
-        if not payload.get("beginner_summary"):
-            suggestions.append("买入决策缺少新手决策通俗总结 (beginner_summary)")
+        if not (payload.get("beginner_summary") or payload.get("better_entry_note")):
+            suggestions.append(
+                "买入决策缺少新手决策通俗总结 (beginner_summary / better_entry_note)"
+            )
 
     elif use_case == "technical":
         # 检查 7 大指标是否包含 plain_explanation

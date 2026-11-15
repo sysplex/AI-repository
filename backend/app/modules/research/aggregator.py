@@ -386,13 +386,34 @@ class FactAggregator:
         kwargs: dict[str, Any],
     ) -> None:
         funds = facts.get("fundamentals") or {}
+        existing_earnings = facts.get("earnings") or {}
         earnings_kwargs = kwargs.get("earnings") or {}
 
-        revenue = earnings_kwargs.get("revenue")
-        eps = earnings_kwargs.get("eps")
-        margins = earnings_kwargs.get("margins") or funds.get("net_margin")
-        guidance = earnings_kwargs.get("guidance")
-        commentary = earnings_kwargs.get("management_commentary")
+        revenue = (
+            earnings_kwargs.get("revenue")
+            if earnings_kwargs.get("revenue") is not None
+            else existing_earnings.get("revenue")
+        )
+        eps = (
+            earnings_kwargs.get("eps")
+            if earnings_kwargs.get("eps") is not None
+            else existing_earnings.get("eps")
+        )
+        margins = (
+            earnings_kwargs.get("margins")
+            if earnings_kwargs.get("margins") is not None
+            else (existing_earnings.get("margins") or funds.get("net_margin"))
+        )
+        guidance = (
+            earnings_kwargs.get("guidance")
+            if "guidance" in earnings_kwargs
+            else existing_earnings.get("guidance")
+        )
+        commentary = (
+            earnings_kwargs.get("management_commentary")
+            if "management_commentary" in earnings_kwargs
+            else existing_earnings.get("management_commentary")
+        )
 
         if revenue is None:
             missing_fields.append("earnings.revenue")
