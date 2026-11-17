@@ -59,6 +59,10 @@ def test_offline_sql_contains_ddl(
     assert "CREATE TABLE screener_results" in output
     assert "CREATE TABLE watchlists" in output
     assert "CREATE TABLE watchlist_items" in output
+    assert "CREATE TABLE notification_channels" in output
+    assert "CREATE TABLE alerts" in output
+    assert "CREATE TABLE alert_history" in output
+    assert "CREATE TABLE daily_reports" in output
     assert "gen_random_uuid" in output
     assert "ix_audit_log_user_id_created_at" in output
     assert "ix_audit_log_action_created_at" in output
@@ -73,9 +77,9 @@ def test_upgrade_downgrade_upgrade_and_check(test_database_url: str) -> None:
     command.downgrade(config, "base")
     command.upgrade(config, "head")
     versions = asyncio.run(_query(test_database_url, "SELECT version_num FROM alembic_version"))
-    # M8-T01: 迁移链为 0001_initial → 0002_marketdata → 0003_identity
-    # → 0004_simbroker → 0005_ai → 0006_screener，单一 head 为 0006_screener。
-    assert versions == [("0006_screener",)]
+    # M10-T01: 迁移链为 0001_initial → 0002_marketdata → 0003_identity
+    # → 0004_simbroker → 0005_ai → 0006_screener → 0007_scheduler_notify，单一 head 为 0007_scheduler_notify。
+    assert versions == [("0007_scheduler_notify",)]
 
     command.downgrade(config, "base")
     tables = asyncio.run(
