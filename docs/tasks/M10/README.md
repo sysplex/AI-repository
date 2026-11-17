@@ -18,7 +18,7 @@
 | [T05](T05-post-market-scheduler-pipeline.md) | #185 | 收盘后全流程自动化批处理工作流与 ARQ 调度编排（Post-Market DAG Pipeline） | `feat/m10-t05-post-market-scheduler-pipeline` | T02, T03, T04 | 大 | Antigravity | ✅ 已完成 |
 | [T06](T06-api-and-ui-integration.md) | #186 | REST API 端点开放与前端提醒及复盘看板联动（API & UI Integration） | `feat/m10-t06-api-and-ui-integration` | T03, T04, T05 | 中–大 | Antigravity | ✅ 已完成 |
 | [T07](T07-ops-backup-runbook.md) | #187 | 运维容灾、监控告警体系与故障应急手册（Prometheus, Backup & Runbook） | `feat/m10-t07-ops-backup-runbook` | T05 | 中 | Antigravity | ✅ 已完成 |
-| T08 | #188 | 全链路端到端集成验收、自动化测试体系与 v1.0 结项发布（E2E Acceptance & Closeout） | `feat/m10-t08-m10-acceptance-and-closeout` | T01–T07 | 中 | Antigravity | ⏳ 待开始 |
+| [T08](T08-m10-acceptance-and-closeout.md) | #188 | 全链路端到端集成验收、自动化测试体系与 v1.0 结项发布（E2E Acceptance & Closeout） | `feat/m10-t08-m10-acceptance-and-closeout` | T01–T07 | 中 | Antigravity | ✅ 已完成 |
 
 ---
 

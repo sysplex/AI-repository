@@ -1,7 +1,7 @@
 [project]
 name = "stockpilot"
-version = "0.1.0"
-description = "StockPilot M0 foundation skeleton"
+version = "1.0.0"
+description = "StockPilot: AI-native US stock research, screener, simulation & operations platform"
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "fastapi>=0.115,<1",

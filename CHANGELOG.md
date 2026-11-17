@@ -6,6 +6,18 @@
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-17
+
+### Added
+- M10 调度与运维 T01（#181）：领域数据模型（Alert, NotificationChannel, AlertHistory, DailyReport）、SQLAlchemy 2.0 ORM 实体、DTO Schemas 与 Alembic `0007_scheduler_notify` 数据库迁移。
+- M10 调度与运维 T02（#182）：多通道通知分发网关与告警调度器（EmailNotifier, WebhookNotifier, InAppNotifier, NotificationDispatcher），异步并发分发与全链路静默容灾降级。
+- M10 调度与运维 T03（#183）：智能提醒引擎与长期持有论文破裂监控（AlertService），覆盖价格突破、技术信号、财报日倒计时与护城河指标破裂，带状态机与防骚扰冷却周期控制。
+- M10 调度与运维 T04（#184）：AI 投资建议持续复盘与超额收益评估器（ReviewService），无未来函数回填评估 5d/20d/60d 收益与相对 SPY 超额 Alpha 胜率。
+- M10 调度与运维 T05（#185）：收盘后全流程自动化批处理工作流与 ARQ 调度编排（PostMarketPipeline），美东闭市 0~6 步骤 DAG 任务链与幂等重跑保障。
+- M10 调度与运维 T06（#186）：REST API 端点开放与前端提醒及复盘看板联动（/api/v1/alerts, /api/v1/notification-channels, /api/v1/reports/daily, /api/v1/reviews/ai-outcomes），前端 AlertsPage, DailyReportsPage, ReviewsDashboardView。
+- M10 调度与运维 T07（#187）：运维容灾、监控告警体系与故障应急手册，Prometheus 业务与运行扩展指标、Alertmanager 告警规则 `prometheus-alerts.yaml`、Grafana 仪表盘模板 `grafana-dashboard.json`、4 大冷备恢复演练脚本与生产排障 SOP `RUNBOOK.md`。
+- M10 调度与运维 T08（#188）：双端端到端 E2E 场景验收（`e2e_04` 与 `test_m10_e2e`）、生产构建版本升级 `v1.0.0`、归档 `docs/acceptance/M10.md`，StockPilot v1.0 正式里程碑结项。
+
 ### Added
 - docs: 设计文档集（01–09）
 - docs: M0 任务拆分与接口契约

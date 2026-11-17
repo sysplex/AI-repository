@@ -62,7 +62,7 @@ gantt
 | M7 对比/长期/组合 | ✅ Done | 2026-11-15 T08 归档 `docs/acceptance/M7.md` + tag `m7-comparison-portfolio-v0.7.0` |
 | M8 筛选器与主题自选 | ✅ Done | 2026-11-15 T08 归档 `docs/acceptance/M8.md` + tag `v0.8.0` |
 | M9 Web 前端 | ✅ Done | 2026-11-15 T08 归档 `docs/acceptance/M9.md` + tag `v0.9.0` |
-| M10 调度/提醒/复盘/运维 | ☐ Todo | 各模块验收记录 `docs/acceptance/<module>.md` |
+| M10 调度/提醒/复盘/运维 | ✅ Done | 2026-11-17 T08 归档 `docs/acceptance/M10.md` + tag `v1.0.0` |
 
 **原则**：M0–M5 是地基，质量不达标不进入 M6+。M6–M8 本质是"新增一个提示词/策略 + 一个接口"，扩展成本低。
 
