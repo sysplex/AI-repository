@@ -2,10 +2,12 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   Activity,
+  Bell,
   BookmarkCheck,
   Brain,
   ChevronLeft,
   ChevronRight,
+  FileText,
   Filter,
   LayoutDashboard,
   Settings,
@@ -50,6 +52,16 @@ export const navItems: NavItem[] = [
     label: '模拟盘交易',
     path: '/simbroker',
     icon: <TrendingUp className="h-5 w-5" />,
+  },
+  {
+    label: '预警与通知',
+    path: '/alerts',
+    icon: <Bell className="h-5 w-5" />,
+  },
+  {
+    label: '收盘复盘',
+    path: '/reports/daily',
+    icon: <FileText className="h-5 w-5" />,
   },
   {
     label: '系统与偏好',

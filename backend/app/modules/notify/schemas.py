@@ -23,6 +23,8 @@ __all__ = [
     "AlertHistoryRead",
     "AlertRead",
     "AlertUpdate",
+    "BatchThesisBreakersRequest",
+    "ChannelTestResult",
     "EarningsDateCondition",
     "NotificationChannelCreate",
     "NotificationChannelRead",
@@ -190,3 +192,21 @@ class AlertHistoryRead(BaseModel):
     delivery_status: DeliveryStatus
     delivered_channels: list[dict[str, Any]]
     created_at: datetime
+
+
+class BatchThesisBreakersRequest(BaseModel):
+    """批量从 M7 投资论文破裂项创建监控规则请求。"""
+
+    symbol: str = Field(min_length=1, max_length=16, description="标的代码")
+    breakers: list[dict[str, Any]] = Field(description="M7 破裂条件列表")
+    channel_ids: list[str] = Field(default_factory=list, description="通知渠道列表")
+    cooldown_minutes: int = Field(default=1440, ge=1, description="冷却时间（分钟）")
+
+
+class ChannelTestResult(BaseModel):
+    """渠道连通性测试响应。"""
+
+    channel_id: str
+    channel_name: str
+    success: bool
+    results: list[dict[str, Any]] = Field(default_factory=list)

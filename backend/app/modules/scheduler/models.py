@@ -63,4 +63,5 @@ class DailyReport(Base, UUIDPkMixin):
     __table_args__ = (
         Index("ix_daily_reports_date_type", "report_date", "report_type"),
         Index("ix_daily_reports_user_date", "user_id", "report_date"),
+        {"extend_existing": True},
     )

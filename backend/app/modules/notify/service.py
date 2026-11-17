@@ -390,6 +390,40 @@ class AlertService:
         await sess.commit()
         return True
 
+    async def test_channel(
+        self,
+        user_id: uuid.UUID,
+        channel_id: uuid.UUID,
+        session: AsyncSession | None = None,
+    ) -> dict[str, Any] | None:
+        """测试指定渠道的连通性。"""
+        sess = self._get_session(session)
+        channel = await self.get_channel(user_id, channel_id, session=sess)
+        if not channel:
+            return None
+
+        msg = NotificationMessage(
+            title="StockPilot 渠道连通性测试",
+            body=f"这是一条来自 StockPilot 系统的测试消息。渠道 [{channel.name}] 已成功连通！",
+            alert_type="test",
+            symbol=None,
+            meta={"test": True, "channel_id": str(channel_id)},
+        )
+        results = await self._dispatcher.dispatch(
+            user_id=user_id,
+            message=msg,
+            channel_ids=[str(channel_id)],
+            session=sess,
+        )
+        result_dicts = [r.to_dict() for r in results]
+        is_success = any(r.success for r in results) if results else False
+        return {
+            "channel_id": str(channel_id),
+            "channel_name": channel.name,
+            "success": is_success,
+            "results": result_dicts,
+        }
+
     # ==========================================
     # 4. 扫描评估与触发分发引擎
     # ==========================================

@@ -65,6 +65,7 @@ class FakeSession:
         mock_res = MagicMock()
         items = list(self.entities.values())
 
+        filtered: list[Any]
         stmt_str = str(stmt).lower()
         if "from notification_channels" in stmt_str:
             filtered = [e for e in items if isinstance(e, NotificationChannel)]

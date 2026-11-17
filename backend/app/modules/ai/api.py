@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Callable
+from datetime import date
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query, Request, status
@@ -21,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_session
 from app.core.errors import Unauthenticated
 from app.core.logging import get_logger
+from app.modules.ai.review_service import ReviewService
 from app.modules.ai.schemas import (
     AIAnalyzeRequest,
     AIPromptInfo,
@@ -28,14 +30,18 @@ from app.modules.ai.schemas import (
     AnalysisReport,
     DataSnapshotResponse,
     QuotaStatus,
+    ReviewSummaryResponse,
 )
 from app.modules.ai.service import AIService
 
 __all__ = [
     "get_ai_service",
     "get_current_user",
+    "get_review_service",
+    "reviews_router",
     "router",
     "set_ai_service_factory",
+    "set_review_service_factory",
 ]
 
 logger = get_logger(__name__)
@@ -188,3 +194,56 @@ async def list_prompts(
 ) -> list[AIPromptInfo]:
     """获取当前系统活跃的提示词模板列表及输出 Schema。"""
     return service.list_prompts()
+
+
+# -----------------------------------------------------------------------------
+# 4. AI 建议事后表现复盘端点 (/api/v1/reviews/ai-outcomes)
+# -----------------------------------------------------------------------------
+
+reviews_router = APIRouter()
+
+_review_service_factory: Callable[[AsyncSession], ReviewService] | None = None
+
+
+def set_review_service_factory(factory: Callable[[AsyncSession], ReviewService] | None) -> None:
+    """设置 ReviewService 自定义构建工厂（测试辅助）。"""
+    global _review_service_factory
+    _review_service_factory = factory
+
+
+def get_review_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> ReviewService:
+    """ReviewService 依赖注入提供器。"""
+    if _review_service_factory is not None:
+        return _review_service_factory(session)
+    return ReviewService(session=session)
+
+
+@reviews_router.get(
+    "/ai-outcomes",
+    response_model=ReviewSummaryResponse,
+    status_code=status.HTTP_200_OK,
+    summary="获取 AI 建议历史复盘统计与表现胜率聚合数据",
+)
+async def get_ai_outcomes(
+    service: Annotated[ReviewService, Depends(get_review_service)],
+    _user: Annotated[Any, Depends(get_current_user)],
+    verdict: Annotated[
+        str | None, Query(description="按结论过滤 (buy, holdable, avoid 等)")
+    ] = None,
+    symbol: Annotated[str | None, Query(description="按股票代码过滤")] = None,
+    start_date: Annotated[date | None, Query(description="起始日期")] = None,
+    end_date: Annotated[date | None, Query(description="结束日期")] = None,
+    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> ReviewSummaryResponse:
+    """获取 AI 建议历史复盘统计（5d/20d/60d 收益、相对 SPY 超额 Alpha、胜率及汇总）。"""
+    return await service.get_outcomes_summary(
+        verdict=verdict,
+        symbol=symbol,
+        start_date=start_date,
+        end_date=end_date,
+        limit=limit,
+        offset=offset,
+    )

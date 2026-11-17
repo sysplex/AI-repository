@@ -50,6 +50,7 @@ class FakeSession:
         items = list(self.entities.values())
         stmt_str = str(stmt).lower()
 
+        filtered: list[Any]
         if "from ai_recommendation_outcomes" in stmt_str:
             filtered = [e for e in items if isinstance(e, AIRecommendationOutcome)]
         elif "from ai_reports" in stmt_str:

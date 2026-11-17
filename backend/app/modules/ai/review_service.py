@@ -362,3 +362,5 @@ class ReviewService:
             by_verdict=by_verdict,
             items=[AIRecommendationOutcomeResponse.model_validate(x) for x in outcomes_list],
         )
+
+    get_outcomes_summary = outcomes

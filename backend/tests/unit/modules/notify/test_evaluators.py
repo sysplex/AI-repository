@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import date
 from decimal import Decimal
+from typing import Any
 
 from app.modules.notify.enums import AlertType, ComparisonOperator, PriceDirection
 from app.modules.notify.evaluators import (
@@ -19,7 +20,7 @@ from app.modules.notify.models import Alert
 
 def _make_alert(
     alert_type: AlertType,
-    conditions: dict,
+    conditions: dict[str, Any],
     symbol: str = "AAPL",
     title: str = "Test Alert",
 ) -> Alert:
@@ -325,7 +326,7 @@ class TestThesisBreakerEvaluator:
                 "data_field": "fundamentals.debt_to_equity",
             },
         )
-        context = {"fundamentals": {}}
+        context: dict[str, Any] = {"fundamentals": {}}
         res = self.evaluator.evaluate(alert, context)
         assert res.triggered is False
 

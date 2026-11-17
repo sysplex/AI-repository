@@ -13,11 +13,18 @@ from app.api.deps import current_user
 from app.api.health import router as health_router
 from app.api.identity import router as identity_router
 from app.modules.ai.api import (
+    reviews_router,
+)
+from app.modules.ai.api import (
     router as ai_router,
 )
 from app.modules.ai.service import AIService
 from app.modules.marketdata.api import get_data_service
 from app.modules.marketdata.api import router as market_router
+from app.modules.notify.api import (
+    alerts_router,
+    channels_router,
+)
 from app.modules.research.aggregator import FactAggregator
 from app.modules.research.api import (
     get_stock_research,
@@ -28,6 +35,10 @@ from app.modules.research.api import (
 )
 from app.modules.research.schemas import ResearchEnvelope
 from app.modules.research.service import ResearchService
+from app.modules.scheduler.api import (
+    reports_router,
+    scheduler_router,
+)
 from app.modules.screener.api import (
     router as screener_router,
 )
@@ -132,4 +143,36 @@ api_router.include_router(
     tags=["research"],
     dependencies=[Depends(current_user)],
     include_in_schema=False,
+)
+
+# M10: 提醒规则、通知渠道、每日研报、收盘调度与复盘看板
+api_router.include_router(
+    alerts_router,
+    prefix="/alerts",
+    tags=["alerts"],
+    dependencies=[Depends(current_user)],
+)
+api_router.include_router(
+    channels_router,
+    prefix="/notification-channels",
+    tags=["notification-channels"],
+    dependencies=[Depends(current_user)],
+)
+api_router.include_router(
+    reports_router,
+    prefix="/reports",
+    tags=["reports"],
+    dependencies=[Depends(current_user)],
+)
+api_router.include_router(
+    scheduler_router,
+    prefix="/scheduler",
+    tags=["scheduler"],
+    dependencies=[Depends(current_user)],
+)
+api_router.include_router(
+    reviews_router,
+    prefix="/reviews",
+    tags=["reviews"],
+    dependencies=[Depends(current_user)],
 )

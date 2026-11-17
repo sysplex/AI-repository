@@ -16,6 +16,8 @@ import UsagePage from './pages/settings/UsagePage';
 import AdminUsersPage from './pages/settings/AdminUsersPage';
 import ScreenerPage from './pages/screener/ScreenerPage';
 import SimBrokerPage from './pages/simbroker/SimBrokerPage';
+import AlertsPage from './pages/alerts/AlertsPage';
+import DailyReportsPage from './pages/reports/DailyReportsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -115,6 +117,24 @@ export const App: React.FC = () => {
                 element={
                   <ProtectedRoute>
                     <SimBrokerPage initialTab="journal" />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/alerts"
+                element={
+                  <ProtectedRoute>
+                    <AlertsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/reports" element={<Navigate to="/reports/daily" replace />} />
+              <Route
+                path="/reports/daily"
+                element={
+                  <ProtectedRoute>
+                    <DailyReportsPage />
                   </ProtectedRoute>
                 }
               />

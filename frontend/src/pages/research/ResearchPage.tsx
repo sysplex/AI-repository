@@ -6,12 +6,14 @@ import {
   Scale,
   Hourglass,
   PieChart,
+  Award,
 } from 'lucide-react';
 import { StockDeepDiveView } from './StockDeepDiveView';
 import { BuyDecisionView } from './BuyDecisionView';
 import { StockCompareView } from './StockCompareView';
 import { LongTermView } from './LongTermView';
 import { PortfolioView } from './PortfolioView';
+import { ReviewsDashboardView } from './ReviewsDashboardView';
 import { cn } from '../../utils/cn';
 
 export type ResearchTabType =
@@ -19,7 +21,8 @@ export type ResearchTabType =
   | 'buy-decision'
   | 'compare'
   | 'long-term'
-  | 'portfolio';
+  | 'portfolio'
+  | 'reviews';
 
 export const ResearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -77,6 +80,11 @@ export const ResearchPage: React.FC = () => {
       label: '组合配置优化',
       icon: <PieChart className="h-4 w-4" />,
     },
+    {
+      id: 'reviews' as const,
+      label: 'AI 胜率与历史复盘',
+      icon: <Award className="h-4 w-4" />,
+    },
   ];
 
   return (
@@ -114,6 +122,7 @@ export const ResearchPage: React.FC = () => {
         {activeTab === 'compare' && <StockCompareView />}
         {activeTab === 'long-term' && <LongTermView initialSymbol={currentSymbol} />}
         {activeTab === 'portfolio' && <PortfolioView />}
+        {activeTab === 'reviews' && <ReviewsDashboardView />}
       </div>
     </div>
   );
