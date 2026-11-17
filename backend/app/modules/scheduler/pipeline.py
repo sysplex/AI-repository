@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.calendar import is_trading_day
 from app.core.logging import get_logger
+from app.core.metrics import record_pipeline_run
 from app.modules.notify.service import AlertService
 from app.modules.scheduler.enums import JobStatus
 from app.modules.scheduler.ports import ReviewServiceProtocol
@@ -85,11 +86,13 @@ class PostMarketPipeline:
         trading_day = is_trading_day(target_date)
         if not trading_day and not force:
             logger.info("post_market_pipeline.skipped_non_trading_day", trade_date=str(target_date))
+            finished_now = datetime.now(UTC)
+            record_pipeline_run("skipped", (finished_now - start_time).total_seconds())
             step_skip = PipelineStepStatus(
                 name="calendar_guard",
                 status=JobStatus.COMPLETED,
                 started_at=start_time,
-                finished_at=datetime.now(UTC),
+                finished_at=finished_now,
                 details={"is_trading_day": False, "action": "skipped"},
             )
             return PipelineRunResult(
@@ -367,18 +370,23 @@ class PostMarketPipeline:
             else JobStatus.FAILED
         )
 
+        pipeline_finished_at = datetime.now(UTC)
+        duration = (pipeline_finished_at - start_time).total_seconds()
+        record_pipeline_run(overall_status.value, duration)
+
         logger.info(
             "post_market_pipeline.finished",
             trade_date=str(target_date),
             status=overall_status.value,
             steps_count=len(steps_log),
+            duration_seconds=duration,
         )
 
         return PipelineRunResult(
             trade_date=target_date,
             status=overall_status,
             started_at=start_time,
-            finished_at=datetime.now(UTC),
+            finished_at=pipeline_finished_at,
             is_trading_day=True,
             steps=steps_log,
         )

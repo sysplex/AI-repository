@@ -15,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import NotFound, StateConflict
+from app.core.metrics import record_simbroker_order, record_simbroker_trade
 from app.modules.simbroker.accounting import AccountingEngine, InsufficientCashError
 from app.modules.simbroker.market_close import MarketCloseBatch, MarketCloseResult
 from app.modules.simbroker.matcher import MatchingEngine
@@ -298,6 +299,8 @@ class SimService:
         await self.session.commit()
         await self.session.refresh(order)
 
+        record_simbroker_order(status=order_status)
+
         logger.info(
             "Submitted order",
             order_id=str(order.id),
@@ -334,6 +337,7 @@ class SimService:
         order.status = "cancelled"
         await self.session.commit()
         await self.session.refresh(order)
+        record_simbroker_order(status="cancelled")
         return OrderResponse.model_validate(order)
 
     async def list_orders(
@@ -648,4 +652,8 @@ class SimService:
                 executed_trades.append(TradeResponse.model_validate(trade))
 
         await self.session.commit()
+        if executed_trades:
+            record_simbroker_trade(len(executed_trades))
+            for _ in executed_trades:
+                record_simbroker_order(status="filled")
         return executed_trades

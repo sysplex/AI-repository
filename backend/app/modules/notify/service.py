@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
+from app.core.metrics import record_alert_evaluated, record_alert_triggered
 from app.modules.notify.dispatcher import NotificationDispatcher
 from app.modules.notify.enums import (
     AlertStatus,
@@ -462,6 +463,8 @@ class AlertService:
 
         res = await sess.execute(stmt)
         candidate_alerts = list(res.scalars().all())
+        if candidate_alerts:
+            record_alert_evaluated(len(candidate_alerts))
 
         triggered_results: list[tuple[Alert, EvaluationResult]] = []
 
@@ -517,6 +520,8 @@ class AlertService:
             eval_res = evaluator.evaluate(alert, sym_ctx)
             if not eval_res.triggered:
                 continue
+
+            record_alert_triggered(alert.alert_type)
 
             # 5. 触发后更新状态并派发
             alert.last_triggered_at = now_dt

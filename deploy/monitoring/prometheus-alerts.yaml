@@ -1,0 +1,111 @@
+# ==============================================================================
+# StockPilot Prometheus 告警规则定义文件 (M10-T07)
+# 
+# 告警等级与响应约定：
+# - critical (P0): 核心业务阻塞、不可用，值班人员 5 分钟内响应
+# - warning  (P1): 潜在性能降级或单点异常，值班人员 30 分钟内介入
+# - info     (P2): 关键业务流水事件或容量预警，日常关注
+# ==============================================================================
+
+groups:
+  - name: stockpilot-availability-alerts
+    rules:
+      - alert: StockPilotInstanceDown
+        expr: up{job=~"stockpilot.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          tier: platform
+          team: sre
+        annotations:
+          summary: "StockPilot 服务实例下线 (Pod/Node Down)"
+          description: "实例 {{ $labels.instance }} 在集群中持续 1 分钟未能响应 Prometheus 抓取，请核验 Pod 存活探针状态。"
+          runbook_url: "https://github.com/sysplex/AI-repository/blob/main/RUNBOOK.md#场景-1postgresql--pod-宕机排查"
+
+      - alert: StockPilotPostgresDown
+        expr: pg_up{job=~"postgres.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          tier: storage
+          team: dba
+        annotations:
+          summary: "PostgreSQL 核心数据库实例不可达"
+          description: "PostgreSQL 实例 {{ $labels.instance }} 处于不可达状态，将导致用户认证、订单及状态落地全面阻塞。"
+          runbook_url: "https://github.com/sysplex/AI-repository/blob/main/RUNBOOK.md#场景-1postgresql-宕机--连接池耗尽--慢查询排查与恢复"
+
+      - alert: StockPilotRedisDown
+        expr: redis_up{job=~"redis.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          tier: cache
+          team: sre
+        annotations:
+          summary: "Redis 缓存与会话实例不可达"
+          description: "Redis 实例 {{ $labels.instance }} 宕机，将导致 Session 验证降级与行情热点缓存失效。"
+          runbook_url: "https://github.com/sysplex/AI-repository/blob/main/RUNBOOK.md#场景-2redis-实例故障--缓存击穿--session-失效应急"
+
+  - name: stockpilot-api-performance-alerts
+    rules:
+      - alert: StockPilotApiHighErrorRate
+        expr: (sum(rate(http_requests_total{status=~"5.."}[2m])) / sum(rate(http_requests_total[2m]))) * 100 > 1.0
+        for: 2m
+        labels:
+          severity: critical
+          tier: api
+          team: backend
+        annotations:
+          summary: "API 5xx 服务端错误率 > 1%"
+          description: "最近 2 分钟内 HTTP 5xx 错误率达 {{ $value | printf \"%.2f\" }}%，已超过 1.0% 的 SLO 红线。"
+          runbook_url: "https://github.com/sysplex/AI-repository/blob/main/RUNBOOK.md#场景-6版本极速回滚与数据库双向可逆迁移回退-sop"
+
+      - alert: StockPilotApiHighLatencyP99
+        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 2.0
+        for: 5m
+        labels:
+          severity: warning
+          tier: api
+          team: backend
+        annotations:
+          summary: "API P99 响应耗时 > 2s"
+          description: "过去 5 分钟全站 API 的 P99 延迟持续高于 2 秒 (当前值: {{ $value | printf \"%.2f\" }}s)。"
+          runbook_url: "https://github.com/sysplex/AI-repository/blob/main/RUNBOOK.md#场景-1postgresql-宕机--连接池耗尽--慢查询排查与恢复"
+
+  - name: stockpilot-scheduler-business-alerts
+    rules:
+      - alert: StockPilotSchedulerPipelineFailed
+        expr: increase(scheduler_pipeline_runs_total{status="failed"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          tier: scheduler
+          team: backend
+        annotations:
+          summary: "美股收盘后批处理 DAG 流水线执行失败"
+          description: "收盘批处理任务在最新一次触发中发生异常中断，请立即登录运维通道手动排查并触发补算！"
+          runbook_url: "https://github.com/sysplex/AI-repository/blob/main/RUNBOOK.md#场景-3收盘后批处理-dag-流水线中断--补算-sop"
+
+      - alert: StockPilotSchedulerPipelineSlow
+        expr: histogram_quantile(0.95, sum(rate(scheduler_pipeline_duration_seconds_bucket[15m])) by (le)) > 300
+        for: 5m
+        labels:
+          severity: warning
+          tier: scheduler
+          team: backend
+        annotations:
+          summary: "收盘批处理 DAG 运行耗时超过 5 分钟"
+          description: "收盘批处理 P95 耗时达 {{ $value | printf \"%.1f\" }} 秒，存在批处理堆积或第三方行情/LLM 响应过慢风险。"
+          runbook_url: "https://github.com/sysplex/AI-repository/blob/main/RUNBOOK.md#场景-4外部行情提供商网络超时与本地-mock-降级"
+
+      - alert: StockPilotNotificationDeliveryHighFailureRate
+        expr: (sum(rate(notifications_dispatched_total{status="failure"}[10m])) / (sum(rate(notifications_dispatched_total[10m])) > 0)) * 100 > 10.0
+        for: 5m
+        labels:
+          severity: warning
+          tier: notify
+          team: backend
+        annotations:
+          summary: "多渠道通知投递失败率 > 10%"
+          description: "最近 10 分钟内邮件/Webhook 通道投递失败率达 {{ $value | printf \"%.1f\" }}%，可能为第三方 SMTP/Webhook 接口限流或网络抖动。"
+          runbook_url: "https://github.com/sysplex/AI-repository/blob/main/RUNBOOK.md#场景-4外部行情提供商网络超时与本地-mock-降级"

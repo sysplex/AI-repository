@@ -34,6 +34,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.clock import get_clock
 from app.core.errors import NotFound
 from app.core.logging import get_logger
+from app.core.metrics import record_ai_report
 from app.modules.ai.adapters.mock import MockLLMClient
 from app.modules.ai.circuit_breaker import BudgetCircuitBreaker
 from app.modules.ai.models import AIReport
@@ -269,6 +270,9 @@ class AIService:
             )
             self._session.add(report)
             await self._session.flush()
+
+            raw_verdict = parsed_payload.get("verdict", "neutral")
+            record_ai_report(str(raw_verdict).lower())
 
             logger.info(
                 "AI analysis succeeded: report_id={id}, use_case={uc}, cost=${cost}",

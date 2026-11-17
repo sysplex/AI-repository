@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.db import get_session_factory
 from app.core.logging import get_logger
+from app.core.metrics import record_notification_dispatched
 from app.modules.notify.adapters.email_notifier import EmailNotifier
 from app.modules.notify.adapters.in_app_notifier import InAppNotifier
 from app.modules.notify.adapters.webhook_notifier import WebhookNotifier
@@ -182,6 +183,13 @@ class NotificationDispatcher:
                             error_message=str(r),
                         )
                     )
+
+            # 记录 Prometheus 投递指标
+            for res in results:
+                record_notification_dispatched(
+                    channel_type=res.channel_type.value,
+                    status="success" if res.success else "failure",
+                )
 
             # 写入审计流水
             try:

@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
+from app.core.metrics import record_ai_report
 from app.modules.scheduler.enums import DailyReportType
 from app.modules.scheduler.models import DailyReport
 
@@ -237,6 +238,7 @@ class DailyReportGenerator:
 
         await session.commit()
         await session.refresh(report)
+        record_ai_report(verdict="market_digest")
         logger.info("market_digest_generated", report_id=str(report.id), trade_date=str(trade_date))
         return report
 
@@ -307,6 +309,7 @@ class DailyReportGenerator:
 
         await session.commit()
         await session.refresh(report)
+        record_ai_report(verdict="portfolio_digest")
         logger.info(
             "portfolio_digest_generated",
             user_id=str(user_id),
