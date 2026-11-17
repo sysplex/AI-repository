@@ -13,7 +13,7 @@
 |---|---|---|---|---|---|---|---|
 | [T01](T01-domain-models-orm-and-migration.md) | #181 | 数据模型、ORM 实体与数据库迁移（Alerts, Channels, History, Daily Reports） | `feat/m10-t01-models-and-migrations` | M9 已结项 | 中 | Antigravity | ✅ 已完成 (Commit f317438) |
 | [T02](T02-notification-dispatcher.md) | #182 | 多通道通知分发网关与告警调度器（Email, Webhook, In-App Dispatcher） | `feat/m10-t02-notification-dispatcher` | T01 | 中 | Antigravity | ✅ 已完成 (Commit ce918ae) |
-| T03 | #183 | 智能提醒引擎与长期持有论文破裂监控（Alert Engine & Thesis Breakers） | `feat/m10-t03-alert-and-thesis-breaker-engine` | T01, T02 | 中–大 | Antigravity | ⏳ 待开始 |
+| [T03](T03-alert-and-thesis-breaker-engine.md) | #183 | 智能提醒引擎与长期持有论文破裂监控（Alert Engine & Thesis Breakers） | `feat/m10-t03-alert-and-thesis-breaker-engine` | T01, T02 | 中–大 | Antigravity | ✅ 已完成 (Commit 717d308) |
 | T04 | #184 | AI 投资建议持续复盘与超额收益评估器（AI Recommendation Outcomes Evaluator） | `feat/m10-t04-ai-recommendation-evaluator` | T01 | 中 | Antigravity | ⏳ 待开始 |
 | T05 | #185 | 收盘后全流程自动化批处理工作流与 ARQ 调度编排（Post-Market DAG Pipeline） | `feat/m10-t05-post-market-scheduler-pipeline` | T02, T03, T04 | 大 | Antigravity | ⏳ 待开始 |
 | T06 | #186 | REST API 端点开放与前端提醒及复盘看板联动（API & UI Integration） | `feat/m10-t06-api-and-ui-integration` | T03, T04, T05 | 中–大 | Antigravity | ⏳ 待开始 |
