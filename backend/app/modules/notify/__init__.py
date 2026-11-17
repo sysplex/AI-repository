@@ -1,4 +1,4 @@
-"""M10 Notify 模块：通知分发网关与智能提醒监控（T01 & T02）。"""
+"""M10 Notify 模块：通知分发网关与智能提醒监控（T01, T02, T03）。"""
 
 from __future__ import annotations
 
@@ -13,6 +13,15 @@ from app.modules.notify.enums import (
     ComparisonOperator,
     DeliveryStatus,
     PriceDirection,
+)
+from app.modules.notify.evaluators import (
+    BaseAlertEvaluator,
+    EarningsDateEvaluator,
+    EvaluationResult,
+    PriceAlertEvaluator,
+    TechnicalSignalEvaluator,
+    ThesisBreakerEvaluator,
+    get_evaluator,
 )
 from app.modules.notify.models import (
     Alert,
@@ -37,6 +46,7 @@ from app.modules.notify.schemas import (
     TechnicalSignalCondition,
     ThesisBreakerCondition,
 )
+from app.modules.notify.service import AlertService
 
 __all__ = [
     "Alert",
@@ -44,15 +54,19 @@ __all__ = [
     "AlertHistory",
     "AlertHistoryRead",
     "AlertRead",
+    "AlertService",
     "AlertStatus",
     "AlertType",
     "AlertUpdate",
+    "BaseAlertEvaluator",
     "BaseNotifier",
     "ChannelType",
     "ComparisonOperator",
     "DeliveryStatus",
     "EarningsDateCondition",
+    "EarningsDateEvaluator",
     "EmailNotifier",
+    "EvaluationResult",
     "InAppNotifier",
     "NotificationChannel",
     "NotificationChannelCreate",
@@ -61,9 +75,13 @@ __all__ = [
     "NotificationDispatcher",
     "NotificationMessage",
     "NotificationResult",
+    "PriceAlertEvaluator",
     "PriceCondition",
     "PriceDirection",
     "TechnicalSignalCondition",
+    "TechnicalSignalEvaluator",
     "ThesisBreakerCondition",
+    "ThesisBreakerEvaluator",
     "WebhookNotifier",
+    "get_evaluator",
 ]

@@ -163,9 +163,9 @@ class AlertRead(BaseModel):
     conditions: dict[str, Any]
     channel_ids: list[str]
     status: AlertStatus
-    last_triggered_at: datetime | None
-    trigger_count: int
-    cooldown_minutes: int
+    last_triggered_at: datetime | None = None
+    trigger_count: int = Field(default=0)
+    cooldown_minutes: int = 1440
     created_at: datetime
     updated_at: datetime
 
