@@ -37,6 +37,7 @@ from app.modules.ai.models import (
 )
 from app.modules.ai.ports import (
     LLMClient,
+    PriceFeedProtocol,
     PromptRegistryProtocol,
     QuotaServiceProtocol,
 )
@@ -76,6 +77,7 @@ from app.modules.ai.retry import (
     ValidatedLLMResult,
     execute_with_retry,
 )
+from app.modules.ai.review_service import ReviewService
 from app.modules.ai.schemas import (
     AIAnalyzeRequest,
     AIPromptInfo,
@@ -93,6 +95,8 @@ from app.modules.ai.schemas import (
     LLMResult,
     QuotaStatus,
     ReportStatus,
+    ReviewSummaryResponse,
+    VerdictStatsResponse,
 )
 from app.modules.ai.service import (
     AIService,
@@ -163,6 +167,7 @@ __all__ = [
     "MockFaultMode",
     "MockLLMClient",
     "ModelPricing",
+    "PriceFeedProtocol",
     "PromptNotFoundError",
     "PromptRegistry",
     "PromptRegistryProtocol",
@@ -173,10 +178,13 @@ __all__ = [
     "QuotaStatus",
     "ReportStatus",
     "RetryableLLMCaller",
+    "ReviewService",
+    "ReviewSummaryResponse",
     "SchemaValidationError",
     "SchemaValidationResult",
     "SchemaValidator",
     "ValidatedLLMResult",
+    "VerdictStatsResponse",
     "ai_usage_table",
     "calculate_cost",
     "clean_and_extract_json",

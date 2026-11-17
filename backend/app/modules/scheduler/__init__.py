@@ -9,6 +9,9 @@ from app.modules.scheduler.enums import (
 from app.modules.scheduler.models import (
     DailyReport,
 )
+from app.modules.scheduler.ports import (
+    ReviewServiceProtocol,
+)
 from app.modules.scheduler.schemas import (
     DailyReportCreate,
     DailyReportFilter,
@@ -22,4 +25,5 @@ __all__ = [
     "DailyReportRead",
     "DailyReportType",
     "JobStatus",
+    "ReviewServiceProtocol",
 ]

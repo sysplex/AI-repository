@@ -29,6 +29,8 @@ __all__ = [
     "LLMResult",
     "QuotaStatus",
     "ReportStatus",
+    "ReviewSummaryResponse",
+    "VerdictStatsResponse",
 ]
 
 ReportStatus = Literal["pending", "processing", "success", "failed"]
@@ -237,3 +239,36 @@ class AIPromptInfo(BaseModel):
     description: str
     is_active: bool = True
     output_schema: dict[str, Any] = Field(default_factory=dict)
+
+
+class VerdictStatsResponse(BaseModel):
+    """单个推荐评级的事后表现统计"""
+
+    model_config = ConfigDict(from_attributes=True, frozen=True)
+
+    verdict: str
+    total_count: int = 0
+    evaluated_5d_count: int = 0
+    evaluated_20d_count: int = 0
+    evaluated_60d_count: int = 0
+    avg_return_5d: Decimal | None = None
+    avg_return_20d: Decimal | None = None
+    avg_return_60d: Decimal | None = None
+    avg_alpha_20d: Decimal | None = None
+    win_rate_20d: Decimal | None = None
+
+
+class ReviewSummaryResponse(BaseModel):
+    """AI 投资建议事后复盘大盘与胜率统计看板响应"""
+
+    model_config = ConfigDict(from_attributes=True, frozen=True)
+
+    total_recommendations: int = 0
+    evaluated_count: int = 0
+    avg_return_5d: Decimal | None = None
+    avg_return_20d: Decimal | None = None
+    avg_return_60d: Decimal | None = None
+    avg_alpha_20d: Decimal | None = None
+    win_rate_20d: Decimal | None = None
+    by_verdict: dict[str, VerdictStatsResponse] = Field(default_factory=dict)
+    items: list[AIRecommendationOutcomeResponse] = Field(default_factory=list)

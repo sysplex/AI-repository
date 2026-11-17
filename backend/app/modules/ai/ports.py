@@ -15,9 +15,19 @@ from app.modules.ai.schemas import LLMResult, QuotaStatus
 
 __all__ = [
     "LLMClient",
+    "PriceFeedProtocol",
     "PromptRegistryProtocol",
     "QuotaServiceProtocol",
 ]
+
+
+@runtime_checkable
+class PriceFeedProtocol(Protocol):
+    """行情价格查询协议（用于事后收益与基准超额计算）。"""
+
+    async def get_price(self, symbol: str, trade_date: date) -> Decimal | None:
+        """获取指定标的在指定交易日的收盘价格。"""
+        ...
 
 
 @runtime_checkable
