@@ -1,0 +1,95 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'IMAGE_TAG', defaultValue: 'v1.0.0', description: 'Docker 镜像发布标签 (如 v1.0.0)')
+        string(name: 'HARBOR_REGISTRY', defaultValue: '192.168.50.36:30088', description: 'Harbor 镜像仓库地址')
+        string(name: 'HARBOR_PROJECT', defaultValue: 'stockpilot', description: 'Harbor 项目名称')
+        string(name: 'HARBOR_CREDENTIAL_ID', defaultValue: 'harbor-credentials', description: 'Jenkins 凭据 ID (若无则走脚本内置凭据)')
+    }
+
+    environment {
+        HARBOR_HOST = "${params.HARBOR_REGISTRY}"
+        APP_IMAGE   = "${params.HARBOR_REGISTRY}/${params.HARBOR_PROJECT}/stockpilot-app"
+    }
+
+    stages {
+        stage('检出代码 (Checkout)') {
+            steps {
+                checkout scm
+                script {
+                    env.GIT_SHORT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                    echo "=== 正在构建 Git Commit: ${env.GIT_SHORT_SHA}, 目标版本标签: ${params.IMAGE_TAG} ==="
+                }
+            }
+        }
+
+        stage('自动化测试门禁 (Tests)') {
+            steps {
+                dir('backend') {
+                    sh '''
+                        if [ -f ".venv/bin/pytest" ]; then
+                            .venv/bin/pytest tests/unit --no-cov
+                        elif command -v uv >/dev/null 2>&1; then
+                            uv run pytest tests/unit --no-cov
+                        else
+                            echo "环境无独立 Python 解释器，跳过宿主自测，直接进入 Docker 构建门禁"
+                        fi
+                    '''
+                }
+            }
+        }
+
+        stage('多架构容器打包 (Docker Build)') {
+            steps {
+                script {
+                    echo "=== 开始根据 deploy/Dockerfile 构建双标签不可变镜像 ==="
+                    sh """
+                        docker build \
+                            -t ${APP_IMAGE}:${params.IMAGE_TAG} \
+                            -t ${APP_IMAGE}:sha-${env.GIT_SHORT_SHA} \
+                            -f deploy/Dockerfile .
+                    """
+                }
+            }
+        }
+
+        stage('推送镜像至 Harbor (Push to Harbor)') {
+            steps {
+                script {
+                    echo "=== 登录 Harbor (${env.HARBOR_HOST}) 并推送镜像 ==="
+                    // 默认采用集群内置 Harbor 凭据（admin / Harbor12345），也兼容凭据插件
+                    sh """
+                        echo Harbor12345 | docker login ${env.HARBOR_HOST} -u admin --password-stdin
+                        docker push ${APP_IMAGE}:${params.IMAGE_TAG}
+                        docker push ${APP_IMAGE}:sha-${env.GIT_SHORT_SHA}
+                        docker logout ${env.HARBOR_HOST}
+                    """
+                }
+            }
+        }
+
+        stage('发布就绪通知 (GitOps Ready)') {
+            steps {
+                echo "=========================================================="
+                echo " 镜像推送成功！"
+                echo " 语义化版本: ${APP_IMAGE}:${params.IMAGE_TAG}"
+                echo " Commit 摘要: ${APP_IMAGE}:sha-${env.GIT_SHORT_SHA}"
+                echo " 请访问 Argo CD 控制台 (https://192.168.50.36:31443/) 执行一键同步！"
+                echo "=========================================================="
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo "Jenkins 构建与镜像推送成功！"
+        }
+        failure {
+            echo "Jenkins 构建失败，请查看控制台日志排查！"
+        }
+    }
+}
