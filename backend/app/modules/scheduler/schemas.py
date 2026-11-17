@@ -15,6 +15,8 @@ __all__ = [
     "DailyReportFilter",
     "DailyReportRead",
     "JobStatus",
+    "PipelineRunResult",
+    "PipelineStepStatus",
 ]
 
 
@@ -49,3 +51,35 @@ class DailyReportFilter(BaseModel):
 
     report_date: date | None = None
     report_type: DailyReportType | None = None
+
+
+# ==========================================
+# 2. 收盘后批处理任务链 DAG 监控快照
+# ==========================================
+
+
+class PipelineStepStatus(BaseModel):
+    """流水线单步执行状态。"""
+
+    model_config = ConfigDict(frozen=True)
+
+    name: str
+    status: JobStatus
+    started_at: datetime
+    finished_at: datetime | None = None
+    details: dict[str, Any] = Field(default_factory=dict)
+    error_message: str | None = None
+
+
+class PipelineRunResult(BaseModel):
+    """收盘后批处理任务链完整执行结果快照。"""
+
+    model_config = ConfigDict(frozen=True)
+
+    trade_date: date
+    status: JobStatus
+    started_at: datetime
+    finished_at: datetime | None = None
+    is_trading_day: bool = True
+    steps: list[PipelineStepStatus] = Field(default_factory=list)
+    error_message: str | None = None
