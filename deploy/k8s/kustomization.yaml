@@ -11,6 +11,5 @@ resources:
   - ingress.yaml
 
 images:
-  - name: stockpilot-app
-    newName: 192.168.50.36:30088/stockpilot/stockpilot-app
+  - name: 192.168.50.36:30088/stockpilot/stockpilot-app
     newTag: v1.0.0

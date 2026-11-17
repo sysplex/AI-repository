@@ -30,7 +30,7 @@ spec:
         fsGroup: 10001
       containers:
         - name: worker
-          image: 192.168.50.36:30088/stockpilot/stockpilot-app:v0.2.0
+          image: 192.168.50.36:30088/stockpilot/stockpilot-app:v1.0.0
           command: ["python", "-m", "arq", "app.worker.WorkerSettings"]
           envFrom:
             - configMapRef:

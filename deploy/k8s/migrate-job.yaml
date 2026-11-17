@@ -18,7 +18,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: migrate
-          image: 192.168.50.36:30088/stockpilot/stockpilot-app:v0.2.0
+          image: 192.168.50.36:30088/stockpilot/stockpilot-app:v1.0.0
           command: ["alembic", "upgrade", "head"]
           envFrom:
             - configMapRef:
