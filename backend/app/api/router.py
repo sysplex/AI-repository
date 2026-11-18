@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import current_user
@@ -60,6 +61,12 @@ from app.modules.strategy.service import StrategyService
 
 root_router = APIRouter()
 root_router.include_router(health_router)
+
+
+@root_router.get("/", include_in_schema=False)
+async def root() -> RedirectResponse:
+    """根路径自动重定向至 API Swagger 交互文档。"""
+    return RedirectResponse(url="/docs")
 
 # Wire market data service into strategy service facade
 data_service = get_data_service()
