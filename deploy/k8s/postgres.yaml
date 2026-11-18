@@ -30,7 +30,7 @@ spec:
             - name: POSTGRES_USER
               value: "stockpilot"
             - name: POSTGRES_PASSWORD
-              value: "StockPilot2026!"
+              value: "StockPilot2026"
             - name: POSTGRES_DB
               value: "stockpilot"
             - name: PGDATA
