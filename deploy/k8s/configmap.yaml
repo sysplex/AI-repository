@@ -7,4 +7,4 @@ data:
   APP_ENV: "production"
   LOG_LEVEL: "INFO"
   LOG_FORMAT: "json"
-  CORS_ORIGINS: "http://localhost:8080,http://192.168.50.36"
+  CORS_ORIGINS: "http://localhost:8080,http://192.168.50.36,http://stockpilot.vm.ok,https://stockpilot.vm.ok"

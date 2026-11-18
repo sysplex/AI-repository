@@ -8,8 +8,9 @@ metadata:
 spec:
   entryPoints:
     - web
+    - websecure
   routes:
-    - match: Host(`stockpilot.internal`) || PathPrefix(`/`)
+    - match: Host(`stockpilot.vm.ok`) && PathPrefix(`/`)
       kind: Rule
       services:
         - name: stockpilot-api

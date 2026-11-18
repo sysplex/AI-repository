@@ -10,18 +10,8 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: stockpilot.internal
+    - host: stockpilot.vm.ok
       http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-api
-                port:
-                  number: 8000
-    # 无需配置 hosts 域名时，允许直接通过 Traefik IP 访问
-    - http:
         paths:
           - path: /
             pathType: Prefix
