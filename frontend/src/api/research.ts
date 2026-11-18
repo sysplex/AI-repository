@@ -82,6 +82,17 @@ export const researchApi = {
   async getQuota(): Promise<QuotaStatus> {
     return api.get<QuotaStatus>('/ai/quota');
   },
+
+  /**
+   * 测试第三方 AI API 密钥与模型可用性
+   */
+  async testApiKey(data: {
+    provider: string;
+    api_key: string;
+    model?: string;
+  }): Promise<{ valid: boolean; message: string; latency_ms: number }> {
+    return api.post<{ valid: boolean; message: string; latency_ms: number }>('/ai/test-key', data);
+  },
 };
 
 export default researchApi;

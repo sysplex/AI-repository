@@ -247,6 +247,27 @@ def _build_default_pricing_table() -> dict[str, ModelPricing]:
             provider="google",
             description="Gemini 2.0 Flash next-gen",
         ),
+        ModelPricing(
+            model="gemini-3.5-flash-lite",
+            input_price_per_1m=Decimal("0.05"),
+            output_price_per_1m=Decimal("0.20"),
+            provider="google",
+            description="Gemini 3.5 Flash Lite (Free tier eligible)",
+        ),
+        ModelPricing(
+            model="gemini-3.1-flash-lite",
+            input_price_per_1m=Decimal("0.05"),
+            output_price_per_1m=Decimal("0.20"),
+            provider="google",
+            description="Gemini 3.1 Flash Lite (Free tier eligible)",
+        ),
+        ModelPricing(
+            model="gemini-3.8-flash",
+            input_price_per_1m=Decimal("0.10"),
+            output_price_per_1m=Decimal("0.40"),
+            provider="google",
+            description="Gemini 3.8 Flash high speed",
+        ),
         # Mock / 本地零成本模型
         ModelPricing(
             model="mock",

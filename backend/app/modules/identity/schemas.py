@@ -58,6 +58,9 @@ class UserSettings(BaseModel):
     risk_profile: Literal["conservative", "balanced", "aggressive"] = "balanced"
     language: str = "zh-CN"
     default_account_id: uuid.UUID | None = None
+    ai_provider: Literal["mock", "google", "openai", "deepseek", "anthropic"] = "mock"
+    google_api_key: str | None = None
+    google_model: str = "gemini-3.5-flash-lite"
 
 
 class RegisterRequest(BaseModel):

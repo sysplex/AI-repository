@@ -31,6 +31,8 @@ from app.modules.ai.schemas import (
     DataSnapshotResponse,
     QuotaStatus,
     ReviewSummaryResponse,
+    TestAPIKeyRequest,
+    TestAPIKeyResponse,
 )
 from app.modules.ai.service import AIService
 
@@ -81,6 +83,46 @@ def get_current_user(request: Request) -> Any:
 
 
 @router.post(
+    "/test-key",
+    response_model=TestAPIKeyResponse,
+    status_code=status.HTTP_200_OK,
+    summary="测试第三方 AI API 密钥连通性",
+)
+async def test_api_key(
+    req: TestAPIKeyRequest,
+    user: Annotated[Any, Depends(get_current_user)],
+) -> TestAPIKeyResponse:
+    """即时在线测试用户提供的 API Key（连通性、模型可用性与额度）。"""
+    del user  # 仅做鉴权拦截
+    if req.provider == "mock":
+        return TestAPIKeyResponse(valid=True, message="Mock 模拟服务可用", latency_ms=5)
+
+    if req.provider == "google":
+        model_name = req.model or "gemini-3.5-flash-lite"
+        client = AIService.create_client(provider="google", api_key=req.api_key, model=model_name)
+        try:
+            res = await client.generate(
+                system="You are a ping test.",
+                user="Reply with 'PONG' and nothing else.",
+                max_tokens=10,
+                temperature=0.0,
+            )
+            return TestAPIKeyResponse(
+                valid=True,
+                message=f"Google Gemini 连接成功！模型 [{model_name}] 响应正常，延迟 {res.latency_ms}ms",
+                latency_ms=res.latency_ms,
+            )
+        except Exception as exc:
+            return TestAPIKeyResponse(
+                valid=False,
+                message=f"连接失败: {exc}",
+                latency_ms=0,
+            )
+
+    return TestAPIKeyResponse(valid=False, message=f"暂不支持的提供商: {req.provider}")
+
+
+@router.post(
     "/analyze",
     response_model=AnalysisReport,
     status_code=status.HTTP_200_OK,
@@ -95,12 +137,20 @@ async def analyze(
 
     支持输入事实快照 SHA-256 去重持久化、全流程智能缓存、Schema 格式校验与数字溯源。
     """
+    llm_client = None
+    if req.ai_provider == "google" and req.google_api_key:
+        llm_client = AIService.create_client(
+            provider="google",
+            api_key=req.google_api_key,
+            model=req.google_model,
+        )
     return await service.run(
         use_case=req.use_case,
         facts=req.facts,
         params=req.params,
         user_id=user.id,
         prompt_version=req.prompt_version,
+        llm_client=llm_client,
     )
 
 

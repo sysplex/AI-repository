@@ -61,13 +61,27 @@ __all__ = [
     "AIService",
     "data_snapshots_table",
     "get_budget_circuit_breaker",
+    "get_global_llm_client_resolver",
     "set_budget_circuit_breaker",
+    "set_global_llm_client_resolver",
 ]
 
 logger = get_logger(__name__)
 
 # 全局共享预算熔断器单例
 _global_circuit_breaker = BudgetCircuitBreaker()
+_global_llm_client_resolver: Any | None = None
+
+
+def get_global_llm_client_resolver() -> Any | None:
+    """获取系统全局用户 LLM 客户端动态解析器。"""
+    return _global_llm_client_resolver
+
+
+def set_global_llm_client_resolver(resolver: Any | None) -> None:
+    """设置系统全局用户 LLM 客户端动态解析器（应用启动或装配时注入）。"""
+    global _global_llm_client_resolver
+    _global_llm_client_resolver = resolver
 
 
 def get_budget_circuit_breaker() -> BudgetCircuitBreaker:
@@ -102,6 +116,7 @@ class AIService:
         session: AsyncSession,
         *,
         llm_client: LLMClient | None = None,
+        llm_client_resolver: Any | None = None,
         prompt_registry: PromptRegistryProtocol | None = None,
         quota_service: QuotaServiceProtocol | None = None,
         circuit_breaker: BudgetCircuitBreaker | None = None,
@@ -109,6 +124,9 @@ class AIService:
     ) -> None:
         self._session = session
         self._llm_client: LLMClient = llm_client if llm_client is not None else MockLLMClient()
+        self._llm_client_resolver = (
+            llm_client_resolver if llm_client_resolver is not None else get_global_llm_client_resolver()
+        )
         self._prompt_registry: PromptRegistryProtocol = (
             prompt_registry if prompt_registry is not None else default_prompt_registry
         )
@@ -121,6 +139,21 @@ class AIService:
         self._fact_tracing_engine: FactTracingEngine = (
             fact_tracing_engine if fact_tracing_engine is not None else FactTracingEngine()
         )
+
+    # -------------------------------------------------------------------------
+    # 客户端工厂与路由工具
+    # -------------------------------------------------------------------------
+
+    @staticmethod
+    def create_client(provider: str, api_key: str, model: str | None = None) -> LLMClient:
+        """根据提供商配置创建对应的 LLMClient 实例。"""
+        if provider == "google":
+            from app.modules.ai.adapters.google import GoogleGeminiClient
+
+            return GoogleGeminiClient(api_key=api_key, default_model=model or "gemini-3.5-flash-lite")
+        from app.modules.ai.adapters.mock import MockLLMClient
+
+        return MockLLMClient()
 
     # -------------------------------------------------------------------------
     # 哈希与缓存键计算工具
@@ -159,6 +192,7 @@ class AIService:
         user_id: UUID | None = None,
         as_of: datetime | None = None,
         prompt_version: str | None = None,
+        llm_client: LLMClient | None = None,
     ) -> AnalysisReport:
         """执行端到端 AI 分析。
 
@@ -226,8 +260,17 @@ class AIService:
         )
 
         # 6. LLM 生成与 Schema 校验（含 1 次重试）
+        active_client = llm_client or self._llm_client
+        if active_client is self._llm_client and self._llm_client_resolver and user_id:
+            try:
+                resolved = await self._llm_client_resolver(user_id)
+                if resolved is not None:
+                    active_client = resolved
+            except Exception as exc:
+                logger.warning("ai.resolve_user_llm_client_failed", user_id=str(user_id), error=str(exc))
+
         try:
-            caller = RetryableLLMCaller(client=self._llm_client)
+            caller = RetryableLLMCaller(client=active_client)
             validated_res = await caller.call(
                 system=rendered_system,
                 user=rendered_user,

@@ -227,6 +227,25 @@ class AIAnalyzeRequest(BaseModel):
     facts: dict[str, Any]
     params: dict[str, Any] = Field(default_factory=dict)
     prompt_version: str | None = None
+    ai_provider: str | None = None
+    google_api_key: str | None = None
+    google_model: str | None = None
+
+
+class TestAPIKeyRequest(BaseModel):
+    """测试第三方 AI API 密钥请求"""
+
+    provider: str = "google"
+    api_key: str = Field(min_length=1)
+    model: str = "gemini-3.5-flash-lite"
+
+
+class TestAPIKeyResponse(BaseModel):
+    """测试第三方 AI API 密钥响应"""
+
+    valid: bool
+    message: str
+    latency_ms: int = 0
 
 
 class AIPromptInfo(BaseModel):

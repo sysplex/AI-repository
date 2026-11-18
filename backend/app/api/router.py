@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import uuid
+from typing import Any
 from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,13 +15,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import current_user
 from app.api.health import router as health_router
 from app.api.identity import router as identity_router
+from app.core.logging import get_logger
 from app.modules.ai.api import (
     reviews_router,
 )
 from app.modules.ai.api import (
     router as ai_router,
 )
-from app.modules.ai.service import AIService
+from app.modules.ai.service import AIService, set_global_llm_client_resolver
 from app.modules.marketdata.api import get_data_service
 from app.modules.marketdata.api import router as market_router
 from app.modules.notify.api import (
@@ -67,6 +70,43 @@ root_router.include_router(health_router)
 async def root() -> RedirectResponse:
     """根路径自动重定向至 API Swagger 交互文档。"""
     return RedirectResponse(url="/docs")
+
+logger = get_logger(__name__)
+
+
+async def _resolve_user_llm_client(user_id: uuid.UUID) -> Any | None:
+    """根据用户配置动态解析其首选的 LLM 客户端（Google Gemini / Mock）。"""
+    try:
+        from app.core.config import get_settings
+        from app.core.db import get_session
+        from app.core.redis import get_redis
+        from app.modules.identity.service import build_identity_service
+
+        settings = get_settings()
+        async for session in get_session():
+            identity_svc = build_identity_service(
+                session=session,
+                settings=settings,
+                redis=get_redis(),
+            )
+            user_settings = await identity_svc.get_user_settings(user_id)
+            if user_settings.ai_provider == "google" and user_settings.google_api_key:
+                return AIService.create_client(
+                    provider="google",
+                    api_key=user_settings.google_api_key,
+                    model=user_settings.google_model,
+                )
+            break
+    except Exception as exc:
+        logger.warning(
+            "router.resolve_user_llm_client_failed",
+            user_id=str(user_id),
+            error=str(exc),
+        )
+    return None
+
+
+set_global_llm_client_resolver(_resolve_user_llm_client)
 
 # Wire market data service into strategy service facade
 data_service = get_data_service()

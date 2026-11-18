@@ -291,9 +291,15 @@ class IdentityService:
         return UserPublic.model_validate(record)
 
     async def update_settings(self, user: AuthenticatedUser, update: SettingsUpdate) -> UserPublic:
-        """整体替换 `users.settings`（`UserSettings` 已 `extra="forbid"`），并审计。"""
+        """整体替换 `users.settings`，并审计。"""
         record = await self._require_user(user.id)
-        record.settings = update.settings.model_dump(mode="json")
+        current = record.settings or {}
+        new_data = update.settings.model_dump(mode="json")
+        # 若新保存未提供 google_api_key 或传入了掩码，保留已有真实密钥
+        if not new_data.get("google_api_key") or new_data.get("google_api_key", "").startswith("***"):
+            if current.get("google_api_key"):
+                new_data["google_api_key"] = current["google_api_key"]
+        record.settings = new_data
         await self._users.save(record)
         await self._audit(
             "auth.settings_updated",
@@ -302,6 +308,11 @@ class IdentityService:
             detail={"keys": sorted(record.settings)},
         )
         return UserPublic.model_validate(record)
+
+    async def get_user_settings(self, user_id: uuid.UUID) -> UserSettings:
+        """获取指定用户的个性化设置（含 AI 偏好与凭证）。"""
+        record = await self._require_user(user_id)
+        return UserSettings.model_validate(record.settings or {})
 
     async def get_usage(self, user: AuthenticatedUser) -> UsageResponse:
         """当日 AI 用量（M1 只读，C6）；无记录返回全 0 + 配置里的配额上限。"""

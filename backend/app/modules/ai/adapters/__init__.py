@@ -12,6 +12,7 @@ from app.modules.ai.adapters.base import (
     extract_json_from_text,
     inject_schema_instruction,
 )
+from app.modules.ai.adapters.google import GoogleGeminiClient
 from app.modules.ai.adapters.mock import (
     DEFAULT_MOCK_PAYLOAD,
     MockCall,
@@ -22,6 +23,7 @@ from app.modules.ai.adapters.mock import (
 __all__ = [
     "DEFAULT_MOCK_PAYLOAD",
     "BaseLLMClient",
+    "GoogleGeminiClient",
     "MockCall",
     "MockFaultMode",
     "MockLLMClient",

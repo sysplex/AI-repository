@@ -2949,6 +2949,12 @@ export interface components {
             language: string;
             /** Default Account Id */
             default_account_id?: string | null;
+            /** AI 提供商 */
+            ai_provider?: "mock" | "google" | "openai" | "deepseek" | "anthropic";
+            /** Google Gemini API Key */
+            google_api_key?: string | null;
+            /** Google Gemini 模型名称 */
+            google_model?: string;
         };
         /**
          * UserStatus
