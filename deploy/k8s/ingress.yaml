@@ -10,10 +10,11 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    # 1. 域名访问 (stockpilot.vm.ok)
+    # 规则 1：域名精准匹配 (stockpilot.vm.ok)
     - host: stockpilot.vm.ok
       http:
         paths:
+          # 后端 REST API 接口
           - path: /api
             pathType: Prefix
             backend:
@@ -21,6 +22,7 @@ spec:
                 name: stockpilot-api
                 port:
                   number: 8000
+          # Swagger 交互文档与 OpenAPI 规范
           - path: /docs
             pathType: Prefix
             backend:
@@ -35,6 +37,7 @@ spec:
                 name: stockpilot-api
                 port:
                   number: 8000
+          # 前端 Web UI 应用（主页面、静态资源与前端路由）
           - path: /
             pathType: Prefix
             backend:
@@ -43,137 +46,10 @@ spec:
                 port:
                   number: 8080
 
-    # 2. 节点 IP 显式匹配 (192.168.50.37)
-    - host: "192.168.50.37"
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-api
-                port:
-                  number: 8000
-          - path: /docs
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-api
-                port:
-                  number: 8000
-          - path: /openapi.json
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-api
-                port:
-                  number: 8000
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-web
-                port:
-                  number: 8080
-
-    # 3. 其余集群节点 IP (192.168.50.36 Master / 38 / 39)
-    - host: "192.168.50.36"
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-api
-                port:
-                  number: 8000
-          - path: /docs
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-api
-                port:
-                  number: 8000
-          - path: /openapi.json
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-api
-                port:
-                  number: 8000
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-web
-                port:
-                  number: 8080
-    - host: "192.168.50.38"
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-api
-                port:
-                  number: 8000
-          - path: /docs
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-api
-                port:
-                  number: 8000
-          - path: /openapi.json
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-api
-                port:
-                  number: 8000
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-web
-                port:
-                  number: 8080
-    - host: "192.168.50.39"
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-api
-                port:
-                  number: 8000
-          - path: /docs
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-api
-                port:
-                  number: 8000
-          - path: /openapi.json
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-api
-                port:
-                  number: 8000
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: stockpilot-web
-                port:
-                  number: 8080
-
-    # 4. 缺省通配兜底路由 (Catch-All，支持任意 IP 直连)
+    # 规则 2：全局通配兜底（省略 host，RFC 1123 规范，完美支持所有节点 IP 直连）
     - http:
         paths:
+          # 后端 REST API 接口
           - path: /api
             pathType: Prefix
             backend:
@@ -181,6 +57,7 @@ spec:
                 name: stockpilot-api
                 port:
                   number: 8000
+          # Swagger 交互文档与 OpenAPI 规范
           - path: /docs
             pathType: Prefix
             backend:
@@ -195,6 +72,7 @@ spec:
                 name: stockpilot-api
                 port:
                   number: 8000
+          # 前端 Web UI 应用（主页面、静态资源与前端路由）
           - path: /
             pathType: Prefix
             backend:
