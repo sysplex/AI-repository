@@ -13,10 +13,34 @@ spec:
     - host: stockpilot.vm.ok
       http:
         paths:
-          - path: /
+          # 后端 REST API 接口
+          - path: /api
             pathType: Prefix
             backend:
               service:
                 name: stockpilot-api
                 port:
                   number: 8000
+          # Swagger 交互文档与 OpenAPI 规范
+          - path: /docs
+            pathType: Prefix
+            backend:
+              service:
+                name: stockpilot-api
+                port:
+                  number: 8000
+          - path: /openapi.json
+            pathType: Prefix
+            backend:
+              service:
+                name: stockpilot-api
+                port:
+                  number: 8000
+          # 前端 Web UI 应用（主页面、静态资源与前端路由）
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: stockpilot-web
+                port:
+                  number: 8080

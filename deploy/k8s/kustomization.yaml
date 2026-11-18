@@ -10,8 +10,12 @@ resources:
   - api-deployment.yaml
   - api-service.yaml
   - worker-deployment.yaml
+  - web-deployment.yaml
+  - web-service.yaml
   - ingress.yaml
 
 images:
   - name: 192.168.50.36:30088/stockpilot/stockpilot-app
+    newTag: v1.0.0
+  - name: 192.168.50.36:30088/stockpilot/stockpilot-web
     newTag: v1.0.0

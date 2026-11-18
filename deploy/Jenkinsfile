@@ -11,6 +11,7 @@ pipeline {
     environment {
         HARBOR_HOST = "${params.HARBOR_REGISTRY}"
         APP_IMAGE   = "${params.HARBOR_REGISTRY}/${params.HARBOR_PROJECT}/stockpilot-app"
+        WEB_IMAGE   = "${params.HARBOR_REGISTRY}/${params.HARBOR_PROJECT}/stockpilot-web"
     }
 
     stages {
@@ -43,12 +44,19 @@ pipeline {
         stage('多架构容器打包 (Docker Build)') {
             steps {
                 script {
-                    echo "=== 开始根据 deploy/Dockerfile 构建双标签不可变镜像 ==="
+                    echo "=== 开始根据 deploy/Dockerfile 构建后端镜像 stockpilot-app ==="
                     sh """
                         docker build \
                             -t ${APP_IMAGE}:${params.IMAGE_TAG} \
                             -t ${APP_IMAGE}:sha-${env.GIT_SHORT_SHA} \
                             -f deploy/Dockerfile .
+                    """
+                    echo "=== 开始根据 frontend/Dockerfile 构建前端镜像 stockpilot-web ==="
+                    sh """
+                        docker build \
+                            -t ${WEB_IMAGE}:${params.IMAGE_TAG} \
+                            -t ${WEB_IMAGE}:sha-${env.GIT_SHORT_SHA} \
+                            -f frontend/Dockerfile frontend/
                     """
                 }
             }
@@ -63,6 +71,8 @@ pipeline {
                         echo Harbor12345 | docker login ${env.HARBOR_HOST} -u admin --password-stdin
                         docker push ${APP_IMAGE}:${params.IMAGE_TAG}
                         docker push ${APP_IMAGE}:sha-${env.GIT_SHORT_SHA}
+                        docker push ${WEB_IMAGE}:${params.IMAGE_TAG}
+                        docker push ${WEB_IMAGE}:sha-${env.GIT_SHORT_SHA}
                         docker logout ${env.HARBOR_HOST}
                     """
                 }
