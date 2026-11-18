@@ -10,8 +10,23 @@ spec:
     - web
     - websecure
   routes:
-    - match: Host(`stockpilot.vm.ok`) && PathPrefix(`/`)
+    - match: (Host(`stockpilot.vm.ok`) || Host(`192.168.50.37`) || Host(`192.168.50.36`) || Host(`192.168.50.38`) || Host(`192.168.50.39`)) && PathPrefix(`/api`)
       kind: Rule
       services:
         - name: stockpilot-api
           port: 8000
+    - match: (Host(`stockpilot.vm.ok`) || Host(`192.168.50.37`) || Host(`192.168.50.36`) || Host(`192.168.50.38`) || Host(`192.168.50.39`)) && PathPrefix(`/docs`)
+      kind: Rule
+      services:
+        - name: stockpilot-api
+          port: 8000
+    - match: (Host(`stockpilot.vm.ok`) || Host(`192.168.50.37`) || Host(`192.168.50.36`) || Host(`192.168.50.38`) || Host(`192.168.50.39`)) && PathPrefix(`/openapi.json`)
+      kind: Rule
+      services:
+        - name: stockpilot-api
+          port: 8000
+    - match: (Host(`stockpilot.vm.ok`) || Host(`192.168.50.37`) || Host(`192.168.50.36`) || Host(`192.168.50.38`) || Host(`192.168.50.39`)) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: stockpilot-web
+          port: 8080
