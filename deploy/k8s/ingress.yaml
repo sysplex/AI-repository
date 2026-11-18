@@ -6,13 +6,22 @@ metadata:
   labels:
     app.kubernetes.io/name: stockpilot
   annotations:
-    kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/proxy-body-size: "16m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
 spec:
+  ingressClassName: traefik
   rules:
     - host: stockpilot.internal
       http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: stockpilot-api
+                port:
+                  number: 8000
+    # 无需配置 hosts 域名时，允许直接通过 Traefik IP 访问
+    - http:
         paths:
           - path: /
             pathType: Prefix
