@@ -5,6 +5,8 @@ namespace: stockpilot
 resources:
   - namespace.yaml
   - configmap.yaml
+  - postgres.yaml
+  - redis.yaml
   - api-deployment.yaml
   - api-service.yaml
   - worker-deployment.yaml
