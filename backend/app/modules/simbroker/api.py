@@ -24,6 +24,7 @@ from app.modules.simbroker.ports import MarketDataFeedProtocol
 from app.modules.simbroker.schemas import (
     AccountCreate,
     AccountOverview,
+    AccountResetRequest,
     AccountResponse,
     DepositRequest,
     OrderCreate,
@@ -145,6 +146,26 @@ async def withdraw(
     """从指定账户提取资金（受当前可用现金限制）。"""
     new_cash = await service.withdraw(account_id=account_id, amount=req.amount, user_id=user.id)
     return {"account_id": str(account_id), "cash": str(new_cash)}
+
+
+@router.post(
+    "/accounts/{account_id}/reset",
+    response_model=AccountOverview,
+    summary="重置模拟盘账户",
+)
+async def reset_account(
+    account_id: uuid.UUID,
+    service: Annotated[SimService, Depends(get_sim_service)],
+    user: Annotated[Any, Depends(get_current_user)],
+    req: AccountResetRequest | None = None,
+) -> AccountOverview:
+    """重置模拟盘账户：在单事务内取消全部未成交挂单、清空持仓并恢复初始本金。"""
+    initial_cash = req.initial_cash if req is not None else None
+    return await service.reset_account(
+        account_id=account_id,
+        user_id=user.id,
+        initial_cash=initial_cash,
+    )
 
 
 # -----------------------------------------------------------------------------

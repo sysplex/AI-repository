@@ -11,6 +11,7 @@ import {
   Plus,
   RefreshCw,
   Share2,
+  Sliders,
   TrendingUp,
 } from 'lucide-react';
 import { screenerApi } from '../../api/screener';
@@ -36,8 +37,12 @@ import { cn } from '../../utils/cn';
 export const ScreenerConsoleView: React.FC = () => {
   const navigate = useNavigate();
 
+  const isMockEnabled = import.meta.env.VITE_ENABLE_MOCK === 'true' || import.meta.env.MODE === 'test';
+
   // Control Form States
-  const [universes, setUniverses] = useState<UniverseInfo[]>(mockUniverses);
+  const [universes, setUniverses] = useState<UniverseInfo[]>(() =>
+    isMockEnabled ? mockUniverses : []
+  );
   const [selectedUniverse, setSelectedUniverse] = useState<string>('sp500');
   const [customSymbolsInput, setCustomSymbolsInput] = useState<string>('NVDA, AAPL, MSFT, AMZN, GOOGL, META, TSLA');
   const [selectedStrategyId, setSelectedStrategyId] = useState<string>('trend_following');
@@ -48,12 +53,16 @@ export const ScreenerConsoleView: React.FC = () => {
   const [strategyParams, setStrategyParams] = useState<Record<string, any>>(activeStrategy.defaultParams);
 
   // Active Screener Run State
-  const [currentRun, setCurrentRun] = useState<ScreenerRunRead | null>(mockCompletedScreenerRun);
+  const [currentRun, setCurrentRun] = useState<ScreenerRunRead | null>(() =>
+    isMockEnabled ? mockCompletedScreenerRun : null
+  );
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [runProgressMessage, setRunProgressMessage] = useState<string>('');
 
   // History Runs List
-  const [historyRuns, setHistoryRuns] = useState<ScreenerRunRead[]>([mockCompletedScreenerRun]);
+  const [historyRuns, setHistoryRuns] = useState<ScreenerRunRead[]>(() =>
+    isMockEnabled ? [mockCompletedScreenerRun] : []
+  );
   const [showHistory, setShowHistory] = useState<boolean>(false);
 
   // Results Selection & Batch Actions
@@ -160,24 +169,30 @@ export const ScreenerConsoleView: React.FC = () => {
           }
         }
       }, 1200);
-    } catch {
-      // Simulate fast local run for mock environment
-      setTimeout(() => {
-        setRunProgressMessage('正在聚合技术指标与估值分位数...');
+    } catch (err: unknown) {
+      if (isMockEnabled) {
+        // Simulate fast local run for mock environment
         setTimeout(() => {
-          setIsRunning(false);
-          const simulatedRun: ScreenerRunRead = {
-            ...mockCompletedScreenerRun,
-            id: `run-${Date.now()}`,
-            strategy_id: selectedStrategyId,
-            universe: selectedUniverse,
-            created_at: new Date().toISOString(),
-            completed_at: new Date().toISOString(),
-          };
-          setCurrentRun(simulatedRun);
-          setHistoryRuns((prev) => [simulatedRun, ...prev]);
-        }, 800);
-      }, 600);
+          setRunProgressMessage('正在聚合技术指标与估值分位数...');
+          setTimeout(() => {
+            setIsRunning(false);
+            const simulatedRun: ScreenerRunRead = {
+              ...mockCompletedScreenerRun,
+              id: `run-${Date.now()}`,
+              strategy_id: selectedStrategyId,
+              universe: selectedUniverse,
+              created_at: new Date().toISOString(),
+              completed_at: new Date().toISOString(),
+            };
+            setCurrentRun(simulatedRun);
+            setHistoryRuns((prev) => [simulatedRun, ...prev]);
+          }, 800);
+        }, 600);
+      } else {
+        setIsRunning(false);
+        const msg = err instanceof Error ? err.message : '启动选股扫描任务失败，请检查网络或后端接口';
+        alert(`选股失败: ${msg}`);
+      }
     }
   };
 
@@ -500,6 +515,17 @@ export const ScreenerConsoleView: React.FC = () => {
             ))}
           </div>
         </Modal>
+      )}
+
+      {/* Empty State when no screener run yet */}
+      {!currentRun && !isRunning && (
+        <div className="p-12 rounded-2xl border border-dashed border-slate-800 bg-slate-900/40 text-center space-y-3">
+          <Sliders className="h-10 w-10 text-slate-600 mx-auto" />
+          <h3 className="text-sm font-semibold text-slate-300">尚未执行选股扫描</h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            请在上方配置股票池（Universe）与量化策略参数，点击“启动选股扫描”拉取最新行情并生成实时多因子评分。
+          </p>
+        </div>
       )}
 
       {/* Results Section */}

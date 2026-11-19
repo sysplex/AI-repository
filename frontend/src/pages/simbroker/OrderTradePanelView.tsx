@@ -26,12 +26,16 @@ export interface OrderTradePanelViewProps {
   overview: AccountOverview;
   positions: PositionResponse[];
   onOrderSubmitted: () => void;
+  prefillOrder?: { symbol: string; side: 'buy' | 'sell'; quantity?: number } | null;
+  onClearPrefill?: () => void;
 }
 
 export const OrderTradePanelView: React.FC<OrderTradePanelViewProps> = ({
   overview,
   positions,
   onOrderSubmitted,
+  prefillOrder,
+  onClearPrefill,
 }) => {
   // Trade Form States
   const [symbol, setSymbol] = useState<string>('NVDA');
@@ -42,6 +46,22 @@ export const OrderTradePanelView: React.FC<OrderTradePanelViewProps> = ({
   const [limitPrice, setLimitPrice] = useState<string>('148.50');
   const [stopPrice, setStopPrice] = useState<string>('140.00');
   const [note, setNote] = useState<string>('突破均线顺势建仓');
+
+  // Consume prefilled order parameters (e.g. from quick close / sell)
+  React.useEffect(() => {
+    if (prefillOrder) {
+      if (prefillOrder.symbol) {
+        setSymbol(prefillOrder.symbol.toUpperCase());
+      }
+      if (prefillOrder.side) {
+        setSide(prefillOrder.side);
+      }
+      if (prefillOrder.quantity !== undefined && prefillOrder.quantity > 0) {
+        setQty(String(prefillOrder.quantity));
+      }
+      onClearPrefill?.();
+    }
+  }, [prefillOrder, onClearPrefill]);
 
   // Interactive Reference Price Map (Live / Simulated)
   const [quoteMap] = useState<Record<string, { price: number; changePct: number; name: string }>>({
@@ -82,7 +102,10 @@ export const OrderTradePanelView: React.FC<OrderTradePanelViewProps> = ({
   // Confirm Modal State
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [submitFeedback, setSubmitFeedback] = useState<string | null>(null);
+  const [submitFeedback, setSubmitFeedback] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
   // Quick Quantity Selector
   const handleSetRatio = (ratio: number) => {
@@ -111,26 +134,41 @@ export const OrderTradePanelView: React.FC<OrderTradePanelViewProps> = ({
 
     try {
       await simbrokerApi.submitOrder(overview.id, payload);
-      setSubmitFeedback(`订单提交成功！${side === 'buy' ? '买入' : '卖出'} ${numQty} 股 ${upperSymbol}`);
+      setSubmitFeedback({
+        type: 'success',
+        message: `订单提交成功！${side === 'buy' ? '买入' : '卖出'} ${numQty} 股 ${upperSymbol}`,
+      });
       onOrderSubmitted();
-    } catch {
-      // Fallback feedback for mock environment
-      setSubmitFeedback(`订单模拟已确认：${side === 'buy' ? '买入' : '卖出'} ${numQty} 股 ${upperSymbol}`);
-      onOrderSubmitted();
+    } catch (err: unknown) {
+      setSubmitFeedback({
+        type: 'error',
+        message: err instanceof Error ? err.message : '下单失败，请检查可用资金或持仓',
+      });
     } finally {
       setIsSubmitting(false);
       setIsConfirmModalOpen(false);
-      setTimeout(() => setSubmitFeedback(null), 3500);
+      setTimeout(() => setSubmitFeedback(null), 4500);
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Success Feedback Toast */}
+      {/* Success / Error Feedback Toast */}
       {submitFeedback && (
-        <div className="flex items-center gap-2 p-4 rounded-xl bg-emerald-500/90 text-white font-medium text-xs shadow-lg shadow-emerald-500/20 animate-in fade-in">
-          <CheckCircle2 className="h-5 w-5" />
-          <span>{submitFeedback}</span>
+        <div
+          className={cn(
+            'flex items-center gap-2 p-4 rounded-xl font-medium text-xs shadow-lg animate-in fade-in',
+            submitFeedback.type === 'success'
+              ? 'bg-emerald-500/90 text-white shadow-emerald-500/20'
+              : 'bg-rose-500/90 text-white shadow-rose-500/20',
+          )}
+        >
+          {submitFeedback.type === 'success' ? (
+            <CheckCircle2 className="h-5 w-5 shrink-0" />
+          ) : (
+            <AlertCircle className="h-5 w-5 shrink-0" />
+          )}
+          <span>{submitFeedback.message}</span>
         </div>
       )}
 

@@ -30,6 +30,13 @@ export const simbrokerApi = {
     return api.get<AccountOverview>(`/sim/accounts/${accountId}`);
   },
 
+  async resetAccount(
+    accountId: string,
+    data?: { initial_cash?: number | string },
+  ): Promise<AccountOverview> {
+    return api.post<AccountOverview>(`/sim/accounts/${accountId}/reset`, data || {});
+  },
+
   // ---------------------------------------------------------------------------
   // 2. 出入金与资金流
   // ---------------------------------------------------------------------------

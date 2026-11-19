@@ -499,3 +499,82 @@ async def test_process_bar_and_fill_order() -> None:
     assert trades[0].price == Decimal("150.0000")
     assert open_order.status == "filled"
     assert session.commit.awaited
+
+
+async def test_reset_account_success() -> None:
+    account_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    account = _make_account(
+        id=account_id,
+        user_id=user_id,
+        initial_cash=Decimal("100000.0000"),
+        cash=Decimal("45000.0000"),
+    )
+    open_order = _make_order(
+        user_id=user_id,
+        account_id=account_id,
+        symbol="NVDA",
+        side="buy",
+        status="accepted",
+    )
+    pos = SimPosition(
+        id=uuid.uuid4(),
+        user_id=user_id,
+        account_id=account_id,
+        symbol="NVDA",
+        qty=Decimal("50.0000"),
+        avg_cost=Decimal("140.0000"),
+        realized_pnl=Decimal("0.0000"),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
+    )
+
+    session = _mock_session(account=account, orders=[open_order], positions=[pos])
+    service = SimService(session=session)
+
+    overview = await service.reset_account(account_id=account_id, user_id=user_id)
+
+    assert account.cash == Decimal("100000.0000")
+    assert open_order.status == "cancelled"
+    assert open_order.reject_reason == "Account reset"
+    assert session.delete.called
+    assert session.commit.awaited
+    assert overview.id == account_id
+    assert overview.cash == Decimal("100000.0000")
+
+
+async def test_reset_account_custom_initial_cash() -> None:
+    account_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    account = _make_account(
+        id=account_id,
+        user_id=user_id,
+        initial_cash=Decimal("100000.0000"),
+        cash=Decimal("20000.0000"),
+    )
+    session = _mock_session(account=account, orders=[], positions=[])
+    service = SimService(session=session)
+
+    overview = await service.reset_account(
+        account_id=account_id,
+        user_id=user_id,
+        initial_cash=Decimal("200000.0000"),
+    )
+
+    assert account.initial_cash == Decimal("200000.0000")
+    assert account.cash == Decimal("200000.0000")
+    assert overview.cash == Decimal("200000.0000")
+
+
+async def test_reset_account_cross_tenant_forbidden() -> None:
+    account_id = uuid.uuid4()
+    owner_id = uuid.uuid4()
+    other_user_id = uuid.uuid4()
+    account = _make_account(id=account_id, user_id=owner_id)
+
+    session = _mock_session(account=account)
+    service = SimService(session=session)
+
+    with pytest.raises(NotFound):
+        await service.reset_account(account_id=account_id, user_id=other_user_id)
+

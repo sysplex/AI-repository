@@ -16,6 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field
 __all__ = [
     "AccountCreate",
     "AccountOverview",
+    "AccountResetRequest",
     "AccountResponse",
     "AccountStatus",
     "DepositRequest",
@@ -108,6 +109,12 @@ class DepositRequest(BaseModel):
     """出入金请求"""
 
     amount: Decimal = Field(gt=0)
+
+
+class AccountResetRequest(BaseModel):
+    """重置模拟盘账户请求"""
+
+    initial_cash: Decimal | None = Field(default=None, gt=0)
 
 
 class OrderCreate(BaseModel):

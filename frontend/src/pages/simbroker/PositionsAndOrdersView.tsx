@@ -19,7 +19,7 @@ export interface PositionsAndOrdersViewProps {
   positions: PositionResponse[];
   orders: OrderResponse[];
   onRefresh: () => void;
-  onQuickTrade?: (symbol: string, side: 'buy' | 'sell') => void;
+  onQuickTrade?: (symbol: string, side: 'buy' | 'sell', quantity?: number) => void;
 }
 
 export const PositionsAndOrdersView: React.FC<PositionsAndOrdersViewProps> = ({
@@ -42,9 +42,8 @@ export const PositionsAndOrdersView: React.FC<PositionsAndOrdersViewProps> = ({
     try {
       await simbrokerApi.cancelOrder(accountId, orderId);
       onRefresh();
-    } catch {
-      // Local fallback
-      onRefresh();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : '撤单失败，请稍后重试');
     } finally {
       setCancellingOrderId(null);
     }
@@ -225,7 +224,7 @@ export const PositionsAndOrdersView: React.FC<PositionsAndOrdersViewProps> = ({
                               <Button
                                 size="sm"
                                 variant="danger"
-                                onClick={() => onQuickTrade(pos.symbol, 'sell')}
+                                onClick={() => onQuickTrade(pos.symbol, 'sell', parseFloat(pos.qty) || undefined)}
                                 title="快速卖出平仓"
                               >
                                 快速平仓

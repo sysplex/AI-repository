@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   DollarSign,
   Plus,
+  RotateCcw,
   Scale,
   ShieldCheck,
   TrendingUp,
@@ -26,10 +27,11 @@ export interface AccountOverviewViewProps {
   accounts: AccountResponse[];
   activeAccountId: string;
   onSelectAccount: (id: string) => void;
-  performance: PerformanceMetrics;
-  risk: RiskOverview;
+  performance?: PerformanceMetrics | null;
+  risk?: RiskOverview | null;
   onOpenDeposit: () => void;
   onOpenCreateAccount: () => void;
+  onResetAccount?: () => void;
 }
 
 export const AccountOverviewView: React.FC<AccountOverviewViewProps> = ({
@@ -41,6 +43,7 @@ export const AccountOverviewView: React.FC<AccountOverviewViewProps> = ({
   risk,
   onOpenDeposit,
   onOpenCreateAccount,
+  onResetAccount,
 }) => {
   const [curveMode, setCurveMode] = useState<'equity' | 'benchmark'>('equity');
 
@@ -87,6 +90,24 @@ export const AccountOverviewView: React.FC<AccountOverviewViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {onResetAccount && (
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    `确认重置该模拟盘账户 (${overview.name})？\n\n注意：此操作将在单事务内取消全部未成交挂单、清空当前持仓，并将现金与资产恢复为初始本金 ($${parseFloat(overview.initial_cash).toLocaleString()})，且不可撤销！`
+                  )
+                ) {
+                  onResetAccount();
+                }
+              }}
+              leftIcon={<RotateCcw className="h-3.5 w-3.5" />}
+            >
+              重置账户
+            </Button>
+          )}
           <Button
             size="sm"
             variant="outline"
@@ -126,7 +147,7 @@ export const AccountOverviewView: React.FC<AccountOverviewViewProps> = ({
             <PriceDisplay value={cashNum} />
           </div>
           <div className="text-[10px] text-slate-500 font-mono">
-            现金水位: {risk.cash_ratio}%
+            现金水位: {risk ? `${risk.cash_ratio}%` : '--'}
           </div>
         </div>
 
@@ -137,7 +158,7 @@ export const AccountOverviewView: React.FC<AccountOverviewViewProps> = ({
             <PriceDisplay value={marketValNum} />
           </div>
           <div className="text-[10px] text-slate-500 font-mono">
-            持仓仓位: {(100 - parseFloat(risk.cash_ratio)).toFixed(1)}%
+            持仓仓位: {risk ? `${(100 - parseFloat(risk.cash_ratio)).toFixed(1)}%` : '--'}
           </div>
         </div>
 
@@ -281,10 +302,10 @@ export const AccountOverviewView: React.FC<AccountOverviewViewProps> = ({
 
             {/* X-axis dates & Legend */}
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono pt-2 border-t border-slate-800">
-              <span>2026-10-15</span>
-              <span>2026-10-25</span>
-              <span>2026-11-05</span>
-              <span>今日 (2026-11-15)</span>
+              <span>{new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)}</span>
+              <span>{new Date(Date.now() - 20 * 86400000).toISOString().slice(0, 10)}</span>
+              <span>{new Date(Date.now() - 10 * 86400000).toISOString().slice(0, 10)}</span>
+              <span>今日 ({new Date().toISOString().slice(0, 10)})</span>
             </div>
           </div>
 
@@ -292,7 +313,7 @@ export const AccountOverviewView: React.FC<AccountOverviewViewProps> = ({
           <div className="flex items-center justify-center gap-6 pt-1 text-xs text-slate-400 font-medium">
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-6 rounded bg-emerald-500" />
-              <span>当前模拟账户 (+14.95%)</span>
+              <span>当前模拟账户 ({totalPnlPct >= 0 ? `+${totalPnlPct.toFixed(2)}` : totalPnlPct.toFixed(2)}%)</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="h-0.5 w-6 border-b-2 border-dashed border-slate-500" />
@@ -313,37 +334,37 @@ export const AccountOverviewView: React.FC<AccountOverviewViewProps> = ({
               <div className="py-2.5 flex items-center justify-between">
                 <span className="text-slate-400">超额 Alpha (年化)</span>
                 <span className="font-mono font-bold text-emerald-400">
-                  +{performance.alpha || '8.75'}%
+                  +{performance?.alpha || '0.00'}%
                 </span>
               </div>
               <div className="py-2.5 flex items-center justify-between">
                 <span className="text-slate-400">市场敏感度 Beta</span>
                 <span className="font-mono font-bold text-slate-200">
-                  {performance.beta || '1.05'}
+                  {performance?.beta || '1.00'}
                 </span>
               </div>
               <div className="py-2.5 flex items-center justify-between">
                 <span className="text-slate-400">交易胜率 (Win Rate)</span>
                 <span className="font-mono font-bold text-blue-300">
-                  {performance.win_rate}% ({performance.winning_trades}胜 / {performance.losing_trades}负)
+                  {performance?.win_rate ?? '0.0'}% ({performance?.winning_trades ?? 0}胜 / {performance?.losing_trades ?? 0}负)
                 </span>
               </div>
               <div className="py-2.5 flex items-center justify-between">
                 <span className="text-slate-400">盈亏比 (Profit/Loss Ratio)</span>
                 <span className="font-mono font-bold text-slate-200">
-                  {performance.profit_loss_ratio}
+                  {performance?.profit_loss_ratio ?? '0.00'}
                 </span>
               </div>
               <div className="py-2.5 flex items-center justify-between">
                 <span className="text-slate-400">历史最大回撤 (Max Drawdown)</span>
                 <span className="font-mono font-bold text-rose-400">
-                  -{performance.max_drawdown}%
+                  -{performance?.max_drawdown ?? '0.00'}%
                 </span>
               </div>
               <div className="py-2.5 flex items-center justify-between">
                 <span className="text-slate-400">总成交笔数 (Total Trades)</span>
                 <span className="font-mono font-bold text-white">
-                  {performance.total_trades} 笔
+                  {performance?.total_trades ?? 0} 笔
                 </span>
               </div>
             </div>
@@ -356,14 +377,18 @@ export const AccountOverviewView: React.FC<AccountOverviewViewProps> = ({
               <span>前四大重仓标的集中度</span>
             </span>
             <div className="flex flex-wrap gap-1.5">
-              {(risk.top_positions || []).map(([sym, w], idx) => (
-                <span
-                  key={idx}
-                  className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-800 text-slate-300 border border-slate-700/60"
-                >
-                  {sym}: {w}
-                </span>
-              ))}
+              {risk?.top_positions && risk.top_positions.length > 0 ? (
+                risk.top_positions.map(([sym, w], idx) => (
+                  <span
+                    key={idx}
+                    className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-800 text-slate-300 border border-slate-700/60"
+                  >
+                    {sym}: {w}
+                  </span>
+                ))
+              ) : (
+                <span className="text-[11px] text-slate-500 italic">暂无持仓分布数据</span>
+              )}
             </div>
           </div>
         </div>

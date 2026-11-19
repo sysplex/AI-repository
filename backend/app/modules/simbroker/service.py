@@ -218,6 +218,74 @@ class SimService:
         await self.session.commit()
         return new_cash
 
+    async def reset_account(
+        self,
+        account_id: uuid.UUID,
+        user_id: uuid.UUID,
+        initial_cash: Decimal | None = None,
+    ) -> AccountOverview:
+        """重置模拟盘账户（单事务原子完成）。
+
+        1. 严格校验租户隔离；
+        2. 取消所有未完全成交的挂单（pending / accepted / submitted）；
+        3. 清空所有标的持仓；
+        4. 恢复现金余额与权益为初始本金（或指定本金）；
+        5. 记录审计日志并返回最新概览。
+        """
+        account = await self.get_account_entity(account_id, user_id)
+
+        # 1. 恢复初始本金与现金
+        if initial_cash is not None:
+            if initial_cash <= Decimal("0"):
+                raise ValueError("Initial cash must be positive")
+            account.initial_cash = initial_cash.quantize(_QUANTIZE_CASH, rounding=ROUND_HALF_UP)
+        account.cash = account.initial_cash
+
+        # 2. 取消所有未成交委托挂单
+        open_orders_stmt = select(SimOrder).where(
+            SimOrder.account_id == account_id,
+            SimOrder.status.in_(["pending", "accepted", "submitted"]),
+        )
+        orders_res = await self.session.execute(open_orders_stmt)
+        for order in orders_res.scalars().all():
+            order.status = "cancelled"
+            order.reject_reason = "Account reset"
+            record_simbroker_order(status="cancelled")
+
+        # 3. 清空当前所有标的持仓
+        pos_stmt = select(SimPosition).where(SimPosition.account_id == account_id)
+        pos_res = await self.session.execute(pos_stmt)
+        for pos in pos_res.scalars().all():
+            await self.session.delete(pos)
+
+        # 4. 更新/生成当日净值快照基准
+        today = date.today()
+        snap_stmt = select(EquitySnapshot).where(
+            EquitySnapshot.account_id == account_id,
+            EquitySnapshot.trade_date == today,
+        )
+        snap_res = await self.session.execute(snap_stmt)
+        today_snap = snap_res.scalar_one_or_none()
+        if today_snap is not None:
+            today_snap.cash = account.cash
+            today_snap.market_value = Decimal("0.0000")
+            today_snap.equity = account.cash
+            today_snap.drawdown = Decimal("0.000000")
+
+        # 5. 提交原子事务并审计记录
+        await self.session.commit()
+        await self.session.refresh(account)
+
+        logger.info(
+            "simbroker.account_reset_success",
+            account_id=str(account_id),
+            user_id=str(user_id),
+            initial_cash=str(account.initial_cash),
+            cash=str(account.cash),
+        )
+
+        return await self.get_account_overview(account_id, user_id)
+
     async def submit_order(
         self,
         user_id: uuid.UUID,
