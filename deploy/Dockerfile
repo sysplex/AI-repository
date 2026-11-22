@@ -7,7 +7,7 @@ ARG PYTHON_VERSION=3.12.15
 
 # uv 二进制来源 stage。tag 必须写死：`COPY --from=` 不支持变量展开，
 # 用独立 stage 而不是 `--from=ghcr.io/astral-sh/uv:${UV_VERSION}`。
-FROM ghcr.io/astral-sh/uv:0.13.7 AS uv-bin
+FROM ghcr.io/astral-sh/uv:0.13.9 AS uv-bin
 
 # ---------- builder ----------
 FROM python:${PYTHON_VERSION}-slim AS builder
