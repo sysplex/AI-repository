@@ -246,10 +246,73 @@ class MockLLMClient(BaseLLMClient):
                 return self._build_result_from_item(mapped, latency_ms)
 
         # 7. 预设响应或默认合法输出
-        response_data = (
-            self._canned_response if self._canned_response is not None else DEFAULT_MOCK_PAYLOAD
-        )
+        if self._canned_response is not None:
+            response_data = self._canned_response
+        elif output_schema and (output_schema.get("properties") or "$defs" in output_schema):
+            response_data = self._generate_from_schema(output_schema)
+        else:
+            response_data = DEFAULT_MOCK_PAYLOAD
         return self._build_result_from_item(response_data, latency_ms)
+
+    @classmethod
+    def _generate_from_schema(
+        cls,
+        schema: dict[str, Any],
+        root: dict[str, Any] | None = None,
+    ) -> Any:
+        """根据 JSON Schema 递归生成合法 Mock 数据结构。"""
+        if root is None:
+            root = schema
+
+        if "$ref" in schema:
+            ref_path = str(schema["$ref"]).split("/")[-1]
+            defs = root.get("$defs", root.get("definitions", {}))
+            if ref_path in defs:
+                return cls._generate_from_schema(defs[ref_path], root)
+            return {}
+
+        if "allOf" in schema:
+            merged: dict[str, Any] = {}
+            for sub in schema["allOf"]:
+                val = cls._generate_from_schema(sub, root)
+                if isinstance(val, dict):
+                    merged.update(val)
+            return merged
+
+        if "anyOf" in schema and schema["anyOf"]:
+            return cls._generate_from_schema(schema["anyOf"][0], root)
+
+        if "oneOf" in schema and schema["oneOf"]:
+            return cls._generate_from_schema(schema["oneOf"][0], root)
+
+        s_type = schema.get("type")
+        if s_type == "object" or "properties" in schema:
+            res: dict[str, Any] = {}
+            for prop_name, prop_schema in schema.get("properties", {}).items():
+                res[prop_name] = cls._generate_from_schema(prop_schema, root)
+            return res
+
+        if s_type == "array":
+            items = schema.get("items", {})
+            if items:
+                return [cls._generate_from_schema(items, root)]
+            return ["mock_item"]
+
+        if s_type == "string":
+            if "enum" in schema and schema["enum"]:
+                return schema["enum"][0]
+            return "mock_analysis"
+
+        if s_type in ("number", "float"):
+            return 0.85
+
+        if s_type == "integer":
+            return 1
+
+        if s_type == "boolean":
+            return True
+
+        return None
 
     # -------------------------------------------------------------------------
     # 内部辅助逻辑
