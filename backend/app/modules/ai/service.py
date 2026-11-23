@@ -101,11 +101,11 @@ data_snapshots_table = table(
     "data_snapshots",
     column("content_hash", String),
     column("symbol", String),
-    column("as_of", DateTime),
+    column("as_of", DateTime(timezone=True)),
     column("scope", JSON),
     column("facts", JSON),
     column("missing_fields", JSON),
-    column("created_at", DateTime),
+    column("created_at", DateTime(timezone=True)),
 )
 
 

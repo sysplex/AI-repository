@@ -51,8 +51,8 @@ ai_usage_table = table(
     column("tokens_in", Integer),
     column("tokens_out", Integer),
     column("cost_usd", Numeric),
-    column("created_at", DateTime),
-    column("updated_at", DateTime),
+    column("created_at", DateTime(timezone=True)),
+    column("updated_at", DateTime(timezone=True)),
 )
 
 
