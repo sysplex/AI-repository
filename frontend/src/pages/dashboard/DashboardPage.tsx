@@ -12,6 +12,7 @@ import { Button } from '../../components/common/Button';
 import { StockDetailModal } from '../../components/chart/StockDetailModal';
 import { formatLargeNumber } from '../../utils/format';
 import { marketApi } from '../../api/market';
+import { api } from '../../api/client';
 import type { Quote, Signal } from '../../api/types';
 
 interface MarketIndexItem {
@@ -30,9 +31,9 @@ interface StockOverviewItem {
   changePercent: number;
   changeAmount: number;
   volume: number;
-  marketCap: number;
-  aiSignal: 'BULLISH' | 'NEUTRAL' | 'BEARISH';
-  aiScore: number;
+  marketCap?: number | null;
+  aiSignal?: 'BULLISH' | 'NEUTRAL' | 'BEARISH' | null;
+  aiScore?: number | null;
 }
 
 const INDEX_CONFIG = [
@@ -43,12 +44,12 @@ const INDEX_CONFIG = [
 ];
 
 const HOT_STOCKS_CONFIG = [
-  { symbol: 'NVDA', name: 'NVIDIA Corp', marketCap: 3580000000000, aiSignal: 'BULLISH' as const, aiScore: 88 },
-  { symbol: 'AAPL', name: 'Apple Inc', marketCap: 3450000000000, aiSignal: 'NEUTRAL' as const, aiScore: 65 },
-  { symbol: 'MSFT', name: 'Microsoft Corp', marketCap: 3140000000000, aiSignal: 'BULLISH' as const, aiScore: 82 },
-  { symbol: 'TSLA', name: 'Tesla Inc', marketCap: 1080000000000, aiSignal: 'NEUTRAL' as const, aiScore: 54 },
-  { symbol: 'AMZN', name: 'Amazon.com Inc', marketCap: 2160000000000, aiSignal: 'BULLISH' as const, aiScore: 79 },
-  { symbol: 'PLTR', name: 'Palantir Technologies', marketCap: 138000000000, aiSignal: 'BULLISH' as const, aiScore: 91 },
+  { symbol: 'NVDA', name: 'NVIDIA Corp' },
+  { symbol: 'AAPL', name: 'Apple Inc' },
+  { symbol: 'MSFT', name: 'Microsoft Corp' },
+  { symbol: 'TSLA', name: 'Tesla Inc' },
+  { symbol: 'AMZN', name: 'Amazon.com Inc' },
+  { symbol: 'PLTR', name: 'Palantir Technologies' },
 ];
 
 export const DashboardPage: React.FC = () => {
@@ -57,6 +58,7 @@ export const DashboardPage: React.FC = () => {
 
   const [marketIndices, setMarketIndices] = useState<MarketIndexItem[]>([]);
   const [hotStocks, setHotStocks] = useState<StockOverviewItem[]>([]);
+  const [modalSignals, setModalSignals] = useState<Signal[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [asOf, setAsOf] = useState<string>(new Date().toISOString());
@@ -71,6 +73,40 @@ export const DashboardPage: React.FC = () => {
       quotesList.forEach((q) => {
         quotesMap[q.symbol.toUpperCase()] = q;
       });
+
+      // 并发拉取热门标的基本面以获取真实市值（若未连接或异常则为 null，严禁硬编码虚假数据）
+      const fundamentalsResults = await Promise.allSettled(
+        HOT_STOCKS_CONFIG.map((cfg) => marketApi.getFundamentals(cfg.symbol))
+      );
+      const fundMap: Record<string, number | null> = {};
+      fundamentalsResults.forEach((res, idx) => {
+        const sym = HOT_STOCKS_CONFIG[idx].symbol;
+        if (res.status === 'fulfilled' && res.value && res.value.market_cap) {
+          const parsed = parseFloat(res.value.market_cap);
+          fundMap[sym] = isNaN(parsed) ? null : parsed;
+        } else {
+          fundMap[sym] = null;
+        }
+      });
+
+      // 尝试扫描道氏趋势策略以获取真实技术量化信号
+      const today = new Date().toISOString().split('T')[0];
+      const scanMap: Record<string, Signal> = {};
+      try {
+        const scanned = await api.post<Signal[]>('/strategy/scan', {
+          strategy_id: 'dow_trend',
+          symbols: HOT_STOCKS_CONFIG.map((s) => s.symbol),
+          as_of: today,
+          params: {},
+        });
+        if (Array.isArray(scanned)) {
+          scanned.forEach((sig) => {
+            if (sig && sig.symbol) scanMap[sig.symbol.toUpperCase()] = sig;
+          });
+        }
+      } catch {
+        // 策略扫描未就绪或行情不足时不伪造假信号
+      }
 
       const indices: MarketIndexItem[] = INDEX_CONFIG.map((cfg) => {
         const q = quotesMap[cfg.symbol];
@@ -93,6 +129,21 @@ export const DashboardPage: React.FC = () => {
         const priceNum = q ? parseFloat(q.price) : 0;
         const changeNum = q ? parseFloat(q.change_pct) : 0;
         const changeAmt = q ? parseFloat(q.change) : 0;
+        const sig = scanMap[cfg.symbol];
+
+        let aiSignal: 'BULLISH' | 'NEUTRAL' | 'BEARISH' | null = null;
+        let aiScore: number | null = null;
+        if (sig) {
+          if (sig.direction === 'long') {
+            aiSignal = 'BULLISH';
+          } else if (sig.direction === 'short') {
+            aiSignal = 'BEARISH';
+          } else {
+            aiSignal = 'NEUTRAL';
+          }
+          aiScore = sig.strength;
+        }
+
         return {
           symbol: cfg.symbol,
           name: cfg.name,
@@ -100,9 +151,9 @@ export const DashboardPage: React.FC = () => {
           changePercent: changeNum,
           changeAmount: changeAmt,
           volume: q?.volume || 0,
-          marketCap: cfg.marketCap,
-          aiSignal: cfg.aiSignal,
-          aiScore: cfg.aiScore,
+          marketCap: fundMap[cfg.symbol] ?? null,
+          aiSignal,
+          aiScore,
         };
       });
       setHotStocks(stocks);
@@ -123,24 +174,36 @@ export const DashboardPage: React.FC = () => {
     fetchDashboardData();
   }, []);
 
-  const getSignalsForSymbol = (sym: string): Signal[] => {
-    const today = new Date().toISOString().split('T')[0];
-    return [
-      {
-        strategy_id: 'dow_trend',
-        symbol: sym,
-        as_of: today,
-        direction: 'long',
-        strength: 85,
-        reasons: ['突破短期阻力位', '量价配合健康', '多因子共振打分良好'],
-        levels: {
-          entry: '--',
-          stop_loss: '--',
-          target: '--',
-        },
-      },
-    ];
-  };
+  // 选中标的时，真实调用后端策略信号接口计算信号，绝不伪造硬编码假信号
+  useEffect(() => {
+    if (!selectedStock) {
+      setModalSignals([]);
+      return;
+    }
+    let cancelled = false;
+    const fetchSignals = async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const res = await api.post<Signal>('/strategy/evaluate', {
+          strategy_id: 'dow_trend',
+          symbol: selectedStock.symbol,
+          as_of: today,
+          params: {},
+        });
+        if (!cancelled && res && res.strategy_id) {
+          setModalSignals([res]);
+        }
+      } catch {
+        if (!cancelled) {
+          setModalSignals([]);
+        }
+      }
+    };
+    fetchSignals();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedStock]);
 
   const columns: Column<StockOverviewItem>[] = [
     {
@@ -191,7 +254,11 @@ export const DashboardPage: React.FC = () => {
       dataIndex: 'marketCap',
       sortable: true,
       align: 'right',
-      render: (val) => <span className="font-mono text-slate-300">${formatLargeNumber(val)}</span>,
+      render: (val) => (
+        <span className="font-mono text-slate-300">
+          {val ? `$${formatLargeNumber(val)}` : '--'}
+        </span>
+      ),
     },
     {
       key: 'aiSignal',
@@ -200,6 +267,13 @@ export const DashboardPage: React.FC = () => {
       sortable: true,
       align: 'center',
       render: (_, record) => {
+        if (!record.aiSignal || record.aiScore === undefined || record.aiScore === null) {
+          return (
+            <span className="text-[11px] text-slate-500 font-mono">
+              待触发研判
+            </span>
+          );
+        }
         const signalStyles = {
           BULLISH: 'bg-emerald-950/60 text-emerald-300 border-emerald-500/30',
           NEUTRAL: 'bg-slate-800 text-slate-300 border-slate-700',
@@ -361,7 +435,7 @@ export const DashboardPage: React.FC = () => {
         onClose={() => setSelectedStock(null)}
         symbol={selectedStock?.symbol || ''}
         name={selectedStock?.name}
-        signals={selectedStock ? getSignalsForSymbol(selectedStock.symbol) : []}
+        signals={modalSignals}
         onOpenResearch={(sym) => navigate(`/research?symbol=${sym}`)}
       />
     </div>

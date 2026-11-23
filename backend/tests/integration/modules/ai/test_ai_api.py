@@ -234,6 +234,7 @@ async def test_analyze_authenticated_cache_miss(
         params={"risk": "moderate"},
         user_id=auth_user.id,
         prompt_version="v1",
+        llm_client=None,
     )
 
 

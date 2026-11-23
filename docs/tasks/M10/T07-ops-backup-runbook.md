@@ -1,7 +1,7 @@
 # M10-T07: 运维容灾、监控告警体系与故障应急手册
 
 > 责任人：Antigravity ｜ 依赖：M10-T05, M10-T06 已完成 ｜ 分支：`feat/m10-t07-ops-backup-runbook`  
-> 契约参考：[`docs/tasks/M10/CONTRACTS.md`](CONTRACTS.md) ｜ [`docs/02-architecture.md`](../../02-architecture.md) ｜ [`docs/05-api-spec.md§2.9`](../../05-api-spec.md) ｜ [`deploy/K8S.md`](../../deploy/K8S.md) ｜ [`GEMINI.md`](../../../GEMINI.md)
+> 契约参考：[`docs/tasks/M10/CONTRACTS.md`](CONTRACTS.md) ｜ [`docs/02-architecture.md`](../../02-architecture.md) ｜ [`docs/05-api-spec.md§2.9`](../../05-api-spec.md) ｜ [`deploy/K8S.md`](../../../deploy/K8S.md) ｜ [`AGENTS.md`](../../../AGENTS.md)
 
 ---
 

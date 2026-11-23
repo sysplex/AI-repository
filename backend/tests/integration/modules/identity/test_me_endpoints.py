@@ -97,6 +97,9 @@ async def test_patch_me_roundtrip_and_audit(
         "risk_profile": "aggressive",
         "language": "en-US",
         "default_account_id": account_id,
+        "ai_provider": "mock",
+        "google_api_key": None,
+        "google_model": "gemini-3.5-flash-lite",
     }
     # 再读一次确认已落库（不是只改了响应对象）
     again = await client.get(_ME, headers=_headers(token))
@@ -117,6 +120,30 @@ async def test_patch_me_roundtrip_and_audit(
     )
     assert len(rows) == 1
     assert rows[0].detail == {"keys": ["default_account_id", "language", "risk_profile"]}
+
+    # 验证 UserSettings 新增 AI 字段 roundtrip
+    ai_patch = await client.patch(
+        _ME,
+        headers=_headers(token),
+        json={
+            "settings": {
+                "ai_provider": "google",
+                "google_api_key": "test-google-key",
+                "google_model": "gemini-2.5-flash",
+            }
+        },
+    )
+    assert ai_patch.status_code == 200, ai_patch.text
+    ai_body = ai_patch.json()
+    assert ai_body["settings"]["ai_provider"] == "google"
+    assert ai_body["settings"]["google_api_key"] == "test-google-key"
+    assert ai_body["settings"]["google_model"] == "gemini-2.5-flash"
+    assert ai_body["settings"]["risk_profile"] == "aggressive"
+
+    again_ai = await client.get(_ME, headers=_headers(token))
+    assert again_ai.json()["settings"]["ai_provider"] == "google"
+    assert again_ai.json()["settings"]["google_api_key"] == "test-google-key"
+    assert again_ai.json()["settings"]["google_model"] == "gemini-2.5-flash"
 
 
 @pytest.mark.parametrize(
