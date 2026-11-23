@@ -7,6 +7,7 @@ order submission and cancellation, market close and bar processing.
 
 from __future__ import annotations
 
+import json
 import uuid
 from collections.abc import Sequence
 from datetime import UTC, date, datetime
@@ -210,6 +211,33 @@ async def test_create_account() -> None:
     assert session.add.called
     assert session.commit.awaited
     assert session.refresh.awaited
+
+
+async def test_create_account_fee_model_json_serializable() -> None:
+    session = _mock_session()
+    service = SimService(session=session)
+    user_id = uuid.uuid4()
+    req = AccountCreate(
+        name="Custom Fee Sim Account",
+        initial_cash=Decimal("100000.0000"),
+        fee_model=FeeModelConfig(
+            type="bps",
+            per_share=Decimal("0.0050"),
+            bps=Decimal("2.0000"),
+            min_fee=Decimal("1.0000"),
+            max_fee=Decimal("100.0000"),
+        ),
+    )
+
+    account_resp = await service.create_account(user_id=user_id, req=req)
+
+    added_account = session.add.call_args[0][0]
+    # 必须能够通过标准 json.dumps 序列化，严禁裸 Decimal 导致 asyncpg JSONB 抛错 (P0-1)
+    serialized = json.dumps(added_account.fee_model)
+    assert "0.005" in serialized
+    assert "2.0" in serialized
+    assert account_resp.fee_model.per_share == Decimal("0.0050")
+    assert account_resp.fee_model.bps == Decimal("2.0000")
 
 
 async def test_get_account_entity_success_and_tenant_check() -> None:
@@ -577,4 +605,3 @@ async def test_reset_account_cross_tenant_forbidden() -> None:
 
     with pytest.raises(NotFound):
         await service.reset_account(account_id=account_id, user_id=other_user_id)
-

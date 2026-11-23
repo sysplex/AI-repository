@@ -64,6 +64,7 @@ from app.modules.identity.schemas import (
     TokenPair,
     UsageResponse,
     UserPublic,
+    UserSettings,
 )
 from app.modules.identity.security import (
     hash_opaque_token,
@@ -296,9 +297,9 @@ class IdentityService:
         current = record.settings or {}
         new_data = update.settings.model_dump(mode="json")
         # 若新保存未提供 google_api_key 或传入了掩码，保留已有真实密钥
-        if not new_data.get("google_api_key") or new_data.get("google_api_key", "").startswith("***"):
-            if current.get("google_api_key"):
-                new_data["google_api_key"] = current["google_api_key"]
+        google_key = str(new_data.get("google_api_key") or "")
+        if (not google_key or google_key.startswith("***")) and current.get("google_api_key"):
+            new_data["google_api_key"] = current["google_api_key"]
         record.settings = new_data
         await self._users.save(record)
         await self._audit(

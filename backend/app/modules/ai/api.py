@@ -107,9 +107,10 @@ async def test_api_key(
                 max_tokens=10,
                 temperature=0.0,
             )
+            msg = f"Google Gemini 连接成功！模型 [{model_name}] 响应正常，延迟 {res.latency_ms}ms"
             return TestAPIKeyResponse(
                 valid=True,
-                message=f"Google Gemini 连接成功！模型 [{model_name}] 响应正常，延迟 {res.latency_ms}ms",
+                message=msg,
                 latency_ms=res.latency_ms,
             )
         except Exception as exc:

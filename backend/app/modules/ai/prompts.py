@@ -667,6 +667,10 @@ class PromptRegistry:
         """获取某用例当前的 active 版本号。"""
         return self._active_versions.get(use_case.strip())
 
+    def get_active(self, use_case: str) -> PromptTemplate:
+        """获取某用例当前 active 版本的模板。"""
+        return self.get(use_case)
+
     def list_templates(self, use_case: str | None = None) -> list[PromptTemplate]:
         """按用例过滤或列出所有模板。"""
         if use_case:

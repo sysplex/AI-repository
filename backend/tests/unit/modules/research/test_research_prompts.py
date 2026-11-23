@@ -422,3 +422,34 @@ def test_schema_validator_validates_earnings_payload() -> None:
     assert len(result.errors) == 0
     assert result.data is not None
     assert result.data["assessment"] == "strong"
+
+
+def test_app_startup_prompt_registry_complete() -> None:
+    """验证启动与接线后，default_prompt_registry 对所有 7 个研究用例均能返回有效模板。"""
+    from app.modules.ai.service import default_prompt_registry
+    from app.modules.research.prompts import register_research_prompts
+
+    register_research_prompts(default_prompt_registry)
+
+    expected_use_cases = [
+        "research",
+        "buy_decision",
+        "technical",
+        "earnings",
+        "compare",
+        "long_term",
+        "portfolio",
+    ]
+
+    for uc in expected_use_cases:
+        tmpl = default_prompt_registry.get_active(uc)
+        assert tmpl is not None
+        assert tmpl.use_case == uc
+        assert tmpl.version
+        assert tmpl.system_template
+        assert tmpl.user_template
+
+    # 验证幂等性：重复注册无副作用
+    register_research_prompts(default_prompt_registry)
+    for uc in expected_use_cases:
+        assert default_prompt_registry.get_active(uc).use_case == uc

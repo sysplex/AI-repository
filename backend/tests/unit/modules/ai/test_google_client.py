@@ -77,11 +77,13 @@ async def test_google_gemini_client_error_handling() -> None:
 
 
 def test_ai_service_create_client() -> None:
+    from app.modules.ai.adapters.google import GoogleGeminiClient
+
     client_mock = AIService.create_client(provider="mock", api_key="")
     assert client_mock.__class__.__name__ == "MockLLMClient"
 
     client_google = AIService.create_client(
         provider="google", api_key="AQ.test", model="gemini-3.1-flash-lite"
     )
-    assert client_google.__class__.__name__ == "GoogleGeminiClient"
+    assert isinstance(client_google, GoogleGeminiClient)
     assert client_google.default_model == "gemini-3.1-flash-lite"

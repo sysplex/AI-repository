@@ -78,7 +78,8 @@ def test_upgrade_downgrade_upgrade_and_check(test_database_url: str) -> None:
     command.upgrade(config, "head")
     versions = asyncio.run(_query(test_database_url, "SELECT version_num FROM alembic_version"))
     # M10-T01: 迁移链为 0001_initial → 0002_marketdata → 0003_identity
-    # → 0004_simbroker → 0005_ai → 0006_screener → 0007_scheduler_notify，单一 head 为 0007_scheduler_notify。
+    # → 0004_simbroker → 0005_ai → 0006_screener → 0007_scheduler_notify
+    # 单一 head 为 0007_scheduler_notify。
     assert versions == [("0007_scheduler_notify",)]
 
     command.downgrade(config, "base")

@@ -93,7 +93,7 @@ class SimService:
             name=req.name,
             initial_cash=req.initial_cash,
             cash=req.initial_cash,
-            fee_model=req.fee_model.model_dump(),
+            fee_model=req.fee_model.model_dump(mode="json"),
             slippage_bps=req.slippage_bps,
             pdt_enabled=req.pdt_enabled,
             status="active",

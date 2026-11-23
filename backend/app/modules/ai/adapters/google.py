@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-import json
 import time
 from typing import Any
 
@@ -66,23 +65,18 @@ class GoogleGeminiClient(BaseLLMClient):
         # 注入 JSON Schema 约定
         effective_system = inject_schema_instruction(system, output_schema)
 
-        url = f"{GEMINI_API_BASE_URL}/models/{self.default_model}:generateContent?key={self.api_key}"
+        url = (
+            f"{GEMINI_API_BASE_URL}/models/{self.default_model}:generateContent?key={self.api_key}"
+        )
 
         # 构造 Gemini 请求体
         body: dict[str, Any] = {
-            "system_instruction": {
-                "parts": [{"text": effective_system}]
-            },
-            "contents": [
-                {
-                    "role": "user",
-                    "parts": [{"text": user}]
-                }
-            ],
+            "system_instruction": {"parts": [{"text": effective_system}]},
+            "contents": [{"role": "user", "parts": [{"text": user}]}],
             "generationConfig": {
                 "temperature": temperature,
                 "maxOutputTokens": max_tokens,
-            }
+            },
         }
         if output_schema:
             body["generationConfig"]["responseMimeType"] = "application/json"
@@ -112,7 +106,11 @@ class GoogleGeminiClient(BaseLLMClient):
             raise AIServiceUnavailableError(f"Google Gemini 额度耗尽或超频: {msg}")
 
         if resp.status_code != 200:
-            logger.error("google_gemini.server_error", status=resp.status_code, body=resp.text[:300])
+            logger.error(
+                "google_gemini.server_error",
+                status=resp.status_code,
+                body=resp.text[:300],
+            )
             raise AIServiceUnavailableError(f"Google Gemini 服务响应异常 (HTTP {resp.status_code})")
 
         data = resp.json()

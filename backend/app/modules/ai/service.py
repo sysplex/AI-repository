@@ -60,6 +60,7 @@ from app.modules.ai.tracing import FactTracingEngine
 __all__ = [
     "AIService",
     "data_snapshots_table",
+    "default_prompt_registry",
     "get_budget_circuit_breaker",
     "get_global_llm_client_resolver",
     "set_budget_circuit_breaker",
@@ -125,7 +126,9 @@ class AIService:
         self._session = session
         self._llm_client: LLMClient = llm_client if llm_client is not None else MockLLMClient()
         self._llm_client_resolver = (
-            llm_client_resolver if llm_client_resolver is not None else get_global_llm_client_resolver()
+            llm_client_resolver
+            if llm_client_resolver is not None
+            else get_global_llm_client_resolver()
         )
         self._prompt_registry: PromptRegistryProtocol = (
             prompt_registry if prompt_registry is not None else default_prompt_registry
@@ -150,7 +153,10 @@ class AIService:
         if provider == "google":
             from app.modules.ai.adapters.google import GoogleGeminiClient
 
-            return GoogleGeminiClient(api_key=api_key, default_model=model or "gemini-3.5-flash-lite")
+            return GoogleGeminiClient(
+                api_key=api_key,
+                default_model=model or "gemini-3.5-flash-lite",
+            )
         from app.modules.ai.adapters.mock import MockLLMClient
 
         return MockLLMClient()
@@ -267,7 +273,11 @@ class AIService:
                 if resolved is not None:
                     active_client = resolved
             except Exception as exc:
-                logger.warning("ai.resolve_user_llm_client_failed", user_id=str(user_id), error=str(exc))
+                logger.warning(
+                    "ai.resolve_user_llm_client_failed",
+                    user_id=str(user_id),
+                    error=str(exc),
+                )
 
         try:
             caller = RetryableLLMCaller(client=active_client)

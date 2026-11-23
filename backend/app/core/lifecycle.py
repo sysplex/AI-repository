@@ -6,8 +6,9 @@
 
 from __future__ import annotations
 
+import inspect
 from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from app.core.config import get_settings
 from app.core.db import dispose_engine
@@ -19,9 +20,16 @@ if TYPE_CHECKING:
 
 _log = get_logger("app.lifecycle")
 
+_startup_hooks: list[Callable[[FastAPI], Any]] = []
+
+
+def register_startup_hook(hook: Callable[[FastAPI], Any]) -> None:
+    """注册应用启动回调钩子（供高层路由层/业务组装层挂载，避免逆向分层依赖）。"""
+    _startup_hooks.append(hook)
+
 
 async def on_startup(app: FastAPI) -> None:
-    """输出启动日志，含版本与环境（不含任何凭据）。"""
+    """输出启动日志，含版本与环境（不含任何凭据），并执行所有注册的启动钩子。"""
     settings = get_settings()
     _log.info(
         "app.startup",
@@ -29,6 +37,18 @@ async def on_startup(app: FastAPI) -> None:
         version=settings.app_version,
         env=settings.app_env,
     )
+    for hook in _startup_hooks:
+        try:
+            res = hook(app)
+            if inspect.isawaitable(res):
+                await res
+        except Exception:
+            _log.error(
+                "app.startup_hook_failed",
+                hook=getattr(hook, "__name__", str(hook)),
+                exc_info=True,
+            )
+            raise
 
 
 async def on_shutdown(app: FastAPI) -> None:

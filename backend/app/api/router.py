@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import uuid
 from typing import Any
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import current_user
 from app.api.health import router as health_router
 from app.api.identity import router as identity_router
+from app.core.lifecycle import register_startup_hook
 from app.core.logging import get_logger
 from app.modules.ai.api import (
     reviews_router,
@@ -22,7 +24,11 @@ from app.modules.ai.api import (
 from app.modules.ai.api import (
     router as ai_router,
 )
-from app.modules.ai.service import AIService, set_global_llm_client_resolver
+from app.modules.ai.service import (
+    AIService,
+    default_prompt_registry,
+    set_global_llm_client_resolver,
+)
 from app.modules.marketdata.api import get_data_service
 from app.modules.marketdata.api import router as market_router
 from app.modules.notify.api import (
@@ -37,6 +43,7 @@ from app.modules.research.api import (
 from app.modules.research.api import (
     router as research_router,
 )
+from app.modules.research.prompts import register_research_prompts
 from app.modules.research.schemas import ResearchEnvelope
 from app.modules.research.service import ResearchService
 from app.modules.scheduler.api import (
@@ -70,6 +77,7 @@ root_router.include_router(health_router)
 async def root() -> RedirectResponse:
     """根路径自动重定向至 API Swagger 交互文档。"""
     return RedirectResponse(url="/docs")
+
 
 logger = get_logger(__name__)
 
@@ -139,7 +147,19 @@ def _create_screener_service(session: AsyncSession) -> ScreenerService:
     )
 
 
+# Wire concrete dependencies into screener service facade
 set_screener_service_provider(_create_screener_service)
+
+# 注册全部 AI 研究与分析提示词模板至全局单例注册表（M6/M7 全部 7 个模板）
+register_research_prompts(default_prompt_registry)
+
+
+def _register_prompts_startup_hook(app: Any) -> None:
+    del app
+    register_research_prompts(default_prompt_registry)
+
+
+register_startup_hook(_register_prompts_startup_hook)
 
 api_router = APIRouter()
 api_router.include_router(market_router, prefix="/market", tags=["marketdata"])

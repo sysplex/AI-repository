@@ -223,7 +223,7 @@ class FactTracingEngine:
             raise FactTracingError(
                 msg,
                 details={
-                    "violations": [v.model_dump() for v in res.violations],
+                    "violations": [v.model_dump(mode="json") for v in res.violations],
                     "checked_numbers_count": res.checked_numbers_count,
                 },
             )

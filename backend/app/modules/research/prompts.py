@@ -117,6 +117,7 @@ class ResearchPromptInfo(BaseModel):
     version: str
     description: str
     is_active: bool = True
+    output_schema: dict[str, Any] = Field(default_factory=dict)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -191,6 +192,7 @@ class ResearchPromptTemplate:
             version=self.version,
             description=self.description,
             is_active=self.is_active,
+            output_schema=self.output_schema,
             metadata=self.metadata,
         )
 

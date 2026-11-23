@@ -18,6 +18,7 @@ from unittest.mock import AsyncMock
 import httpx
 import pytest
 from fastapi import FastAPI, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import current_user
 from app.core.errors import NotFound
@@ -702,3 +703,74 @@ def test_sim_broker_cancel_order() -> None:
 
     cancelled = broker.cancel_order(account_id=acc_id, order_id=str(order.id))
     assert cancelled.status == "cancelled"
+
+
+@pytest.mark.integration
+async def test_sim_service_postgres_closed_loop(db_session: AsyncSession) -> None:
+    """真实 Postgres 闭环：创建账户(含 Decimal 手续费) -> 查询 -> 下单 -> 撤单 -> 重置 (P0-1)。"""
+    from app.modules.identity.models import User
+    from app.modules.simbroker.schemas import AccountCreate, FeeModelConfig
+
+    test_user = User(
+        id=uuid.uuid4(),
+        email=f"sim-e2e-{uuid.uuid4().hex[:8]}@example.com",
+        password_hash="argon2$fake",  # noqa: S106
+        settings={},
+    )
+    db_session.add(test_user)
+    await db_session.flush()
+
+    service = SimService(session=db_session)
+
+    # 1. 创建账户（带包含 Decimal 的 fee_model 配置）
+    req = AccountCreate(
+        name="Postgres E2E Account",
+        initial_cash=Decimal("100000.0000"),
+        fee_model=FeeModelConfig(
+            type="bps",
+            per_share=Decimal("0.0050"),
+            bps=Decimal("2.0000"),
+            min_fee=Decimal("1.0000"),
+            max_fee=Decimal("100.0000"),
+        ),
+        slippage_bps=Decimal("5.0"),
+    )
+    acc = await service.create_account(user_id=test_user.id, req=req)
+    assert acc.name == "Postgres E2E Account"
+    assert acc.cash == Decimal("100000.0000")
+    assert acc.fee_model.per_share == Decimal("0.0050")
+
+    # 2. 查询列表与概览
+    accounts = await service.list_accounts(user_id=test_user.id)
+    assert len(accounts) >= 1
+    overview = await service.get_account_overview(account_id=acc.id, user_id=test_user.id)
+    assert overview.cash == Decimal("100000.0000")
+
+    # 3. 创建限价单
+    order_req = OrderCreate(
+        symbol="NVDA",
+        side="buy",
+        type="limit",
+        qty=Decimal("10.0000"),
+        limit_price=Decimal("120.0000"),
+    )
+    order = await service.submit_order(
+        account_id=acc.id,
+        user_id=test_user.id,
+        req=order_req,
+        idempotency_key=f"idem-{uuid.uuid4().hex[:8]}",
+    )
+    assert order.status == "accepted"
+    assert order.symbol == "NVDA"
+
+    # 4. 撤销订单
+    cancelled = await service.cancel_order(
+        account_id=acc.id,
+        order_id=order.id,
+        user_id=test_user.id,
+    )
+    assert cancelled.status == "cancelled"
+
+    # 5. 重置账户
+    reset_resp = await service.reset_account(account_id=acc.id, user_id=test_user.id)
+    assert reset_resp.cash == Decimal("100000.0000")
