@@ -306,16 +306,18 @@ class AIService:
 
             # 9. 落库持久化成功报告
             report_id = uuid.uuid4()
+            clean_params = json.loads(json.dumps(params, default=str))
+            clean_payload = json.loads(json.dumps(parsed_payload, default=str))
             report = AIReport(
                 id=report_id,
                 user_id=user_id if user_id is not None else uuid.uuid4(),
                 use_case=use_case,
-                params=params,
+                params=clean_params,
                 cache_key=cache_key,
                 data_snapshot_id=content_hash,
                 prompt_version=resolved_version,
                 model=validated_res.model,
-                payload=parsed_payload,
+                payload=clean_payload,
                 cost_usd=validated_res.cost_usd,
                 status="success",
                 error_message=None,
@@ -353,11 +355,12 @@ class AIService:
                 err=str(exc),
             )
             if user_id is not None:
+                clean_params = json.loads(json.dumps(params, default=str))
                 failed_report = AIReport(
                     id=uuid.uuid4(),
                     user_id=user_id,
                     use_case=use_case,
-                    params=params,
+                    params=clean_params,
                     cache_key=cache_key,
                     data_snapshot_id=content_hash,
                     prompt_version=resolved_version,
@@ -471,6 +474,9 @@ class AIService:
         symbol = str(facts.get("symbol", "MARKET"))
         scope = list(facts.keys())
         missing_fields = list(facts.get("missing_fields", []))
+        clean_facts = json.loads(json.dumps(facts, default=str))
+        clean_scope = json.loads(json.dumps(scope, default=str))
+        clean_missing = json.loads(json.dumps(missing_fields, default=str))
 
         stmt = select(data_snapshots_table.c.content_hash).where(
             data_snapshots_table.c.content_hash == content_hash
@@ -481,17 +487,16 @@ class AIService:
                 content_hash=content_hash,
                 symbol=symbol,
                 as_of=snapshot_as_of,
-                scope=scope,
-                facts=facts,
-                missing_fields=missing_fields,
+                scope=clean_scope,
+                facts=clean_facts,
+                missing_fields=clean_missing,
                 created_at=now,
             )
             try:
                 await self._session.execute(ins_stmt)
                 await self._session.flush()
             except Exception as ins_err:
-                # 并发插入冲突时忽略
-                logger.debug("Concurrent snapshot insert caught and ignored: {err}", err=ins_err)
+                logger.warning("Snapshot insert caught exception: {err}", err=ins_err)
         return content_hash
 
     async def _lookup_cache(self, cache_key: str) -> AIReport | None:
