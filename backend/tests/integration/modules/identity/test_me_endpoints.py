@@ -70,6 +70,9 @@ async def test_get_me_returns_own_profile(auth: FastAPI, client: AsyncClient) ->
     assert body["id"] == created["id"]
     assert body["email"] == "me@example.com"
     assert body["settings"]["risk_profile"] == "balanced"
+    assert body["settings"]["ai_provider"] == "mock"
+    assert body["settings"]["google_api_key"] is None
+    assert body["settings"]["google_model"] == "gemini-3.5-flash-lite"
     assert "password" not in str(body) and "password_hash" not in body
 
 
@@ -88,6 +91,9 @@ async def test_patch_me_roundtrip_and_audit(
                 "risk_profile": "aggressive",
                 "language": "en-US",
                 "default_account_id": account_id,
+                "ai_provider": "google",
+                "google_api_key": "test-google-key",
+                "google_model": "gemini-2.5-flash",
             }
         },
     )
@@ -97,13 +103,16 @@ async def test_patch_me_roundtrip_and_audit(
         "risk_profile": "aggressive",
         "language": "en-US",
         "default_account_id": account_id,
-        "ai_provider": "mock",
-        "google_api_key": None,
-        "google_model": "gemini-3.5-flash-lite",
+        "ai_provider": "google",
+        "google_api_key": "test-google-key",
+        "google_model": "gemini-2.5-flash",
     }
     # 再读一次确认已落库（不是只改了响应对象）
     again = await client.get(_ME, headers=_headers(token))
     assert again.json()["settings"]["risk_profile"] == "aggressive"
+    assert again.json()["settings"]["ai_provider"] == "google"
+    assert again.json()["settings"]["google_api_key"] == "test-google-key"
+    assert again.json()["settings"]["google_model"] == "gemini-2.5-flash"
 
     await db_session.commit()
     rows = (
@@ -119,31 +128,16 @@ async def test_patch_me_roundtrip_and_audit(
         .all()
     )
     assert len(rows) == 1
-    assert rows[0].detail == {"keys": ["default_account_id", "language", "risk_profile"]}
-
-    # 验证 UserSettings 新增 AI 字段 roundtrip
-    ai_patch = await client.patch(
-        _ME,
-        headers=_headers(token),
-        json={
-            "settings": {
-                "ai_provider": "google",
-                "google_api_key": "test-google-key",
-                "google_model": "gemini-2.5-flash",
-            }
-        },
-    )
-    assert ai_patch.status_code == 200, ai_patch.text
-    ai_body = ai_patch.json()
-    assert ai_body["settings"]["ai_provider"] == "google"
-    assert ai_body["settings"]["google_api_key"] == "test-google-key"
-    assert ai_body["settings"]["google_model"] == "gemini-2.5-flash"
-    assert ai_body["settings"]["risk_profile"] == "aggressive"
-
-    again_ai = await client.get(_ME, headers=_headers(token))
-    assert again_ai.json()["settings"]["ai_provider"] == "google"
-    assert again_ai.json()["settings"]["google_api_key"] == "test-google-key"
-    assert again_ai.json()["settings"]["google_model"] == "gemini-2.5-flash"
+    assert rows[0].detail == {
+        "keys": [
+            "ai_provider",
+            "default_account_id",
+            "google_api_key",
+            "google_model",
+            "language",
+            "risk_profile",
+        ]
+    }
 
 
 @pytest.mark.parametrize(
