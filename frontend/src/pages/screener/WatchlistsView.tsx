@@ -36,10 +36,14 @@ import { cn } from '../../utils/cn';
 export const WatchlistsView: React.FC = () => {
   const navigate = useNavigate();
 
+  const isMockEnabled = import.meta.env.VITE_ENABLE_MOCK === 'true' || import.meta.env.MODE === 'test';
+
   // Watchlists state
-  const [watchlists, setWatchlists] = useState<WatchlistRead[]>(mockDefaultWatchlists);
-  const [activeWatchlistId, setActiveWatchlistId] = useState<string>(
-    mockDefaultWatchlists[0]?.id || '',
+  const [watchlists, setWatchlists] = useState<WatchlistRead[]>(() =>
+    isMockEnabled ? mockDefaultWatchlists : []
+  );
+  const [activeWatchlistId, setActiveWatchlistId] = useState<string>(() =>
+    isMockEnabled ? (mockDefaultWatchlists[0]?.id || '') : ''
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [quotes, setQuotes] = useState<Record<string, Quote>>({});
@@ -99,7 +103,9 @@ export const WatchlistsView: React.FC = () => {
         }
       }
     } catch {
-      // Keep mock fallback gracefully
+      if (isMockEnabled) {
+        setWatchlists(mockDefaultWatchlists);
+      }
     } finally {
       setIsLoading(false);
     }

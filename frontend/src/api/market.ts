@@ -23,12 +23,19 @@ export const marketApi = {
   },
 
   /**
-   * 批量获取标的实时或延时最新报价
+   * 批量获取标的实时或延时最新报价（统一归一化为 Quote[]）
    */
   async getQuotes(symbols: string[]): Promise<Quote[]> {
     if (!symbols || symbols.length === 0) return [];
     const query = symbols.join(',');
-    return api.get<Quote[]>('/market/quotes', { symbols: query });
+    const data = await api.get<Record<string, Quote> | Quote[]>('/market/quotes', { symbols: query });
+    if (Array.isArray(data)) {
+      return data;
+    }
+    if (data && typeof data === 'object') {
+      return Object.values(data);
+    }
+    return [];
   },
 
   /**

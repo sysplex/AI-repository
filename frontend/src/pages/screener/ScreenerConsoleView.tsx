@@ -25,6 +25,7 @@ import {
   mockCompletedScreenerRun,
   mockStrategyOptions,
   mockUniverses,
+  type StrategyOption,
 } from './mockData';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
@@ -45,11 +46,15 @@ export const ScreenerConsoleView: React.FC = () => {
   );
   const [selectedUniverse, setSelectedUniverse] = useState<string>('sp500');
   const [customSymbolsInput, setCustomSymbolsInput] = useState<string>('NVDA, AAPL, MSFT, AMZN, GOOGL, META, TSLA');
-  const [selectedStrategyId, setSelectedStrategyId] = useState<string>('trend_following');
+  const [strategies, setStrategies] = useState<StrategyOption[]>(mockStrategyOptions);
+  const [selectedStrategyId, setSelectedStrategyId] = useState<string>(() =>
+    mockStrategyOptions[0]?.id || 'dow_trend'
+  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Strategy Tuning Parameters
   const activeStrategy =
-    mockStrategyOptions.find((s) => s.id === selectedStrategyId) || mockStrategyOptions[0];
+    strategies.find((s) => s.id === selectedStrategyId) || strategies[0] || mockStrategyOptions[0];
   const [strategyParams, setStrategyParams] = useState<Record<string, any>>(activeStrategy.defaultParams);
 
   // Active Screener Run State
@@ -88,14 +93,15 @@ export const ScreenerConsoleView: React.FC = () => {
     if (activeStrategy) {
       setStrategyParams(activeStrategy.defaultParams);
     }
-  }, [selectedStrategyId]);
+  }, [selectedStrategyId, activeStrategy]);
 
   const loadInitialData = async () => {
     try {
-      const [uData, wData, rData] = await Promise.allSettled([
+      const [uData, wData, rData, sData] = await Promise.allSettled([
         screenerApi.listUniverses(),
         screenerApi.listWatchlists(),
         screenerApi.listScreenerRuns(10),
+        screenerApi.listStrategies(),
       ]);
 
       if (uData.status === 'fulfilled' && uData.value.length > 0) {
@@ -110,6 +116,19 @@ export const ScreenerConsoleView: React.FC = () => {
         setHistoryRuns(rData.value);
         setCurrentRun(rData.value[0]);
       }
+      if (sData.status === 'fulfilled' && sData.value.length > 0) {
+        const mapped: StrategyOption[] = sData.value.map((s) => ({
+          id: s.id,
+          name: s.display_name,
+          category: s.category,
+          description: s.description,
+          defaultParams: s.default_params || {},
+        }));
+        setStrategies(mapped);
+        if (!mapped.some((m) => m.id === selectedStrategyId)) {
+          setSelectedStrategyId(mapped[0].id);
+        }
+      }
     } catch {
       // Keep mock initial states
     }
@@ -117,6 +136,7 @@ export const ScreenerConsoleView: React.FC = () => {
 
   // Trigger Screener Execution
   const handleStartScreener = async () => {
+    setErrorMessage(null);
     setIsRunning(true);
     setRunProgressMessage('正在初始化股票池与行情快照...');
     setSelectedSymbols([]);
@@ -143,6 +163,9 @@ export const ScreenerConsoleView: React.FC = () => {
       // If already succeeded or failed immediately
       if (createdRun.status === 'succeeded' || createdRun.status === 'failed') {
         setIsRunning(false);
+        if (createdRun.status === 'failed') {
+          setErrorMessage('选股任务执行失败，请查看历史任务详情或重试');
+        }
         setHistoryRuns((prev) => [createdRun, ...prev.filter((r) => r.id !== createdRun.id)]);
         return;
       }
@@ -159,6 +182,9 @@ export const ScreenerConsoleView: React.FC = () => {
           if (polled.status === 'succeeded' || polled.status === 'failed' || attempts > 20) {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setIsRunning(false);
+            if (polled.status === 'failed') {
+              setErrorMessage('选股任务执行失败，请查看历史任务详情或重试');
+            }
             setHistoryRuns((prev) => [polled, ...prev.filter((r) => r.id !== polled.id)]);
           }
         } catch {
@@ -191,7 +217,7 @@ export const ScreenerConsoleView: React.FC = () => {
       } else {
         setIsRunning(false);
         const msg = err instanceof Error ? err.message : '启动选股扫描任务失败，请检查网络或后端接口';
-        alert(`选股失败: ${msg}`);
+        setErrorMessage(`选股失败: ${msg}`);
       }
     }
   };
@@ -247,7 +273,7 @@ export const ScreenerConsoleView: React.FC = () => {
       : (currentRun?.results || []).slice(0, 6).map((r) => r.symbol);
 
     if (symbols.length === 0) {
-      alert('暂无标的可供导出');
+      showToast('暂无标的可供导出');
       return;
     }
 
@@ -316,6 +342,22 @@ export const ScreenerConsoleView: React.FC = () => {
           </div>
         </div>
 
+        {/* Error Banner */}
+        {errorMessage && (
+          <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/50 flex items-start justify-between gap-3 text-rose-200 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-rose-400">错误:</span>
+              <span>{errorMessage}</span>
+            </div>
+            <button
+              onClick={() => setErrorMessage(null)}
+              className="text-rose-400 hover:text-rose-200 text-xs font-mono px-2 py-0.5 rounded border border-rose-800"
+            >
+              关闭
+            </button>
+          </div>
+        )}
+
         {/* Console Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Step 1: Universe Selection (4 cols) */}
@@ -381,7 +423,7 @@ export const ScreenerConsoleView: React.FC = () => {
             </label>
 
             <div className="space-y-2">
-              {mockStrategyOptions.map((strat) => {
+              {strategies.map((strat) => {
                 const isSelected = selectedStrategyId === strat.id;
                 return (
                   <div

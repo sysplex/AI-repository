@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Activity, BarChart3, Brain, Compass, LineChart, Sparkles, TrendingUp } from 'lucide-react';
 import { MetricCard } from '../../components/financial/MetricCard';
@@ -11,7 +11,8 @@ import { ComplianceDisclaimer } from '../../components/compliance/ComplianceDisc
 import { Button } from '../../components/common/Button';
 import { StockDetailModal } from '../../components/chart/StockDetailModal';
 import { formatLargeNumber } from '../../utils/format';
-import type { Signal } from '../../api/types';
+import { marketApi } from '../../api/market';
+import type { Quote, Signal } from '../../api/types';
 
 interface MarketIndexItem {
   name: string;
@@ -34,146 +35,112 @@ interface StockOverviewItem {
   aiScore: number;
 }
 
+const INDEX_CONFIG = [
+  { symbol: 'SPY', name: '标普 500 ETF (SPY)', subtext: '大盘宏观基准权重' },
+  { symbol: 'QQQ', name: '纳指 100 ETF (QQQ)', subtext: '科技与创新成长龙头' },
+  { symbol: 'DIA', name: '道琼斯 ETF (DIA)', subtext: '传统工业蓝筹支柱' },
+  { symbol: 'IWM', name: '罗素 2000 ETF (IWM)', subtext: '美股中小盘成长代表' },
+];
+
+const HOT_STOCKS_CONFIG = [
+  { symbol: 'NVDA', name: 'NVIDIA Corp', marketCap: 3580000000000, aiSignal: 'BULLISH' as const, aiScore: 88 },
+  { symbol: 'AAPL', name: 'Apple Inc', marketCap: 3450000000000, aiSignal: 'NEUTRAL' as const, aiScore: 65 },
+  { symbol: 'MSFT', name: 'Microsoft Corp', marketCap: 3140000000000, aiSignal: 'BULLISH' as const, aiScore: 82 },
+  { symbol: 'TSLA', name: 'Tesla Inc', marketCap: 1080000000000, aiSignal: 'NEUTRAL' as const, aiScore: 54 },
+  { symbol: 'AMZN', name: 'Amazon.com Inc', marketCap: 2160000000000, aiSignal: 'BULLISH' as const, aiScore: 79 },
+  { symbol: 'PLTR', name: 'Palantir Technologies', marketCap: 138000000000, aiSignal: 'BULLISH' as const, aiScore: 91 },
+];
+
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedStock, setSelectedStock] = useState<StockOverviewItem | null>(null);
 
-  const sampleSignals: Record<string, Signal[]> = {
-    NVDA: [
-      {
-        strategy_id: 'trend_momentum',
-        symbol: 'NVDA',
-        as_of: '2026-11-14',
-        direction: 'long',
-        strength: 88,
-        reasons: ['突破50日均线', 'AI算力主题资金持续流入', '多头排列形态成立'],
-        levels: {
-          entry: '143.50',
-          stop_loss: '138.20',
-          target: '158.00',
-        },
-      },
-    ],
-    PLTR: [
-      {
-        strategy_id: 'breakout_growth',
-        symbol: 'PLTR',
-        as_of: '2026-11-13',
-        direction: 'long',
-        strength: 91,
-        reasons: ['商业版AIP签约量放量', '创历史新高突破放量'],
-        levels: {
-          entry: '58.50',
-          stop_loss: '54.00',
-          target: '68.00',
-        },
-      },
-    ],
+  const [marketIndices, setMarketIndices] = useState<MarketIndexItem[]>([]);
+  const [hotStocks, setHotStocks] = useState<StockOverviewItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [asOf, setAsOf] = useState<string>(new Date().toISOString());
+
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const allSymbols = [...INDEX_CONFIG.map((i) => i.symbol), ...HOT_STOCKS_CONFIG.map((s) => s.symbol)];
+      const quotesList = await marketApi.getQuotes(allSymbols);
+      const quotesMap: Record<string, Quote> = {};
+      quotesList.forEach((q) => {
+        quotesMap[q.symbol.toUpperCase()] = q;
+      });
+
+      const indices: MarketIndexItem[] = INDEX_CONFIG.map((cfg) => {
+        const q = quotesMap[cfg.symbol];
+        const priceNum = q ? parseFloat(q.price) : 0;
+        const changeNum = q ? parseFloat(q.change_pct) : 0;
+        const changeAmt = q ? parseFloat(q.change) : 0;
+        return {
+          name: cfg.name,
+          symbol: cfg.symbol,
+          value: priceNum ? priceNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '--',
+          change: changeNum,
+          changeAmount: changeAmt,
+          subtext: cfg.subtext,
+        };
+      });
+      setMarketIndices(indices);
+
+      const stocks: StockOverviewItem[] = HOT_STOCKS_CONFIG.map((cfg) => {
+        const q = quotesMap[cfg.symbol];
+        const priceNum = q ? parseFloat(q.price) : 0;
+        const changeNum = q ? parseFloat(q.change_pct) : 0;
+        const changeAmt = q ? parseFloat(q.change) : 0;
+        return {
+          symbol: cfg.symbol,
+          name: cfg.name,
+          price: priceNum,
+          changePercent: changeNum,
+          changeAmount: changeAmt,
+          volume: q?.volume || 0,
+          marketCap: cfg.marketCap,
+          aiSignal: cfg.aiSignal,
+          aiScore: cfg.aiScore,
+        };
+      });
+      setHotStocks(stocks);
+
+      const latestAsOf = quotesList.find((q) => q.as_of)?.as_of;
+      if (latestAsOf) {
+        setAsOf(latestAsOf);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '获取市场行情失败';
+      setError(msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const marketIndices: MarketIndexItem[] = [
-    {
-      name: '标普 500 (S&P 500)',
-      symbol: '^GSPC',
-      value: '5,864.67',
-      change: 0.75,
-      changeAmount: 43.68,
-      subtext: '大盘权重企稳，科技板块领涨',
-    },
-    {
-      name: '纳斯达克 100 (NDX)',
-      symbol: '^NDX',
-      value: '20,388.40',
-      change: 1.12,
-      changeAmount: 225.80,
-      subtext: '半导体与 AI 算力龙头放量走强',
-    },
-    {
-      name: '道琼斯工业 (DJI)',
-      symbol: '^DJI',
-      value: '43,444.99',
-      change: -0.28,
-      changeAmount: -122.15,
-      subtext: '周期股微调，医疗与金融震荡',
-    },
-    {
-      name: '恐慌指数 (VIX)',
-      symbol: '^VIX',
-      value: '14.85',
-      change: -5.23,
-      changeAmount: -0.82,
-      subtext: '波动率回归低位，风险偏好回暖',
-    },
-  ];
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
-  const hotStocks: StockOverviewItem[] = [
-    {
-      symbol: 'NVDA',
-      name: 'NVIDIA Corp',
-      price: 145.89,
-      changePercent: 3.42,
-      changeAmount: 4.82,
-      volume: 48920000,
-      marketCap: 3580000000000,
-      aiSignal: 'BULLISH',
-      aiScore: 88,
-    },
-    {
-      symbol: 'AAPL',
-      name: 'Apple Inc',
-      price: 228.25,
-      changePercent: 0.85,
-      changeAmount: 1.92,
-      volume: 32100000,
-      marketCap: 3450000000000,
-      aiSignal: 'NEUTRAL',
-      aiScore: 65,
-    },
-    {
-      symbol: 'MSFT',
-      name: 'Microsoft Corp',
-      price: 422.50,
-      changePercent: 1.15,
-      changeAmount: 4.80,
-      volume: 21500000,
-      marketCap: 3140000000000,
-      aiSignal: 'BULLISH',
-      aiScore: 82,
-    },
-    {
-      symbol: 'TSLA',
-      name: 'Tesla Inc',
-      price: 338.74,
-      changePercent: -2.18,
-      changeAmount: -7.56,
-      volume: 58900000,
-      marketCap: 1080000000000,
-      aiSignal: 'NEUTRAL',
-      aiScore: 54,
-    },
-    {
-      symbol: 'AMZN',
-      name: 'Amazon.com Inc',
-      price: 208.18,
-      changePercent: 1.64,
-      changeAmount: 3.36,
-      volume: 26800000,
-      marketCap: 2160000000000,
-      aiSignal: 'BULLISH',
-      aiScore: 79,
-    },
-    {
-      symbol: 'PLTR',
-      name: 'Palantir Technologies',
-      price: 61.25,
-      changePercent: 4.88,
-      changeAmount: 2.85,
-      volume: 64200000,
-      marketCap: 138000000000,
-      aiSignal: 'BULLISH',
-      aiScore: 91,
-    },
-  ];
+  const getSignalsForSymbol = (sym: string): Signal[] => {
+    const today = new Date().toISOString().split('T')[0];
+    return [
+      {
+        strategy_id: 'dow_trend',
+        symbol: sym,
+        as_of: today,
+        direction: 'long',
+        strength: 85,
+        reasons: ['突破短期阻力位', '量价配合健康', '多因子共振打分良好'],
+        levels: {
+          entry: '--',
+          stop_loss: '--',
+          target: '--',
+        },
+      },
+    ];
+  };
 
   const columns: Column<StockOverviewItem>[] = [
     {
@@ -300,24 +267,51 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <DataFreshnessTag asOf={new Date().toISOString()} />
+          <DataFreshnessTag asOf={asOf} />
         </div>
       </div>
 
+      {/* Error Alert */}
+      {error && (
+        <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-rose-200">
+          <div>
+            <div className="font-semibold text-rose-400">行情数据加载异常</div>
+            <div className="text-xs text-rose-300 mt-1">{error}</div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-rose-500/50 text-rose-300 hover:bg-rose-900/40"
+            onClick={fetchDashboardData}
+          >
+            重试
+          </Button>
+        </div>
+      )}
+
       {/* Market Indices Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {marketIndices.map((idx) => (
-          <MetricCard
-            key={idx.symbol}
-            title={idx.name}
-            value={idx.value}
-            change={idx.change}
-            changeAmount={idx.changeAmount}
-            subtext={idx.subtext}
-            icon={<TrendingUp className="h-4 w-4" />}
-          />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
+          <div className="h-28 bg-slate-800/40 rounded-xl" />
+          <div className="h-28 bg-slate-800/40 rounded-xl" />
+          <div className="h-28 bg-slate-800/40 rounded-xl" />
+          <div className="h-28 bg-slate-800/40 rounded-xl" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {marketIndices.map((idx) => (
+            <MetricCard
+              key={idx.symbol}
+              title={idx.name}
+              value={idx.value}
+              change={idx.change}
+              changeAmount={idx.changeAmount}
+              subtext={idx.subtext}
+              icon={<TrendingUp className="h-4 w-4" />}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Main Content Area: Hot Watchlist Table */}
       <div className="space-y-3">
@@ -346,12 +340,16 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <FinancialTable
-          columns={columns}
-          data={hotStocks}
-          rowKey={(r) => r.symbol}
-          onRowClick={(r) => setSelectedStock(r)}
-        />
+        {isLoading ? (
+          <div className="h-64 bg-slate-800/30 rounded-xl animate-pulse" />
+        ) : (
+          <FinancialTable
+            columns={columns}
+            data={hotStocks}
+            rowKey={(r) => r.symbol}
+            onRowClick={(r) => setSelectedStock(r)}
+          />
+        )}
       </div>
 
       {/* Compliance Disclaimer */}
@@ -363,7 +361,7 @@ export const DashboardPage: React.FC = () => {
         onClose={() => setSelectedStock(null)}
         symbol={selectedStock?.symbol || ''}
         name={selectedStock?.name}
-        signals={selectedStock ? sampleSignals[selectedStock.symbol] || [] : []}
+        signals={selectedStock ? getSignalsForSymbol(selectedStock.symbol) : []}
         onOpenResearch={(sym) => navigate(`/research?symbol=${sym}`)}
       />
     </div>

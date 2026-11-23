@@ -3,6 +3,7 @@ import type {
   ExportToResearchRequest,
   ScreenerRunCreate,
   ScreenerRunRead,
+  StrategyMetadata,
   ThemeCardsResponse,
   ThemeInfo,
   UniverseInfo,
@@ -15,6 +16,13 @@ import type {
 } from './types';
 
 export const screenerApi = {
+  // ---------------------------------------------------------------------------
+  // 策略引擎元数据 (Strategies)
+  // ---------------------------------------------------------------------------
+  async listStrategies(): Promise<StrategyMetadata[]> {
+    return api.get<StrategyMetadata[]>('/strategy/list');
+  },
+
   // ---------------------------------------------------------------------------
   // 股票池 (Universes)
   // ---------------------------------------------------------------------------

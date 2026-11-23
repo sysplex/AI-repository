@@ -36,9 +36,9 @@ describe('E2E-02: Screener to Decision Pipeline (筛选到决策全流程)', () 
     expect(htmlScreener).toContain('道琼斯工业指数 30 (Dow 30)');
 
     // Model selection
-    expect(htmlScreener).toContain('多周期均线突破趋势跟踪');
-    expect(htmlScreener).toContain('布林带下轨触底反弹均值回归');
-    expect(htmlScreener).toContain('RSI 极致超卖右侧企稳');
+    expect(htmlScreener).toContain('道氏趋势突破策略');
+    expect(htmlScreener).toContain('多头 RSI 回调企稳策略');
+    expect(htmlScreener).toContain('123 法则反转突破策略');
 
     // Controls and ranking results
     expect(htmlScreener).toContain('策略筛选控制台');

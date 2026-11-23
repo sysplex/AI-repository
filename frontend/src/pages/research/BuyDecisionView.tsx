@@ -20,9 +20,13 @@ import type { BuyDecisionRequest, ResearchEnvelope } from '../../api/types';
 
 export interface BuyDecisionViewProps {
   initialSymbol?: string;
+  onSelectSymbol?: (symbol: string) => void;
 }
 
-export const BuyDecisionView: React.FC<BuyDecisionViewProps> = ({ initialSymbol = 'NVDA' }) => {
+export const BuyDecisionView: React.FC<BuyDecisionViewProps> = ({
+  initialSymbol = 'NVDA',
+  onSelectSymbol,
+}) => {
   const [symbol, setSymbol] = useState(initialSymbol);
   const [targetPrice, setTargetPrice] = useState('140.00');
   const [horizon, setHorizon] = useState<'short' | 'medium' | 'long'>('medium');
@@ -34,6 +38,17 @@ export const BuyDecisionView: React.FC<BuyDecisionViewProps> = ({ initialSymbol 
     horizon: 'medium',
     risk_level: 'moderate',
   });
+
+  // 当外部传入 initialSymbol 改变时，同步更新内部状态与查询参数
+  React.useEffect(() => {
+    if (initialSymbol && initialSymbol !== symbol) {
+      setSymbol(initialSymbol);
+      setActiveParams((prev) => ({
+        ...prev,
+        symbol: initialSymbol,
+      }));
+    }
+  }, [initialSymbol]);
 
   const isMockEnabled = import.meta.env.VITE_ENABLE_MOCK === 'true' || import.meta.env.MODE === 'test';
 
@@ -77,6 +92,7 @@ export const BuyDecisionView: React.FC<BuyDecisionViewProps> = ({ initialSymbol 
         horizon,
         risk_level: riskLevel,
       });
+      onSelectSymbol?.(cleanSym);
     }
   };
 
@@ -235,7 +251,11 @@ export const BuyDecisionView: React.FC<BuyDecisionViewProps> = ({ initialSymbol 
               <div className="flex items-center gap-2 text-xs font-mono">
                 <span className="text-slate-300">AI 置信度评分:</span>
                 <span className="text-lg font-bold text-white">
-                  {payload.confidence_score ?? 86} / 100
+                  {payload.confidence_score !== undefined && payload.confidence_score !== null
+                    ? `${payload.confidence_score} / 100`
+                    : payload.confidence !== undefined && payload.confidence !== null
+                      ? `${Math.round(Number(payload.confidence) * 100)} / 100`
+                      : '--'}
                 </span>
               </div>
             </div>
@@ -249,27 +269,35 @@ export const BuyDecisionView: React.FC<BuyDecisionViewProps> = ({ initialSymbol 
               <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
                 <div className="text-[11px] text-slate-400">现行市场价</div>
                 <div className="text-base font-bold font-mono text-white mt-0.5">
-                  ${payload.current_price ?? 145.89}
+                  {payload.current_price !== undefined && payload.current_price !== null
+                    ? `$${payload.current_price}`
+                    : '--'}
                 </div>
               </div>
               <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
                 <div className="text-[11px] text-slate-400">输入目标买入价</div>
                 <div className="text-base font-bold font-mono text-white mt-0.5">
-                  ${payload.target_price ?? targetPrice}
+                  {payload.target_price !== undefined && payload.target_price !== null
+                    ? `$${payload.target_price}`
+                    : targetPrice
+                      ? `$${targetPrice}`
+                      : '--'}
                 </div>
               </div>
               <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
                 <div className="text-[11px] text-slate-400">安全边际 (Margin of Safety)</div>
                 <div className="text-base font-bold font-mono text-emerald-400 mt-0.5">
-                  +{payload.margin_of_safety ?? 9.8}%
+                  {payload.margin_of_safety !== undefined && payload.margin_of_safety !== null
+                    ? `${Number(payload.margin_of_safety) > 0 ? '+' : ''}${payload.margin_of_safety}%`
+                    : '--'}
                 </div>
               </div>
               <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-800">
                 <div className="text-[11px] text-slate-400">建议分批入场区间</div>
                 <div className="text-sm font-bold font-mono text-sky-300 mt-0.5 truncate">
-                  {payload.suggested_entry_range
+                  {Array.isArray(payload.suggested_entry_range)
                     ? `$${payload.suggested_entry_range[0]} - $${payload.suggested_entry_range[1]}`
-                    : '$136.00 - $142.00'}
+                    : payload.suggested_entry_range || payload.better_entry_note || '--'}
                 </div>
               </div>
             </div>

@@ -87,10 +87,10 @@ describe('Screener, Themes & Watchlists Views', () => {
       expect(html).toContain('道琼斯工业指数 30 (Dow 30)');
 
       // Strategies
-      expect(html).toContain('多周期均线突破趋势跟踪');
-      expect(html).toContain('布林带下轨触底反弹均值回归');
-      expect(html).toContain('RSI 极致超卖右侧企稳');
-      expect(html).toContain('GARP 高成长合理估值因子');
+      expect(html).toContain('道氏趋势突破策略');
+      expect(html).toContain('多头 RSI 回调企稳策略');
+      expect(html).toContain('123 法则反转突破策略');
+      expect(html).toContain('海龟 20/55 日突破策略');
 
       // Controls & Actions
       expect(html).toContain('策略筛选控制台');

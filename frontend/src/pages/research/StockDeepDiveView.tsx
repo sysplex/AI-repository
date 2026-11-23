@@ -55,14 +55,19 @@ export const StockDeepDiveView: React.FC<StockDeepDiveViewProps> = ({
     onSelectSymbol?.(sym);
   };
 
+  const isMockEnabled = import.meta.env.VITE_ENABLE_MOCK === 'true' || import.meta.env.MODE === 'test';
+
   // 1. 获取 AI 个股研报
   const researchQuery = useQuery({
     queryKey: ['ai-research', symbol],
     queryFn: async () => {
       try {
         return await researchApi.getResearch(symbol);
-      } catch {
-        return MOCK_RESEARCH_DATA[symbol] || MOCK_RESEARCH_DATA.NVDA;
+      } catch (err) {
+        if (isMockEnabled) {
+          return MOCK_RESEARCH_DATA[symbol] || MOCK_RESEARCH_DATA.NVDA;
+        }
+        throw err;
       }
     },
     staleTime: 5 * 60 * 1000,
@@ -74,8 +79,11 @@ export const StockDeepDiveView: React.FC<StockDeepDiveViewProps> = ({
     queryFn: async () => {
       try {
         return await researchApi.getEarnings(symbol);
-      } catch {
-        return MOCK_EARNINGS_DATA[symbol] || MOCK_EARNINGS_DATA.NVDA;
+      } catch (err) {
+        if (isMockEnabled) {
+          return MOCK_EARNINGS_DATA[symbol] || MOCK_EARNINGS_DATA.NVDA;
+        }
+        throw err;
       }
     },
     staleTime: 5 * 60 * 1000,
@@ -96,11 +104,11 @@ export const StockDeepDiveView: React.FC<StockDeepDiveViewProps> = ({
     enabled: showChart,
   });
 
-  const researchData = researchQuery.data || MOCK_RESEARCH_DATA.NVDA;
-  const earningsData = earningsQuery.data || MOCK_EARNINGS_DATA.NVDA;
+  const researchData = researchQuery.data || (isMockEnabled ? (MOCK_RESEARCH_DATA[symbol] || MOCK_RESEARCH_DATA.NVDA) : null);
+  const earningsData = earningsQuery.data || (isMockEnabled ? (MOCK_EARNINGS_DATA[symbol] || MOCK_EARNINGS_DATA.NVDA) : null);
 
-  const payload = (researchData.payload || {}) as Record<string, any>;
-  const earningsPayload = (earningsData.payload || {}) as Record<string, any>;
+  const payload = (researchData?.payload || {}) as Record<string, any>;
+  const earningsPayload = (earningsData?.payload || {}) as Record<string, any>;
 
   return (
     <div className="space-y-6">
@@ -151,7 +159,7 @@ export const StockDeepDiveView: React.FC<StockDeepDiveViewProps> = ({
           <AIPromptVersionBadge model="deepseek-chat" promptVersion="v1.2.0" />
         </div>
         <div className="flex items-center gap-3">
-          <DataFreshnessTag asOf={researchData.as_of} />
+          <DataFreshnessTag asOf={researchData?.as_of} />
           <Button
             variant="outline"
             size="xs"
@@ -180,8 +188,46 @@ export const StockDeepDiveView: React.FC<StockDeepDiveViewProps> = ({
         </div>
       )}
 
-      {/* 1. 核心结论通俗摘要 */}
-      <Card className="border-l-4 border-l-blue-500">
+      {/* 错误展示 */}
+      {researchQuery.isError && (
+        <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-rose-200">
+          <div>
+            <div className="font-semibold text-rose-400">研报生成失败</div>
+            <div className="text-xs text-rose-300 mt-1">
+              {(researchQuery.error as Error)?.message || '无法获取标的深度研报，请检查服务可用性或稍后重试'}
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-rose-500/50 text-rose-300 hover:bg-rose-900/40"
+            onClick={() => {
+              researchQuery.refetch();
+              earningsQuery.refetch();
+            }}
+          >
+            重试
+          </Button>
+        </div>
+      )}
+
+      {/* 加载骨架屏 */}
+      {researchQuery.isLoading && (
+        <div className="space-y-4 animate-pulse">
+          <div className="h-28 bg-slate-800/40 rounded-xl" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="h-40 bg-slate-800/40 rounded-xl" />
+            <div className="h-40 bg-slate-800/40 rounded-xl" />
+            <div className="h-40 bg-slate-800/40 rounded-xl" />
+          </div>
+          <div className="h-48 bg-slate-800/40 rounded-xl" />
+        </div>
+      )}
+
+      {researchData && (
+        <>
+          {/* 1. 核心结论通俗摘要 */}
+          <Card className="border-l-4 border-l-blue-500">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Brain className="h-4 w-4 text-blue-400" />
@@ -297,7 +343,7 @@ export const StockDeepDiveView: React.FC<StockDeepDiveViewProps> = ({
               最新财报深度解读（Earnings Interpretation）
             </CardTitle>
             <span className="text-xs font-mono text-purple-300 bg-purple-950/60 px-2 py-0.5 rounded border border-purple-500/30">
-              {earningsPayload.quarter || 'FY2026 Q3'}
+              {earningsPayload.quarter || '--'}
             </span>
           </div>
         </CardHeader>
@@ -307,32 +353,40 @@ export const StockDeepDiveView: React.FC<StockDeepDiveViewProps> = ({
             <div className="p-3 rounded-lg bg-slate-950 border border-slate-800">
               <div className="text-[11px] text-slate-400">EPS 每股收益</div>
               <div className="text-lg font-bold font-mono text-white mt-1">
-                ${earningsPayload.eps?.actual ?? 0.81}
+                {earningsPayload.eps?.actual !== undefined ? `$${earningsPayload.eps.actual}` : '--'}
               </div>
-              <div className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3" />
-                超预期 +{earningsPayload.eps?.surprise_percent ?? 8.0}%
-              </div>
+              {earningsPayload.eps?.surprise_percent !== undefined && (
+                <div className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3" />
+                  {Number(earningsPayload.eps.surprise_percent) >= 0 ? '超预期 +' : '不及预期 '}
+                  {earningsPayload.eps.surprise_percent}%
+                </div>
+              )}
             </div>
 
             {/* Revenue */}
             <div className="p-3 rounded-lg bg-slate-950 border border-slate-800">
               <div className="text-[11px] text-slate-400">单季营收 Revenue</div>
               <div className="text-lg font-bold font-mono text-white mt-1">
-                ${earningsPayload.revenue?.actual ?? 35.08}B
+                {earningsPayload.revenue?.actual !== undefined ? `$${earningsPayload.revenue.actual}B` : '--'}
               </div>
-              <div className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3" />
-                超预期 +{earningsPayload.revenue?.surprise_percent ?? 5.8}%
-              </div>
+              {earningsPayload.revenue?.surprise_percent !== undefined && (
+                <div className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3" />
+                  {Number(earningsPayload.revenue.surprise_percent) >= 0 ? '超预期 +' : '不及预期 '}
+                  {earningsPayload.revenue.surprise_percent}%
+                </div>
+              )}
             </div>
 
             {/* Guidance */}
             <div className="p-3 rounded-lg bg-slate-950 border border-slate-800">
               <div className="text-[11px] text-slate-400">下季指引 Guidance</div>
-              <div className="text-base font-semibold text-emerald-300 mt-1">上调 (Raised)</div>
+              <div className="text-base font-semibold text-emerald-300 mt-1">
+                {earningsPayload.guidance?.verdict || '--'}
+              </div>
               <div className="text-[11px] text-slate-400 mt-1 truncate">
-                {earningsPayload.guidance?.details || '营收指引超市场一致预期'}
+                {earningsPayload.guidance?.details || '--'}
               </div>
             </div>
           </div>
@@ -353,6 +407,8 @@ export const StockDeepDiveView: React.FC<StockDeepDiveViewProps> = ({
           )}
         </CardContent>
       </Card>
+      </>
+      )}
 
       {/* 合规免责声明 */}
       <ComplianceDisclaimer variant="card" />

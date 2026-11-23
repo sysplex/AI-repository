@@ -37,6 +37,8 @@ describe('Compliance & Market Guardrails', () => {
         }),
       );
       expect(html).toContain('数据截至:');
+      expect(html).toContain('(ET)');
+      expect(html).toContain('11:00:00'); // 16:00:00 UTC is 11:00:00 EST
       expect(html).not.toContain('[数据可能延迟]');
     });
 
@@ -48,6 +50,8 @@ describe('Compliance & Market Guardrails', () => {
         }),
       );
       expect(html).toContain('数据截至:');
+      expect(html).toContain('(ET)');
+      expect(html).toContain('05:00:00'); // 10:00:00 UTC is 05:00:00 EST
       expect(html).toContain('[数据可能延迟]');
       expect(html).toContain('text-amber-300');
     });

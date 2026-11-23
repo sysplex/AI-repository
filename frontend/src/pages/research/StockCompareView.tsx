@@ -47,20 +47,25 @@ export const StockCompareView: React.FC = () => {
     setSymbols(list);
   };
 
+  const isMockEnabled = import.meta.env.VITE_ENABLE_MOCK === 'true' || import.meta.env.MODE === 'test';
+
   const query = useQuery({
     queryKey: ['ai-compare', symbols],
     queryFn: async () => {
       try {
         return await researchApi.getCompare(symbols);
-      } catch {
-        return MOCK_COMPARE_DATA;
+      } catch (err) {
+        if (isMockEnabled) {
+          return MOCK_COMPARE_DATA;
+        }
+        throw err;
       }
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const compareData = query.data || MOCK_COMPARE_DATA;
-  const payload = (compareData.payload || {}) as Record<string, any>;
+  const compareData = query.data || (isMockEnabled ? MOCK_COMPARE_DATA : null);
+  const payload = (compareData?.payload || {}) as Record<string, any>;
   const rankings = (payload.rankings || []) as any[];
   const winner = (payload.winner || {}) as Record<string, string>;
   const dimensionMatrix = (payload.dimension_matrix || []) as any[];
@@ -81,7 +86,7 @@ export const StockCompareView: React.FC = () => {
             支持 2–8 只股票横向多维对比，自动测算综合排名、定性维度胜率与不同投资风格画像匹配。
           </p>
         </div>
-        <DataFreshnessTag asOf={compareData.as_of} />
+        <DataFreshnessTag asOf={compareData?.as_of} />
       </div>
 
       {/* 对比标的管理与预设 */}
@@ -147,8 +152,39 @@ export const StockCompareView: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* 结论摘要 */}
-      <Card className="border-l-4 border-l-indigo-500">
+      {/* 错误展示 */}
+      {query.isError && (
+        <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-rose-200">
+          <div>
+            <div className="font-semibold text-rose-400">横向对比评估失败</div>
+            <div className="text-xs text-rose-300 mt-1">
+              {(query.error as Error)?.message || '无法获取标的对比矩阵，请检查服务或重试'}
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-rose-500/50 text-rose-300 hover:bg-rose-900/40"
+            onClick={() => query.refetch()}
+          >
+            重试
+          </Button>
+        </div>
+      )}
+
+      {/* 加载骨架屏 */}
+      {query.isLoading && (
+        <div className="space-y-4 animate-pulse">
+          <div className="h-24 bg-slate-800/40 rounded-xl" />
+          <div className="h-48 bg-slate-800/40 rounded-xl" />
+          <div className="h-64 bg-slate-800/40 rounded-xl" />
+        </div>
+      )}
+
+      {compareData && (
+        <>
+          {/* 结论摘要 */}
+          <Card className="border-l-4 border-l-indigo-500">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-indigo-400" />
@@ -305,6 +341,8 @@ export const StockCompareView: React.FC = () => {
             </table>
           </CardContent>
         </Card>
+      )}
+      </>
       )}
 
       {/* 合规免责声明 */}

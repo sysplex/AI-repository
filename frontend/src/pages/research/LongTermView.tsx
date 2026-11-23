@@ -27,20 +27,25 @@ export const LongTermView: React.FC<{ initialSymbol?: string }> = ({ initialSymb
     if (clean) setSymbol(clean);
   };
 
+  const isMockEnabled = import.meta.env.VITE_ENABLE_MOCK === 'true' || import.meta.env.MODE === 'test';
+
   const query = useQuery({
     queryKey: ['ai-long-term', symbol, years],
     queryFn: async () => {
       try {
         return await researchApi.getLongTerm(symbol, years);
-      } catch {
-        return MOCK_LONG_TERM_DATA[symbol] || MOCK_LONG_TERM_DATA.NVDA;
+      } catch (err) {
+        if (isMockEnabled) {
+          return MOCK_LONG_TERM_DATA[symbol] || MOCK_LONG_TERM_DATA.NVDA;
+        }
+        throw err;
       }
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const longTermData = query.data || MOCK_LONG_TERM_DATA.NVDA;
-  const payload = (longTermData.payload || {}) as Record<string, any>;
+  const longTermData = query.data || (isMockEnabled ? (MOCK_LONG_TERM_DATA[symbol] || MOCK_LONG_TERM_DATA.NVDA) : null);
+  const payload = (longTermData?.payload || {}) as Record<string, any>;
   const pillars = (payload.pillars || []) as any[];
   const thesisBreakers = (payload.thesis_breakers || []) as any[];
 
@@ -93,7 +98,7 @@ export const LongTermView: React.FC<{ initialSymbol?: string }> = ({ initialSymb
             评估 5–15 年跨周期的 7 大价值支柱，并建立不可妥协的「投资逻辑破裂退出条件」监控体系。
           </p>
         </div>
-        <DataFreshnessTag asOf={longTermData.as_of} />
+        <DataFreshnessTag asOf={longTermData?.as_of} />
       </div>
 
       {/* 控制栏：标的代码与持有期切换 */}
@@ -135,26 +140,59 @@ export const LongTermView: React.FC<{ initialSymbol?: string }> = ({ initialSymb
         </CardContent>
       </Card>
 
-      {/* 评级大卡片 */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-5 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="text-xl font-bold font-mono text-white">{symbol}</span>
-            <span className={`px-3 py-1 rounded-lg text-xs font-bold border ${tierBadgeStyle(payload.rating || '')}`}>
-              {payload.rating || 'Tier 1 核心压舱石'}
-            </span>
+      {/* 错误展示 */}
+      {query.isError && (
+        <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-rose-200">
+          <div>
+            <div className="font-semibold text-rose-400">长期价值评估失败</div>
+            <div className="text-xs text-rose-300 mt-1">
+              {(query.error as Error)?.message || '无法获取标的长期价值支柱，请检查服务或稍后重试'}
+            </div>
           </div>
-          <div className="flex items-center gap-2 font-mono text-xs">
-            <span className="text-slate-400">7大支柱综合评分:</span>
-            <span className="text-2xl font-black text-amber-400">{payload.score ?? 93}</span>
-            <span className="text-slate-500">/ 100</span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-rose-500/50 text-rose-300 hover:bg-rose-900/40"
+            onClick={() => query.refetch()}
+          >
+            重试
+          </Button>
+        </div>
+      )}
+
+      {/* 加载骨架屏 */}
+      {query.isLoading && (
+        <div className="space-y-4 animate-pulse">
+          <div className="h-28 bg-slate-800/40 rounded-xl" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="h-44 bg-slate-800/40 rounded-xl" />
+            <div className="h-44 bg-slate-800/40 rounded-xl" />
           </div>
         </div>
+      )}
 
-        <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans border-t border-slate-800 pt-2">
-          {longTermData.summary}
-        </p>
-      </div>
+      {longTermData && (
+        <>
+          {/* 评级大卡片 */}
+          <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-5 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="text-xl font-bold font-mono text-white">{symbol}</span>
+                <span className={`px-3 py-1 rounded-lg text-xs font-bold border ${tierBadgeStyle(payload.rating || '')}`}>
+                  {payload.rating || '--'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 font-mono text-xs">
+                <span className="text-slate-400">7大支柱综合评分:</span>
+                <span className="text-2xl font-black text-amber-400">{payload.score ?? '--'}</span>
+                <span className="text-slate-500">/ 100</span>
+              </div>
+            </div>
+
+            <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans border-t border-slate-800 pt-2">
+              {longTermData.summary}
+            </p>
+          </div>
 
       {/* 7 大核心支柱评级网格 */}
       <div className="space-y-3">
@@ -229,6 +267,8 @@ export const LongTermView: React.FC<{ initialSymbol?: string }> = ({ initialSymb
           })}
         </div>
       </div>
+      </>
+      )}
 
       {/* 合规免责声明 */}
       <ComplianceDisclaimer variant="card" />

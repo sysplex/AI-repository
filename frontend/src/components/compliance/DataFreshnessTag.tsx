@@ -15,11 +15,11 @@ export interface DataFreshnessTagProps {
 export const DataFreshnessTag: React.FC<DataFreshnessTagProps> = ({
   asOf,
   stale = false,
-  marketTimezone = 'EST',
+  marketTimezone = 'ET',
   className,
   showIcon = true,
 }) => {
-  const formattedTime = formatDateTime(asOf);
+  const formattedTime = formatDateTime(asOf, 'America/New_York');
 
   if (stale) {
     return (
@@ -30,7 +30,7 @@ export const DataFreshnessTag: React.FC<DataFreshnessTagProps> = ({
         title="当前标的市场数据为缓存快照，由于上游延迟或休市，可能存在时效差异"
       >
         {showIcon && <AlertCircle className="h-3 w-3 text-amber-400 shrink-0" />}
-        <span>数据截至: {formattedTime} ({marketTimezone})</span>
+        <span>{`数据截至: ${formattedTime} (${marketTimezone})`}</span>
         <span className="bg-amber-500/20 px-1 py-0.2 rounded text-[10px] text-amber-300 font-semibold">
           [数据可能延迟]
         </span>
@@ -47,7 +47,7 @@ export const DataFreshnessTag: React.FC<DataFreshnessTagProps> = ({
       title="数据更新正常"
     >
       {showIcon && <Clock className="h-3 w-3 text-emerald-400 shrink-0" />}
-      <span>数据截至: {formattedTime} ({marketTimezone})</span>
+      <span>{`数据截至: ${formattedTime} (${marketTimezone})`}</span>
     </div>
   );
 };

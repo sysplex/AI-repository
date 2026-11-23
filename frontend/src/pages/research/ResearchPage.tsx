@@ -117,7 +117,10 @@ export const ResearchPage: React.FC = () => {
           />
         )}
         {activeTab === 'buy-decision' && (
-          <BuyDecisionView initialSymbol={currentSymbol} />
+          <BuyDecisionView
+            initialSymbol={currentSymbol}
+            onSelectSymbol={handleSelectSymbol}
+          />
         )}
         {activeTab === 'compare' && <StockCompareView />}
         {activeTab === 'long-term' && <LongTermView initialSymbol={currentSymbol} />}

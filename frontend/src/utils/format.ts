@@ -37,11 +37,16 @@ export function formatLargeNumber(val: number | string | null | undefined): stri
   return num.toLocaleString('en-US');
 }
 
-export function formatDateTime(isoString: string | null | undefined): string {
+export function formatDateTime(
+  isoString: string | null | undefined,
+  timeZone = 'America/New_York',
+): string {
   if (!isoString) return '--';
   try {
     const d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
     return d.toLocaleString('zh-CN', {
+      timeZone,
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',

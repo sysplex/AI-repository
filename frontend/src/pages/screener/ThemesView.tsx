@@ -35,14 +35,17 @@ import { cn } from '../../utils/cn';
 export const ThemesView: React.FC = () => {
   const navigate = useNavigate();
 
+  const isMockEnabled = import.meta.env.VITE_ENABLE_MOCK === 'true' || import.meta.env.MODE === 'test';
+
   // Themes state
-  const [themes, setThemes] = useState<ThemeInfo[]>(mockThemes);
-  const [activeThemeId, setActiveThemeId] = useState<string>(mockThemes[0]?.id || 'ai_chips');
+  const [themes, setThemes] = useState<ThemeInfo[]>(() => (isMockEnabled ? mockThemes : []));
+  const [activeThemeId, setActiveThemeId] = useState<string>(() => (isMockEnabled ? (mockThemes[0]?.id || 'ai_chips') : ''));
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [isLoadingThemes, setIsLoadingThemes] = useState<boolean>(false);
+  const [themeError, setThemeError] = useState<string | null>(null);
 
   // Theme AI Cards state
-  const [themeCards, setThemeCards] = useState<Record<string, ThemeCardsResponse>>(mockThemeCardsMap);
+  const [themeCards, setThemeCards] = useState<Record<string, ThemeCardsResponse>>(() => (isMockEnabled ? mockThemeCardsMap : {}));
   const [isGeneratingCards, setIsGeneratingCards] = useState<boolean>(false);
 
   // Watchlists for import
@@ -62,13 +65,22 @@ export const ThemesView: React.FC = () => {
 
   const loadThemes = async () => {
     setIsLoadingThemes(true);
+    setThemeError(null);
     try {
       const data = await screenerApi.listThemes();
       if (data && data.length > 0) {
         setThemes(data);
+        if (!activeThemeId || !data.some((t) => t.id === activeThemeId)) {
+          setActiveThemeId(data[0].id);
+        }
       }
-    } catch {
-      // Keep mock themes fallback
+    } catch (err: unknown) {
+      if (isMockEnabled) {
+        setThemes(mockThemes);
+      } else {
+        const msg = err instanceof Error ? err.message : '获取热门主题列表失败，请检查网络或服务配置';
+        setThemeError(msg);
+      }
     } finally {
       setIsLoadingThemes(false);
     }
@@ -90,44 +102,50 @@ export const ThemesView: React.FC = () => {
   const handleGenerateCards = async () => {
     if (!activeTheme) return;
     setIsGeneratingCards(true);
+    setThemeError(null);
     try {
       const res = await screenerApi.generateThemeCards(activeTheme.id);
       if (res && res.cards) {
         setThemeCards((prev) => ({ ...prev, [activeTheme.id]: res }));
       }
-    } catch {
-      // If endpoint not reachable or mock, use local mock cards if available
-      if (mockThemeCardsMap[activeTheme.id]) {
-        setThemeCards((prev) => ({
-          ...prev,
-          [activeTheme.id]: mockThemeCardsMap[activeTheme.id],
-        }));
+    } catch (err: unknown) {
+      if (isMockEnabled) {
+        // If endpoint not reachable or mock, use local mock cards if available
+        if (mockThemeCardsMap[activeTheme.id]) {
+          setThemeCards((prev) => ({
+            ...prev,
+            [activeTheme.id]: mockThemeCardsMap[activeTheme.id],
+          }));
+        } else {
+          // Synthesize cards for themes without preset
+          const synthResponse: ThemeCardsResponse = {
+            theme_id: activeTheme.id,
+            theme_name: activeTheme.name,
+            as_of: new Date().toISOString(),
+            prompt_version: 'v2.4.0-facts',
+            cards: (activeTheme.stocks || []).map((s) => ({
+              symbol: s.symbol,
+              name: s.name,
+              one_line_intro: `${s.name} 是 ${s.sector} 赛道中 ${s.sub_industry} 领域的代表性龙头。`,
+              why_watch: `受益于「${activeTheme.name}」宏观产业景气度扩张与技术换代催化。`,
+              financial_strengths: [
+                `在 ${s.sub_industry} 细分赛道具备较高市场份额`,
+                '资产负债表健康，自由现金流充裕',
+                '持续的研发投入保持竞争护城河',
+              ],
+              main_risks: [
+                '行业宏观周期波动与下游需求不确定性',
+                '估值短期处于相对高位回撤风险',
+              ],
+              suitable_for: ['中长线成长型投资者', '产业趋势配置者'],
+              more_attractive_when: '回撤至年线或重要支撑位，估值倍数回落至历史中位数时。',
+            })),
+          };
+          setThemeCards((prev) => ({ ...prev, [activeTheme.id]: synthResponse }));
+        }
       } else {
-        // Synthesize cards for themes without preset
-        const synthResponse: ThemeCardsResponse = {
-          theme_id: activeTheme.id,
-          theme_name: activeTheme.name,
-          as_of: new Date().toISOString(),
-          prompt_version: 'v2.4.0-facts',
-          cards: (activeTheme.stocks || []).map((s) => ({
-            symbol: s.symbol,
-            name: s.name,
-            one_line_intro: `${s.name} 是 ${s.sector} 赛道中 ${s.sub_industry} 领域的代表性龙头。`,
-            why_watch: `受益于「${activeTheme.name}」宏观产业景气度扩张与技术换代催化。`,
-            financial_strengths: [
-              `在 ${s.sub_industry} 细分赛道具备较高市场份额`,
-              '资产负债表健康，自由现金流充裕',
-              '持续的研发投入保持竞争护城河',
-            ],
-            main_risks: [
-              '行业宏观周期波动与下游需求不确定性',
-              '估值短期处于相对高位回撤风险',
-            ],
-            suitable_for: ['中长线成长型投资者', '产业趋势配置者'],
-            more_attractive_when: '回撤至年线或重要支撑位，估值倍数回落至历史中位数时。',
-          })),
-        };
-        setThemeCards((prev) => ({ ...prev, [activeTheme.id]: synthResponse }));
+        const msg = err instanceof Error ? err.message : '生成主题投研卡片失败，请检查 AI 服务或重试';
+        setThemeError(msg);
       }
     } finally {
       setIsGeneratingCards(false);
@@ -250,6 +268,33 @@ export const ThemesView: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Error Banner */}
+      {themeError && (
+        <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/50 flex items-start justify-between gap-3 text-rose-200 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-rose-400">错误:</span>
+            <span>{themeError}</span>
+          </div>
+          <Button
+            size="xs"
+            variant="outline"
+            className="border-rose-500/50 text-rose-300 hover:bg-rose-900/40"
+            onClick={() => loadThemes()}
+          >
+            重试
+          </Button>
+        </div>
+      )}
+
+      {/* Loading Skeleton */}
+      {isLoadingThemes && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="h-44 bg-slate-800/40 rounded-xl animate-pulse" />
+          <div className="h-44 bg-slate-800/40 rounded-xl animate-pulse" />
+          <div className="h-44 bg-slate-800/40 rounded-xl animate-pulse" />
+        </div>
+      )}
 
       {/* Themes Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

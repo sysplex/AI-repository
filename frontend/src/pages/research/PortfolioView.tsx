@@ -62,23 +62,28 @@ export const PortfolioView: React.FC = () => {
     }
   };
 
+  const isMockEnabled = import.meta.env.VITE_ENABLE_MOCK === 'true' || import.meta.env.MODE === 'test';
+
   const query = useQuery({
     queryKey: ['ai-portfolio', activeParams],
     queryFn: async () => {
       try {
         return await researchApi.getPortfolio(activeParams);
-      } catch {
-        return MOCK_PORTFOLIO_DATA;
+      } catch (err) {
+        if (isMockEnabled) {
+          return MOCK_PORTFOLIO_DATA;
+        }
+        throw err;
       }
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const portfolioData = query.data || MOCK_PORTFOLIO_DATA;
-  const payload = (portfolioData.payload || {}) as Record<string, any>;
+  const portfolioData = query.data || (isMockEnabled ? MOCK_PORTFOLIO_DATA : null);
+  const payload = (portfolioData?.payload || {}) as Record<string, any>;
   const allocations = (payload.allocations || []) as any[];
-  const cashAmount = Number(payload.cash_amount ?? 8000);
-  const cashPercent = Number(payload.cash_percent ?? 8.0);
+  const cashAmount = Number(payload.cash_amount ?? 0);
+  const cashPercent = Number(payload.cash_percent ?? 0);
   const totalAmount = Number(payload.total_amount ?? parseFloat(amount) ?? 100000);
 
   // 绝对守恒定律验证
@@ -106,7 +111,7 @@ export const PortfolioView: React.FC = () => {
             输入本金与备选池，由 AI 算法自动完成风险预算优化配置，严格履行资金与权重绝对守恒定律。
           </p>
         </div>
-        <DataFreshnessTag asOf={portfolioData.as_of} />
+        <DataFreshnessTag asOf={portfolioData?.as_of} />
       </div>
 
       {/* 参数输入卡片 */}
@@ -220,7 +225,37 @@ export const PortfolioView: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* 绝对守恒定律验证卡片 */}
+      {/* 错误展示 */}
+      {query.isError && (
+        <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-rose-200">
+          <div>
+            <div className="font-semibold text-rose-400">投资组合优化计算失败</div>
+            <div className="text-xs text-rose-300 mt-1">
+              {(query.error as Error)?.message || '无法获取组合权重配置，请检查服务可用性或重试'}
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-rose-500/50 text-rose-300 hover:bg-rose-900/40"
+            onClick={() => query.refetch()}
+          >
+            重试
+          </Button>
+        </div>
+      )}
+
+      {/* 加载骨架屏 */}
+      {query.isLoading && (
+        <div className="space-y-4 animate-pulse">
+          <div className="h-28 bg-slate-800/40 rounded-xl" />
+          <div className="h-48 bg-slate-800/40 rounded-xl" />
+        </div>
+      )}
+
+      {portfolioData && (
+        <>
+          {/* 绝对守恒定律验证卡片 */}
       <div className="rounded-xl border border-emerald-500/40 bg-emerald-950/20 p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -340,6 +375,8 @@ export const PortfolioView: React.FC = () => {
             </ul>
           </CardContent>
         </Card>
+      )}
+      </>
       )}
 
       {/* 合规免责声明 */}

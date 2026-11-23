@@ -11,7 +11,7 @@ export const mockUniverses: UniverseInfo[] = [
     id: 'sp500',
     name: '标普 500 (S&P 500)',
     description: '涵盖美国大盘优质龙头企业，流动性极佳，代表美股宏观基准。',
-    symbol_count: 503,
+    symbol_count: 510,
   },
   {
     id: 'nasdaq100',
@@ -36,39 +36,60 @@ export const mockUniverses: UniverseInfo[] = [
 export interface StrategyOption {
   id: string;
   name: string;
-  category: 'trend' | 'reversion' | 'indicator' | 'fundamental';
+  category: string;
   description: string;
   defaultParams: Record<string, any>;
 }
 
 export const mockStrategyOptions: StrategyOption[] = [
   {
-    id: 'trend_following',
-    name: '多周期均线突破趋势跟踪',
+    id: 'dow_trend',
+    name: '道氏趋势突破策略',
     category: 'trend',
-    description: '基于 EMA 20 与 SMA 50 金叉，结合价格位于 200 日线上方的稳健顺势做多策略。',
-    defaultParams: { fast_period: 20, slow_period: 50, trend_filter: 200 },
+    description: '基于波段高低点抬升确立上升趋势，向上突破最新波段高点触发买入。',
+    defaultParams: { swing_window: 5, risk_reward_ratio: 2.0 },
   },
   {
-    id: 'mean_reversion',
-    name: '布林带下轨触底反弹均值回归',
-    category: 'reversion',
-    description: '捕捉短期被情绪过度错杀、股价跌破布林下轨且波动率收缩后企稳的优质标的。',
-    defaultParams: { period: 20, num_std: 2.0 },
+    id: 'pullback_rsi',
+    name: '多头 RSI 回调企稳策略',
+    category: 'pullback',
+    description: '多头趋势中，寻找 RSI(14) 回调至超卖区间后向上拐头企稳的低吸买入机会。',
+    defaultParams: { trend_sma_period: 50, rsi_period: 14, rsi_oversold: 35.0, pullback_lookback: 5 },
   },
   {
-    id: 'rsi_oversold',
-    name: 'RSI 极致超卖右侧企稳',
-    category: 'indicator',
-    description: '日线级别 RSI < 30 发生顶背离或快速回升突破 35，且成交量温和放大。',
-    defaultParams: { rsi_period: 14, threshold: 35 },
+    id: 'reversal_123',
+    name: '123 法则反转突破策略',
+    category: 'reversal',
+    description: '1-突破下行均线；2-回踩不创新低形成更高低点；3-突破中间反弹高点确认反转买入。',
+    defaultParams: { trend_period: 20, swing_window: 3, risk_reward_ratio: 2.0 },
   },
   {
-    id: 'fundamental_value',
-    name: 'GARP 高成长合理估值因子',
-    category: 'fundamental',
-    description: '结合 ROE > 15%、Forward PE < 30 且 PEG < 1.5 的稳健高质量增长策略。',
-    defaultParams: { min_roe: 15, max_pe: 30, max_peg: 1.5 },
+    id: 'turtle_20_55',
+    name: '海龟 20/55 日突破策略',
+    category: 'trend',
+    description: '突破过去 N 日最高价做多进场，跌破 M 日最低价平仓出场，结合 ATR 动态止损。',
+    defaultParams: { entry_window: 20, exit_window: 10, atr_period: 14 },
+  },
+  {
+    id: 'value_basic',
+    name: '经典价值选股策略',
+    category: 'value',
+    description: '低市盈率（PE < 20）、低市净率（PB < 3.0）、高资本回报率（ROE >= 15%）的低估优质标的。',
+    defaultParams: { max_pe: 20.0, max_pb: 3.0, min_roe: 0.15 },
+  },
+  {
+    id: 'growth_basic',
+    name: '成长选股策略',
+    category: 'growth',
+    description: '高盈利能力（净利润率 >= 15%）、高资本回报率（ROE >= 18%）、合理估值的成长标的。',
+    defaultParams: { min_net_margin: 0.15, min_roe: 0.18, max_pe_forward: 35.0 },
+  },
+  {
+    id: 'dividend_basic',
+    name: '高股息红利选股策略',
+    category: 'dividend',
+    description: '高股息率（>= 3.0%）、稳健盈利（ROE >= 10%）、适中估值（PE <= 25）的收息标的。',
+    defaultParams: { min_dividend_yield: 0.03, min_roe: 0.10, max_pe: 25.0 },
   },
 ];
 
