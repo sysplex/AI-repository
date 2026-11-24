@@ -2,16 +2,20 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'IMAGE_TAG', defaultValue: 'v1.1.0', description: 'Docker 镜像发布标签 (如 v1.1.0)')
+        string(name: 'IMAGE_TAG', defaultValue: 'v1.2.7', description: 'Docker 镜像发布标签 (如 v1.2.7)')
         string(name: 'HARBOR_REGISTRY', defaultValue: '192.168.50.36:30088', description: 'Harbor 镜像仓库地址')
         string(name: 'HARBOR_PROJECT', defaultValue: 'stockpilot', description: 'Harbor 项目名称')
         string(name: 'HARBOR_CREDENTIAL_ID', defaultValue: 'harbor-credentials', description: 'Jenkins 凭据 ID (若无则走脚本内置凭据)')
+        string(name: 'SONAR_HOST_URL', defaultValue: 'http://192.168.50.213:9000', description: 'SonarQube 服务地址')
+        string(name: 'SONAR_TOKEN', defaultValue: 'squ_711438856b93c8a16ae981ab050bcf97d79f1abc', description: 'SonarQube 访问凭据 Token')
     }
 
     environment {
-        HARBOR_HOST = "${params.HARBOR_REGISTRY}"
-        APP_IMAGE   = "${params.HARBOR_REGISTRY}/${params.HARBOR_PROJECT}/stockpilot-app"
-        WEB_IMAGE   = "${params.HARBOR_REGISTRY}/${params.HARBOR_PROJECT}/stockpilot-web"
+        HARBOR_HOST    = "${params.HARBOR_REGISTRY}"
+        APP_IMAGE      = "${params.HARBOR_REGISTRY}/${params.HARBOR_PROJECT}/stockpilot-app"
+        WEB_IMAGE      = "${params.HARBOR_REGISTRY}/${params.HARBOR_PROJECT}/stockpilot-web"
+        SONAR_HOST_URL = "${params.SONAR_HOST_URL}"
+        SONAR_TOKEN    = "${params.SONAR_TOKEN}"
     }
 
     stages {
@@ -37,6 +41,31 @@ pipeline {
                             echo "环境无独立 Python 解释器，跳过宿主自测，直接进入 Docker 构建门禁"
                         fi
                     '''
+                }
+            }
+        }
+
+        stage('SonarQube 代码质量扫描 (Code Analysis)') {
+            steps {
+                script {
+                    echo "=== 开始执行 SonarQube 静态代码扫描与质量大盘上报 ==="
+                    // 使用 sonarsource/sonar-scanner-cli 容器化扫描，避免宿主机缺少 scanner 依赖
+                    // 使用 catchError 保证即便初次扫描提示代码异味，也不中断核心构建流水线
+                    catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                        sh """
+                            if docker inspect jenkins >/dev/null 2>&1; then
+                                VOL_OPT="--volumes-from jenkins -w ${WORKSPACE}"
+                            else
+                                VOL_OPT="-v ${WORKSPACE}:/usr/src"
+                            fi
+                            docker run --rm \
+                                --network host \
+                                \$VOL_OPT \
+                                -e SONAR_HOST_URL="${env.SONAR_HOST_URL}" \
+                                -e SONAR_TOKEN="${env.SONAR_TOKEN}" \
+                                sonarsource/sonar-scanner-cli
+                        """
+                    }
                 }
             }
         }
