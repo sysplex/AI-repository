@@ -59,7 +59,6 @@ pipeline {
                                 VOL_OPT="-v ${WORKSPACE}:/usr/src"
                             fi
                             docker run --rm \
-                                --network host \
                                 \$VOL_OPT \
                                 -e SONAR_HOST_URL="${env.SONAR_HOST_URL}" \
                                 -e SONAR_TOKEN="${env.SONAR_TOKEN}" \
